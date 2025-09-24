@@ -69,6 +69,34 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = Provider.of<FirebaseAuthService>(context, listen: false);
+      final result = await authService.signInWithGoogle();
+
+      if (result != null && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -210,6 +238,57 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ),
                                   )
                                 : Text(_isLogin ? 'Sign In' : 'Create Account'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Divider
+                        Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'OR',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Google Sign In button
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _signInWithGoogle,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey[400]!),
+                            ),
+                            icon: Image.asset(
+                              'assets/images/google_logo.png',
+                              height: 20,
+                              width: 20,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.g_mobiledata,
+                                  size: 24,
+                                  color: Colors.red,
+                                );
+                              },
+                            ),
+                            label: const Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
