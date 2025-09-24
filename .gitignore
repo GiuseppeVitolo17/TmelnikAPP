@@ -44,8 +44,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Environment variables and secrets
-.env
-.env.local
-.env.production
-.env.development
+# Environment variables (not needed for this simple setup)
+# .env files are not used since Firebase keys are safe to include

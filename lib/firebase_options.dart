@@ -38,53 +38,53 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-    appId: String.fromEnvironment('FIREBASE_APP_ID'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-    authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:web:4335da1db5cd1da5206191',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    authDomain: 'tmelnikapp.firebaseapp.com',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-    appId: String.fromEnvironment('FIREBASE_ANDROID_APP_ID'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:android:your-android-app-id',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-    appId: String.fromEnvironment('FIREBASE_IOS_APP_ID'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:ios:your-ios-app-id',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
     iosBundleId: 'com.example.tmelnikApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-    appId: String.fromEnvironment('FIREBASE_MACOS_APP_ID'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:ios:your-macos-app-id',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
     iosBundleId: 'com.example.tmelnikApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-    appId: String.fromEnvironment('FIREBASE_WEB_APP_ID'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:web:4335da1db5cd1da5206191',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 
   static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-    appId: String.fromEnvironment('FIREBASE_WEB_APP_ID'),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
-    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:web:4335da1db5cd1da5206191',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 }

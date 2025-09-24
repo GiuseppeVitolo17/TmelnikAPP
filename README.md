@@ -1,6 +1,14 @@
-# TmelnikAPP
+# 🚀 TmelnikAPP
 
 A comprehensive mobile application designed to streamline youth exchange programs. Features include travel management, participant feedback collection, event calendar with important dates, and registration system for upcoming projects.
+
+## 🔒 Security Notice
+
+**This repository contains Firebase API keys which are intentionally public and safe.**
+
+Firebase API keys are **NOT secret** - they are public identifiers that identify your Firebase project. Real security comes from Firebase Security Rules, not from hiding API keys.
+
+**For more information, see [SECURITY_NOTICE.md](SECURITY_NOTICE.md)**
 
 ## 🚀 Features
 
