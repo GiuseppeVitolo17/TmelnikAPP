@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/project_list_screen.dart';
+import 'screens/main_navigation_screen.dart';
 
 void main() {
   runApp(const TmelnikApp());
@@ -44,7 +44,7 @@ class TmelnikApp extends StatelessWidget {
           elevation: 4,
         ),
       ),
-      home: const ProjectListScreen(),
+      home: const MainNavigationScreen(),
     );
   }
 }

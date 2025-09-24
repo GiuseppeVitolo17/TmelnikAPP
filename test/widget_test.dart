@@ -4,12 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tmelnik_app/main.dart';
 
 void main() {
-  testWidgets('App loads project list screen', (WidgetTester tester) async {
+  testWidgets('App loads main navigation screen', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const TmelnikApp());
 
-    // Verify that our app loads with the project list screen.
-    expect(find.text('Project Management'), findsOneWidget);
-    expect(find.byType(FloatingActionButton), findsOneWidget);
+    // Verify that our app loads with the main navigation screen.
+    expect(find.text('Offers'), findsOneWidget);
+    expect(find.text('Feedback'), findsOneWidget);
+    expect(find.text('Info'), findsOneWidget);
+    expect(find.text('News'), findsOneWidget);
   });
 }
