@@ -1,36 +1,39 @@
-# 🚀 Local Development Guide
+# 🚀 Development Guide
 
 ## 📱 App Versions
 
 This project has **two versions** for different use cases:
 
-### 1. **Full Version** (with Firebase)
+### 1. **Firebase Version** (MAIN - Recommended)
 - **File**: `lib/main.dart`
 - **Features**: Complete Firebase integration, authentication, database
-- **Use**: Production, web deployment
-- **Command**: `flutter run -d chrome`
+- **Use**: Production, web deployment, full functionality
+- **Command**: `./run_firebase.sh` or `flutter run -d chrome`
 
-### 2. **Local Version** (without Firebase)
+### 2. **Local Version** (UI Demo Only)
 - **File**: `lib/main_local.dart`
 - **Features**: UI only, no Firebase dependencies
-- **Use**: Local development, testing, demo
-- **Command**: `flutter run -t lib/main_local.dart -d chrome`
+- **Use**: Quick UI testing, demo without Firebase setup
+- **Command**: `./run_local.sh` or `flutter run -t lib/main_local.dart -d chrome`
 
 ## 🔧 Quick Start
 
-### For Local Development (Recommended):
+### For Firebase App (Recommended - Full Features):
+```bash
+# Easy way
+./run_firebase.sh
+
+# Manual way
+flutter run -d chrome
+```
+
+### For UI Demo Only (No Firebase):
 ```bash
 # Easy way
 ./run_local.sh
 
 # Manual way
 flutter run -t lib/main_local.dart -d chrome
-```
-
-### For Production Testing:
-```bash
-# With Firebase (requires setup)
-flutter run -d chrome
 ```
 
 ## 🎯 What Works in Local Version

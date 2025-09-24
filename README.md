@@ -47,9 +47,40 @@ flutter pub get
 ```
 
 3. Run the app:
+
+**For Web (Recommended - Firebase works best here):**
 ```bash
-flutter run
+flutter run -d chrome
 ```
+
+**For Desktop (Linux/Windows/Mac):**
+```bash
+flutter run -d linux  # or windows/macos
+```
+
+**For Mobile:**
+```bash
+flutter run  # Will show available devices
+```
+
+### 🔥 Firebase Features
+
+The app includes full Firebase integration:
+- ✅ **Email/Password Authentication**
+- ✅ **Google Sign-In**
+- ✅ **Firestore Database**
+- ✅ **Firebase Storage**
+- ✅ **Real-time data sync**
+
+### 🚀 Quick Demo
+
+**To see the app with Firebase features:**
+1. Run `flutter run -d chrome`
+2. You'll see the login screen with Email and Google options
+3. Create an account or sign in with Google
+4. Access all 4 main sections with full functionality
+
+**Note:** Firebase works best on Web. Desktop versions may have connection issues.
 
 ## 🏗️ Project Structure
 
