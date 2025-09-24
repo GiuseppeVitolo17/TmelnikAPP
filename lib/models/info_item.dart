@@ -114,6 +114,51 @@ class InfoItem {
     );
   }
 
+  // Firestore methods
+  Map<String, dynamic> toFirestore() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'category': category.name,
+      'author': author,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'lastUpdated': Timestamp.fromDate(lastUpdated),
+      'views': views,
+      'likes': likes,
+      'tags': tags,
+      'imageUrl': imageUrl,
+      'isImportant': isImportant,
+      'isActive': isActive,
+      'attachments': attachments,
+      'language': language,
+    };
+  }
+
+  factory InfoItem.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return InfoItem(
+      id: data['id'] ?? doc.id,
+      title: data['title'] ?? '',
+      content: data['content'] ?? '',
+      category: InfoCategory.values.firstWhere(
+        (e) => e.name == data['category'],
+        orElse: () => InfoCategory.rules,
+      ),
+      author: data['author'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastUpdated: (data['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      views: data['views'] ?? 0,
+      likes: data['likes'] ?? 0,
+      tags: List<String>.from(data['tags'] ?? []),
+      imageUrl: data['imageUrl'] ?? '',
+      isImportant: data['isImportant'] ?? false,
+      isActive: data['isActive'] ?? true,
+      attachments: List<String>.from(data['attachments'] ?? []),
+      language: data['language'] ?? 'en',
+    );
+  }
+
   String get formattedLastUpdated {
     final now = DateTime.now();
     final difference = now.difference(lastUpdated).inDays;

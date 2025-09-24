@@ -116,6 +116,52 @@ class News {
     );
   }
 
+  // Firestore methods
+  Map<String, dynamic> toFirestore() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'type': type.name,
+      'author': author,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
+      'tags': tags,
+      'imageUrl': imageUrl,
+      'likes': likes,
+      'comments': comments,
+      'shares': shares,
+      'isPinned': isPinned,
+      'isActive': isActive,
+      'attachments': attachments,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    };
+  }
+
+  factory News.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return News(
+      id: data['id'] ?? doc.id,
+      title: data['title'] ?? '',
+      content: data['content'] ?? '',
+      type: NewsType.values.firstWhere(
+        (e) => e.name == data['type'],
+        orElse: () => NewsType.news,
+      ),
+      author: data['author'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
+      tags: List<String>.from(data['tags'] ?? []),
+      imageUrl: data['imageUrl'] ?? '',
+      likes: data['likes'] ?? 0,
+      comments: data['comments'] ?? 0,
+      shares: data['shares'] ?? 0,
+      isPinned: data['isPinned'] ?? false,
+      isActive: data['isActive'] ?? true,
+      attachments: List<String>.from(data['attachments'] ?? []),
+    );
+  }
+
   bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
   
   bool get isHot => DateTime.now().difference(createdAt).inHours < 24;
