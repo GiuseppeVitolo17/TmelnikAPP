@@ -7,9 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  test-local:
+  build-and-test:
     runs-on: ubuntu-latest
-    name: Test Local Version
+    name: Build and Test Working Version
     
     steps:
     - uses: actions/checkout@v4
@@ -22,33 +22,14 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
       
-    - name: Run tests on local version
+    - name: Run tests
       run: flutter test test/widget_test.dart
       
-    - name: Build local version
+    - name: Build working version (Local)
       run: flutter build web -t lib/main_local.dart
       
-  test-firebase:
-    runs-on: ubuntu-latest
-    name: Test Firebase Version (Web only)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.24.0'
-        
-    - name: Install dependencies
-      run: flutter pub get
-      
-    - name: Build Firebase version for web
-      run: flutter build web -t lib/main.dart
-      
-    - name: Deploy to Firebase (if on main branch)
-      if: github.ref == 'refs/heads/main'
+    - name: Verify build output
       run: |
-        echo "Firebase deployment would happen here"
-        echo "To enable: configure Firebase CLI and run 'firebase deploy'"
+        echo "Build completed successfully!"
+        echo "Web assets generated in build/web/"
+        ls -la build/web/

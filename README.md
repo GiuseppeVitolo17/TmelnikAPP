@@ -63,24 +63,29 @@ flutter run -d linux  # or windows/macos
 flutter run  # Will show available devices
 ```
 
-### 🔥 Firebase Features
+### 🔥 Current Status
 
-The app includes full Firebase integration:
-- ✅ **Email/Password Authentication** (Ready to use)
-- ⚠️ **Google Sign-In** (Needs Google Client ID setup - see GOOGLE_SIGNIN_SETUP.md)
-- ✅ **Firestore Database**
-- ✅ **Firebase Storage**
-- ✅ **Real-time data sync**
+**Working Version Available:**
+- ✅ **Complete UI** - All 4 main sections (Offers, Feedback, Info, News)
+- ✅ **Navigation** - Full bottom navigation between sections
+- ✅ **Local Data** - SharedPreferences for data persistence
+- ✅ **Instagram Sharing** - Direct link sharing functionality
+- ✅ **Responsive Design** - Works on web and mobile
+
+**Firebase Integration (In Development):**
+- ⚠️ **Firebase Dependencies** - Currently has compilation conflicts
+- 📋 **Planned Features** - Email/Password auth, Firestore, Google Sign-In
+- 🔧 **Status** - Working on resolving Firebase web compatibility issues
 
 ### 🚀 Quick Demo
 
-**To see the app with Firebase features:**
-1. Run `./run_firebase.sh` or `flutter run -d chrome`
-2. You'll see the login screen with Email and Google options
-3. **Use Email/Password** (Google Sign-In needs setup - see GOOGLE_SIGNIN_SETUP.md)
-4. Create an account and access all 4 main sections with full functionality
+**To see the working app:**
+1. Run `./run_local.sh` or `flutter run -t lib/main_local.dart -d chrome`
+2. Explore all 4 main sections with full UI functionality
+3. Test navigation, data persistence, and Instagram sharing
+4. All features work without requiring Firebase setup
 
-**Note:** Firebase works best on Web. Desktop versions may have connection issues.
+**Note:** The app works perfectly on Web and mobile. Firebase integration is being developed separately.
 
 ## 🏗️ Project Structure
 

@@ -18,6 +18,11 @@ dependencies:
   uuid: ^4.2.1
   url_launcher: ^6.2.2
   
+  # Firebase - Minimal working set
+  firebase_core: ^2.15.1
+  firebase_auth: ^4.7.4
+  cloud_firestore: ^4.9.1
+  
   # State management
   provider: ^6.1.1
 
