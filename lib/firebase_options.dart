@@ -38,53 +38,53 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'your-web-api-key',
-    appId: 'your-web-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'tmelnik-app',
-    authDomain: 'tmelnik-app.firebaseapp.com',
-    storageBucket: 'tmelnik-app.appspot.com',
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:web:4335da1db5cd1da5206191',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    authDomain: 'tmelnikapp.firebaseapp.com',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'your-android-api-key',
-    appId: 'your-android-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'tmelnik-app',
-    storageBucket: 'tmelnik-app.appspot.com',
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:android:your-android-app-id',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'your-ios-api-key',
-    appId: 'your-ios-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'tmelnik-app',
-    storageBucket: 'tmelnik-app.appspot.com',
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:ios:your-ios-app-id',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
     iosBundleId: 'com.example.tmelnikApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'your-macos-api-key',
-    appId: 'your-macos-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'tmelnik-app',
-    storageBucket: 'tmelnik-app.appspot.com',
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:ios:your-macos-app-id',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
     iosBundleId: 'com.example.tmelnikApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'your-windows-api-key',
-    appId: 'your-windows-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'tmelnik-app',
-    storageBucket: 'tmelnik-app.appspot.com',
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:web:4335da1db5cd1da5206191',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 
   static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: 'your-linux-api-key',
-    appId: 'your-linux-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'tmelnik-app',
-    storageBucket: 'tmelnik-app.appspot.com',
+    apiKey: 'AIzaSyBvdAgRimZ8Nk8V14gsA6_o_WqKcfz7UQE',
+    appId: '1:950924265668:web:4335da1db5cd1da5206191',
+    messagingSenderId: '950924265668',
+    projectId: 'tmelnikapp',
+    storageBucket: 'tmelnikapp.firebasestorage.app',
   );
 }
