@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Feedback {
   final String id;
   final String title;
@@ -91,6 +93,47 @@ class Feedback {
       location: json['location'],
       images: List<String>.from(json['images'] ?? []),
       isAnonymous: json['isAnonymous'] ?? false,
+    );
+  }
+
+  // Firestore methods
+  Map<String, dynamic> toFirestore() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'type': type.name,
+      'projectId': projectId,
+      'userId': userId,
+      'rating': rating,
+      'tags': tags,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'location': location,
+      'images': images,
+      'isAnonymous': isAnonymous,
+      'isActive': true,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    };
+  }
+
+  factory Feedback.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Feedback(
+      id: data['id'] ?? doc.id,
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      type: FeedbackType.values.firstWhere(
+        (e) => e.name == data['type'],
+        orElse: () => FeedbackType.project,
+      ),
+      projectId: data['projectId'] ?? '',
+      userId: data['userId'] ?? '',
+      rating: data['rating'] ?? 5,
+      tags: List<String>.from(data['tags'] ?? []),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      location: data['location'] ?? '',
+      images: List<String>.from(data['images'] ?? []),
+      isAnonymous: data['isAnonymous'] ?? false,
     );
   }
 

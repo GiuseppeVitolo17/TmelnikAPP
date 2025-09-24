@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ProjectOffer {
   final String id;
   final String title;
@@ -103,6 +105,51 @@ class ProjectOffer {
       ),
       shareCount: json['shareCount'] ?? 0,
       imageUrl: json['imageUrl'] ?? '',
+    );
+  }
+
+  // Firestore methods
+  Map<String, dynamic> toFirestore() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'targeting': targeting,
+      'location': location,
+      'duration': duration,
+      'requirements': requirements,
+      'benefits': benefits,
+      'contactInfo': contactInfo,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'expiresAt': Timestamp.fromDate(expiresAt),
+      'status': status.name,
+      'shareCount': shareCount,
+      'imageUrl': imageUrl,
+      'isActive': true,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    };
+  }
+
+  factory ProjectOffer.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return ProjectOffer(
+      id: data['id'] ?? doc.id,
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      targeting: data['targeting'] ?? '',
+      location: data['location'] ?? '',
+      duration: data['duration'] ?? '',
+      requirements: data['requirements'] ?? '',
+      benefits: List<String>.from(data['benefits'] ?? []),
+      contactInfo: data['contactInfo'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      status: OfferStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => OfferStatus.active,
+      ),
+      shareCount: data['shareCount'] ?? 0,
+      imageUrl: data['imageUrl'] ?? '',
     );
   }
 
