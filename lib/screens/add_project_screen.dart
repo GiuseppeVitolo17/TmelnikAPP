@@ -49,14 +49,14 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Progetto creato con successo'),
+            content: Text('Project created successfully'),
             backgroundColor: Colors.green,
           ),
         );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Errore durante la creazione del progetto'),
+            content: Text('Error creating project'),
             backgroundColor: Colors.red,
           ),
         );
@@ -65,7 +65,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Errore: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -83,7 +83,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nuovo Progetto'),
+        title: const Text('New Project'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           if (_isLoading)
@@ -98,8 +98,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
           else
             TextButton(
               onPressed: _saveProject,
-              child: const Text(
-                'Salva',
+                child: const Text(
+                  'Save',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -122,7 +122,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Informazioni Progetto',
+                        'Project Information',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -131,17 +131,17 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                       TextFormField(
                         controller: _nameController,
                         decoration: const InputDecoration(
-                          labelText: 'Nome del progetto',
-                          hintText: 'Inserisci il nome del progetto',
+                          labelText: 'Project name',
+                          hintText: 'Enter project name',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.folder),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Il nome del progetto è obbligatorio';
+                            return 'Project name is required';
                           }
                           if (value.trim().length < 3) {
-                            return 'Il nome deve essere di almeno 3 caratteri';
+                            return 'Name must be at least 3 characters';
                           }
                           return null;
                         },
@@ -151,8 +151,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                       TextFormField(
                         controller: _descriptionController,
                         decoration: const InputDecoration(
-                          labelText: 'Descrizione',
-                          hintText: 'Inserisci una descrizione del progetto',
+                          labelText: 'Description',
+                          hintText: 'Enter project description',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.description),
                         ),
@@ -171,7 +171,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Stato del Progetto',
+                        'Project Status',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -226,11 +226,11 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                             ),
                           ),
                           SizedBox(width: 8),
-                          Text('Salvataggio...'),
+                          Text('Saving...'),
                         ],
                       )
                     : const Text(
-                        'Crea Progetto',
+                        'Create Project',
                         style: TextStyle(fontSize: 16),
                       ),
               ),

@@ -11,7 +11,7 @@ class TmelnikApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tmelnik - Gestione Progetti',
+      title: 'Tmelnik - Project Management',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
