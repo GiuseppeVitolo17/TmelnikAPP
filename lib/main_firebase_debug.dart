@@ -12,16 +12,16 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print('Firebase initialized successfully');
+    print('✅ Firebase initialized successfully');
   } catch (e) {
-    print('Error initializing Firebase: $e');
+    print('❌ Error initializing Firebase: $e');
   }
   
-  runApp(const TmelnikAppFirebase());
+  runApp(const TmelnikAppFirebaseDebug());
 }
 
-class TmelnikAppFirebase extends StatelessWidget {
-  const TmelnikAppFirebase({super.key});
+class TmelnikAppFirebaseDebug extends StatelessWidget {
+  const TmelnikAppFirebaseDebug({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class TmelnikAppFirebase extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Tmelnik - Project Management',
+        title: 'Tmelnik - Debug',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
