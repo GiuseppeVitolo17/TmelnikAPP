@@ -66,8 +66,8 @@ flutter run  # Will show available devices
 ### 🔥 Firebase Features
 
 The app includes full Firebase integration:
-- ✅ **Email/Password Authentication**
-- ✅ **Google Sign-In**
+- ✅ **Email/Password Authentication** (Ready to use)
+- ⚠️ **Google Sign-In** (Needs Google Client ID setup - see GOOGLE_SIGNIN_SETUP.md)
 - ✅ **Firestore Database**
 - ✅ **Firebase Storage**
 - ✅ **Real-time data sync**
@@ -75,10 +75,10 @@ The app includes full Firebase integration:
 ### 🚀 Quick Demo
 
 **To see the app with Firebase features:**
-1. Run `flutter run -d chrome`
+1. Run `./run_firebase.sh` or `flutter run -d chrome`
 2. You'll see the login screen with Email and Google options
-3. Create an account or sign in with Google
-4. Access all 4 main sections with full functionality
+3. **Use Email/Password** (Google Sign-In needs setup - see GOOGLE_SIGNIN_SETUP.md)
+4. Create an account and access all 4 main sections with full functionality
 
 **Note:** Firebase works best on Web. Desktop versions may have connection issues.
 
