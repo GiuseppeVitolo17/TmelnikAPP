@@ -59,14 +59,14 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Progetto aggiornato con successo'),
+            content: Text('Project updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Errore durante l\'aggiornamento del progetto'),
+            content: Text('Error updating project'),
             backgroundColor: Colors.red,
           ),
         );
@@ -75,7 +75,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Errore: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -93,7 +93,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Modifica ${widget.project.name}'),
+        title: Text('Edit ${widget.project.name}'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           if (_isLoading)
@@ -108,8 +108,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
           else
             TextButton(
               onPressed: _saveChanges,
-              child: const Text(
-                'Salva',
+                child: const Text(
+                  'Save',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -143,7 +143,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Modifica Progetto',
+                              'Edit Project',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -155,17 +155,17 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                       TextFormField(
                         controller: _nameController,
                         decoration: const InputDecoration(
-                          labelText: 'Nome del progetto',
-                          hintText: 'Inserisci il nome del progetto',
+                          labelText: 'Project name',
+                          hintText: 'Enter project name',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.folder),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Il nome del progetto è obbligatorio';
+                            return 'Project name is required';
                           }
                           if (value.trim().length < 3) {
-                            return 'Il nome deve essere di almeno 3 caratteri';
+                            return 'Name must be at least 3 characters';
                           }
                           return null;
                         },
@@ -175,8 +175,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                       TextFormField(
                         controller: _descriptionController,
                         decoration: const InputDecoration(
-                          labelText: 'Descrizione',
-                          hintText: 'Inserisci una descrizione del progetto',
+                          labelText: 'Description',
+                          hintText: 'Enter project description',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.description),
                         ),
@@ -195,7 +195,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Stato del Progetto',
+                        'Project Status',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -240,7 +240,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Annulla'),
+                      child: const Text('Cancel'),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -263,7 +263,7 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                               ),
                             )
                           : const Text(
-                              'Salva Modifiche',
+                              'Save Changes',
                               style: TextStyle(fontSize: 16),
                             ),
                     ),

@@ -89,13 +89,13 @@ extension ProjectStatusExtension on ProjectStatus {
   String get displayName {
     switch (this) {
       case ProjectStatus.inProgress:
-        return 'In Corso';
+        return 'In Progress';
       case ProjectStatus.completed:
-        return 'Completato';
+        return 'Completed';
       case ProjectStatus.onHold:
-        return 'In Pausa';
+        return 'On Hold';
       case ProjectStatus.cancelled:
-        return 'Annullato';
+        return 'Cancelled';
     }
   }
 

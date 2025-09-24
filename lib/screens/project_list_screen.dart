@@ -38,12 +38,12 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Errore nel caricamento dei progetti: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading projects: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
       }
     }
   }
@@ -52,17 +52,17 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Conferma eliminazione'),
-        content: Text('Sei sicuro di voler eliminare il progetto "${project.name}"?'),
+        title: const Text('Confirm deletion'),
+        content: Text('Are you sure you want to delete the project "${project.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annulla'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Elimina'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -74,14 +74,14 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
         _loadProjects();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Progetto eliminato con successo'),
+            content: Text('Project deleted successfully'),
             backgroundColor: Colors.green,
           ),
         );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Errore durante l\'eliminazione del progetto'),
+            content: Text('Error deleting project'),
             backgroundColor: Colors.red,
           ),
         );
@@ -93,13 +93,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestione Progetti'),
+        title: const Text('Project Management'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
             onPressed: _loadProjects,
             icon: const Icon(Icons.refresh),
-            tooltip: 'Aggiorna',
+            tooltip: 'Refresh',
           ),
         ],
       ),
@@ -117,14 +117,14 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Nessun progetto trovato',
+                        'No projects found',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               color: Colors.grey[600],
                             ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tocca il pulsante + per creare il tuo primo progetto',
+                        'Tap the + button to create your first project',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.grey[500],
                             ),
@@ -248,7 +248,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
             _loadProjects();
           }
         },
-        tooltip: 'Aggiungi Progetto',
+        tooltip: 'Add Project',
         child: const Icon(Icons.add),
       ),
     );
@@ -272,11 +272,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     final difference = now.difference(date).inDays;
 
     if (difference == 0) {
-      return 'Oggi';
+        return 'Today';
     } else if (difference == 1) {
-      return 'Ieri';
+        return 'Yesterday';
     } else if (difference < 7) {
-      return '$difference giorni fa';
+        return '$difference days ago';
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }

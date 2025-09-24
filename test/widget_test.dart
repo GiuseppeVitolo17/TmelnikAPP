@@ -9,7 +9,7 @@ void main() {
     await tester.pumpWidget(const TmelnikApp());
 
     // Verify that our app loads with the project list screen.
-    expect(find.text('Gestione Progetti'), findsOneWidget);
+    expect(find.text('Project Management'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
   });
 }

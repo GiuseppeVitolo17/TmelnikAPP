@@ -29,19 +29,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Conferma eliminazione'),
+        title: const Text('Confirm deletion'),
         content: Text(
-          'Sei sicuro di voler eliminare il progetto "${_project.name}"?\n\nQuesta azione non può essere annullata.',
+          'Are you sure you want to delete the project "${_project.name}"?\n\nThis action cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Annulla'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Elimina'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -53,14 +53,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Progetto eliminato con successo'),
+            content: Text('Project deleted successfully'),
             backgroundColor: Colors.green,
           ),
         );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Errore durante l\'eliminazione del progetto'),
+            content: Text('Error deleting project'),
             backgroundColor: Colors.red,
           ),
         );
@@ -117,7 +117,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           IconButton(
             onPressed: _editProject,
             icon: const Icon(Icons.edit),
-            tooltip: 'Modifica',
+            tooltip: 'Edit',
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -203,7 +203,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     if (_project.description.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       Text(
-                        'Descrizione',
+                        'Description',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -228,7 +228,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Informazioni Progetto',
+                      'Project Information',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -236,19 +236,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.calendar_today,
-                      'Data di creazione',
+                      'Creation date',
                       _formatDate(_project.createdAt),
                     ),
                     const SizedBox(height: 12),
                     _buildInfoRow(
                       Icons.access_time,
-                      'Ora di creazione',
+                      'Creation time',
                       _formatTime(_project.createdAt),
                     ),
                     const SizedBox(height: 12),
                     _buildInfoRow(
                       Icons.fingerprint,
-                      'ID Progetto',
+                      'Project ID',
                       _project.id,
                     ),
                   ],
@@ -265,7 +265,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Statistiche',
+                      'Statistics',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -275,7 +275,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       children: [
                         Expanded(
                           child: _buildStatCard(
-                            'Giorni attivi',
+                            'Active days',
                             _project.createdAt.difference(DateTime.now()).inDays.abs().toString(),
                             Icons.timeline,
                             Colors.blue,
@@ -284,7 +284,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildStatCard(
-                            'Stato',
+                            'Status',
                             _project.status.displayName,
                             Icons.flag,
                             _getStatusColor(_project.status),
@@ -301,7 +301,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _editProject,
-        tooltip: 'Modifica Progetto',
+        tooltip: 'Edit Project',
         child: const Icon(Icons.edit),
       ),
     );
