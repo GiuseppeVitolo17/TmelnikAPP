@@ -182,22 +182,21 @@
     </div>
   </div>
 
+  <!-- Loading configuration script -->
+  <script src="loading_config.js"></script>
+  
   <script>
-    // Hide loading screen when Flutter is ready
+    // Listen for Flutter first frame as backup
     window.addEventListener('flutter-first-frame', function () {
-      const loadingScreen = document.getElementById('loading-screen');
-      loadingScreen.style.animation = 'fadeOut 0.5s ease-out forwards';
-      
-      setTimeout(() => {
-        loadingScreen.classList.add('hidden');
-      }, 500);
+      console.log('🎬 Flutter first frame detected (backup method)');
+      // This will be handled by the Flutter ready property system
     });
 
-    // Fallback: hide loading screen after 10 seconds
+    // Fallback: hide loading screen after 10 seconds if Flutter doesn't signal ready
     setTimeout(() => {
-      const loadingScreen = document.getElementById('loading-screen');
-      if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
-        loadingScreen.classList.add('hidden');
+      if (!window.flutterReady) {
+        console.log('⏰ Fallback: Flutter took too long, hiding loading screen');
+        window.hideLoadingScreen();
       }
     }, 10000);
   </script>

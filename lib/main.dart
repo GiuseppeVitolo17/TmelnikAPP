@@ -5,9 +5,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'utils/debug_logger.dart';
 import 'screens/loading_screen.dart';
+import 'config/loading_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Log loading configuration
+  LoadingConfig.logConfig();
   
   // Initialize debug logging
   await debugLogger.initializeLog();
