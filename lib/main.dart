@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'utils/debug_logger.dart';
 import 'screens/loading_screen.dart';
 import 'config/loading_config.dart';
+import 'services/loading_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,12 @@ void main() async {
   }
   
   await debugLogger.log('Starting TmelnikApp...');
+  
+  // Signal that Flutter is ready after app starts
+  Future.delayed(const Duration(milliseconds: 100), () {
+    loadingController.markAsReady();
+  });
+  
   runApp(const TmelnikApp());
 }
 
