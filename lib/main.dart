@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'utils/debug_logger.dart';
+import 'screens/loading_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,31 +75,44 @@ class TmelnikApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _showLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Show loading screen for at least 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showLoading = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     debugLogger.ui('Building AuthWrapper widget');
     
+    if (_showLoading) {
+      return const LoadingScreen();
+    }
+    
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Show loading indicator while checking auth state
+        // Show loading screen while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
           debugLogger.auth('Auth state: checking...');
-          return const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Checking authentication...'),
-                ],
-              ),
-            ),
-          );
+          return const LoadingScreen();
         }
 
         // If user is logged in, show main app
