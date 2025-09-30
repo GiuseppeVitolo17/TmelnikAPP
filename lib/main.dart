@@ -75,36 +75,12 @@ class TmelnikApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
-
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  bool _showLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    // Show loading screen for at least 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _showLoading = false;
-        });
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     debugLogger.ui('Building AuthWrapper widget');
-    
-    if (_showLoading) {
-      return const LoadingScreen();
-    }
     
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
