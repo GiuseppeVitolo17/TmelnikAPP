@@ -545,7 +545,7 @@ Discover amazing work and cultural exchange opportunities with Tmelnik Projects!
 • Travel opportunities
 • Competitive compensation
 
-📱 Contact us on Instagram: @tmelnik_projects
+📱 Contact us on Instagram: @tmelnik_cz
 
 #TmelnikProject #TravelOpportunity #WorkAbroad #YouthExchange''';
 
@@ -554,8 +554,8 @@ Discover amazing work and cultural exchange opportunities with Tmelnik Projects!
       await Clipboard.setData(ClipboardData(text: text));
       
       // Try to open Instagram app first, fallback to web
-      final instagramAppUrl = Uri.parse('instagram://');
-      final instagramWebUrl = Uri.parse('https://www.instagram.com/');
+      final instagramAppUrl = Uri.parse('instagram://user?username=tmelnik_cz');
+      final instagramWebUrl = Uri.parse('https://www.instagram.com/tmelnik_cz/');
       
       bool launched = false;
       try {
