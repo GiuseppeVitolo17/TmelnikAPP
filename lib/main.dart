@@ -4,11 +4,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'utils/debug_logger.dart';
 import 'screens/loading_screen.dart';
+import 'screens/add_project_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
+import 'services/user_role_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -147,17 +150,25 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       if (_isLogin) {
         await debugLogger.auth('Attempting sign in with email: $_email');
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _email,
           password: _password,
         );
+        // Initialize user role in Firestore
+        if (userCredential.user != null) {
+          await userRoleService.initializeUserRole(userCredential.user!);
+        }
         await debugLogger.auth('Email/password sign in successful');
       } else {
         await debugLogger.auth('Attempting registration with email: $_email');
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _email,
           password: _password,
         );
+        // Initialize user role in Firestore
+        if (userCredential.user != null) {
+          await userRoleService.initializeUserRole(userCredential.user!);
+        }
         await debugLogger.auth('Email/password registration successful');
       }
     } catch (e) {
@@ -228,6 +239,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
       await debugLogger.auth('Signing in to Firebase with Google credential');
       final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      
+      // Initialize user role in Firestore
+      if (userCredential.user != null) {
+        await userRoleService.initializeUserRole(userCredential.user!);
+      }
       
       await debugLogger.auth('Google Sign-In completed successfully');
       await debugLogger.success('User authenticated: ${userCredential.user?.email}');
@@ -491,7 +507,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() {
+    setState(() {
             _currentIndex = index;
           });
           debugLogger.navigation('Navigated to screen: $index');
@@ -526,56 +542,63 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 }
 
 // Placeholder screens - these will be implemented with full functionality
-class ProjectOffersScreen extends StatelessWidget {
+class ProjectOffersScreen extends StatefulWidget {
   const ProjectOffersScreen({super.key});
 
-  Future<void> _shareToInstagram(BuildContext context) async {
-    const text = '''🚀 Tmelnik Projects - Work Opportunities Abroad!
+  @override
+  State<ProjectOffersScreen> createState() => _ProjectOffersScreenState();
+}
 
-📍 Multiple locations across Europe
-⏰ Various durations available
-🎯 Open to all young people
+class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
+  bool _isAdmin = false;
 
-Discover amazing work and cultural exchange opportunities with Tmelnik Projects!
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminStatus();
+  }
+
+  Future<void> _checkAdminStatus() async {
+    final isAdmin = await userRoleService.isCurrentUserAdmin();
+    if (mounted) {
+      setState(() => _isAdmin = isAdmin);
+    }
+  }
+
+  Future<void> _shareToInstagram(BuildContext context, Map<String, dynamic> offer) async {
+    final text = '''🚀 ${offer['title']}
+
+📍 ${offer['location']}
+⏰ ${offer['duration']}
+🎯 ${offer['targeting']}
+
+${offer['description']}
 
 ✅ Benefits:
-• Accommodation provided
-• Cultural immersion
-• Language learning
-• Travel opportunities
-• Competitive compensation
+${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
 
 📱 Contact us on Instagram: @tmelnik_cz
 
 #TmelnikProject #TravelOpportunity #WorkAbroad #YouthExchange''';
 
     try {
-      // Copy to clipboard
       await Clipboard.setData(ClipboardData(text: text));
       
-      // Try to open Instagram app first, fallback to web
       final instagramAppUrl = Uri.parse('instagram://user?username=tmelnik_cz');
       final instagramWebUrl = Uri.parse('https://www.instagram.com/tmelnik_cz/');
       
-      bool launched = false;
       try {
-        launched = await launchUrl(instagramAppUrl, mode: LaunchMode.externalApplication);
+        await launchUrl(instagramAppUrl, mode: LaunchMode.externalApplication);
       } catch (e) {
-        // Instagram app not installed, open web version
-        launched = await launchUrl(instagramWebUrl, mode: LaunchMode.externalApplication);
+        await launchUrl(instagramWebUrl, mode: LaunchMode.externalApplication);
       }
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Text copied to clipboard! Instagram opened.'),
+          const SnackBar(
+            content: Text('Text copied to clipboard! Instagram opened.'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'OK',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
+            duration: Duration(seconds: 3),
           ),
         );
       }
@@ -595,43 +618,151 @@ Discover amazing work and cultural exchange opportunities with Tmelnik Projects!
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.work,
-              size: 80,
-              color: Colors.blue,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Project Offers',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'This section will show available work opportunities\nand project offers.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: () => _shareToInstagram(context),
-              icon: const Icon(Icons.share),
-              label: const Text('Share on Instagram'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: const Text('Project Offers'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('projects')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final projects = snapshot.data?.docs ?? [];
+
+          if (projects.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.work_off, size: 80, color: Colors.grey),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'No projects available yet',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  if (_isAdmin) ...[
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Tap + to add a new project',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: projects.length,
+            itemBuilder: (context, index) {
+              final project = projects[index].data() as Map<String, dynamic>;
+              
+              return Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        project['title'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 16, color: Colors.blue),
+                          const SizedBox(width: 4),
+                          Text(project['location'] ?? ''),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.schedule, size: 16, color: Colors.green),
+                          const SizedBox(width: 4),
+                          Text(project['duration'] ?? ''),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.people, size: 16, color: Colors.orange),
+                          const SizedBox(width: 4),
+                          Text(project['targeting'] ?? ''),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(project['description'] ?? ''),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Benefits:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      ...(project['benefits'] as List? ?? []).map((benefit) => 
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8, top: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• '),
+                              Expanded(child: Text(benefit.toString())),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _shareToInstagram(context, project),
+                              icon: const Icon(Icons.share),
+                              label: const Text('Share on Instagram'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: _isAdmin
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddProjectScreen(),
+                  ),
+                );
+              },
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }
