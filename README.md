@@ -12,16 +12,21 @@ Firebase API keys are **NOT secret** - they are public identifiers that identify
 
 ## 🚀 Features
 
-- **Travel Management**: Organize and track youth exchange trips
-- **Feedback Collection**: Gather participant feedback and evaluations
-- **Event Calendar**: View important dates and upcoming events
-- **Project Registration**: Register for upcoming youth exchange projects
+- **🔐 User Role System**: Admin and normal user roles with different permissions
+- **📋 Project Management**: Admins can add, edit, and manage work opportunities
+- **👥 User Authentication**: Google Sign-In and Email/Password authentication via Firebase
+- **📱 Instagram Integration**: Share project offers directly to Instagram
+- **🌍 Real-time Updates**: Projects load in real-time from Firebase Firestore
+- **🎨 Modern UI**: Beautiful, responsive design with Material 3
+- **🔄 Loading Screen**: Custom "Tmelnik Projects" loading screen
 - **Cross-Platform**: Available on iOS, Android, and Web
 
 ## 🛠️ Tech Stack
 
 - **Framework**: Flutter
 - **Language**: Dart
+- **Backend**: Firebase (Authentication, Firestore)
+- **State Management**: StatefulWidget with StreamBuilder
 - **Platforms**: iOS, Android, Web, macOS, Linux, Windows
 
 ## 📱 Getting Started
@@ -104,6 +109,21 @@ flutter run  # Will show available devices
 - **`lib/main_working.dart`** - Working version with logging
 
 **Note:** Port 5000 is fixed for consistent Google Sign-In configuration.
+
+## 👑 **Admin Setup**
+
+The app has two types of users:
+- **Normal Users**: Can view and share projects
+- **Admin Users**: Can add, edit, and manage projects (+ button visible)
+
+**To set up an admin:**
+1. Login to the app with your account
+2. Go to [Firebase Console](https://console.firebase.google.com/) → Firestore Database
+3. Find your user in the `users` collection
+4. Set `isAdmin: true`
+5. Logout and login again
+
+**For detailed instructions, see [ADMIN_SETUP.md](ADMIN_SETUP.md)**
 
 ## 🏗️ Project Structure
 
