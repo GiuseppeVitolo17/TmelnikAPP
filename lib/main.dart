@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'firebase_options.dart';
 import 'utils/debug_logger.dart';
 import 'screens/loading_screen.dart';
@@ -527,6 +529,69 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 class ProjectOffersScreen extends StatelessWidget {
   const ProjectOffersScreen({super.key});
 
+  Future<void> _shareToInstagram(BuildContext context) async {
+    const text = '''🚀 Tmelnik Projects - Work Opportunities Abroad!
+
+📍 Multiple locations across Europe
+⏰ Various durations available
+🎯 Open to all young people
+
+Discover amazing work and cultural exchange opportunities with Tmelnik Projects!
+
+✅ Benefits:
+• Accommodation provided
+• Cultural immersion
+• Language learning
+• Travel opportunities
+• Competitive compensation
+
+📱 Contact us on Instagram: @tmelnik_projects
+
+#TmelnikProject #TravelOpportunity #WorkAbroad #YouthExchange''';
+
+    try {
+      // Copy to clipboard
+      await Clipboard.setData(ClipboardData(text: text));
+      
+      // Try to open Instagram app first, fallback to web
+      final instagramAppUrl = Uri.parse('instagram://');
+      final instagramWebUrl = Uri.parse('https://www.instagram.com/');
+      
+      bool launched = false;
+      try {
+        launched = await launchUrl(instagramAppUrl, mode: LaunchMode.externalApplication);
+      } catch (e) {
+        // Instagram app not installed, open web version
+        launched = await launchUrl(instagramWebUrl, mode: LaunchMode.externalApplication);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Text copied to clipboard! Instagram opened.'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening Instagram: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -554,16 +619,15 @@ class ProjectOffersScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Instagram sharing would work here!'),
-                    backgroundColor: Colors.purple,
-                  ),
-                );
-              },
+              onPressed: () => _shareToInstagram(context),
               icon: const Icon(Icons.share),
               label: const Text('Share on Instagram'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
