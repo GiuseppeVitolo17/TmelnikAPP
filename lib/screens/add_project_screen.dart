@@ -19,6 +19,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   final _descriptionController = TextEditingController();
   final _contactController = TextEditingController();
   final _expiresController = TextEditingController();
+  DateTime? _selectedDate;
   
   final List<TextEditingController> _benefitControllers = [TextEditingController()];
   bool _isLoading = false;
@@ -60,6 +61,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     );
     if (picked != null) {
       setState(() {
+        _selectedDate = picked;
         _expiresController.text = picked.toIso8601String().split('T')[0];
       });
     }
@@ -83,16 +85,17 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         duration: _durationController.text.trim(),
         targeting: _targetingController.text.trim(),
         description: _descriptionController.text.trim(),
+        requirements: '', // Empty for now
         benefits: benefits,
-        contact: _contactController.text.trim(),
-        expires: _expiresController.text.trim(),
+        contactInfo: _contactController.text.trim(),
         createdAt: DateTime.now(),
+        expiresAt: _selectedDate ?? DateTime.now().add(const Duration(days: 30)),
       );
 
       // Save to Firestore
       await FirebaseFirestore.instance
           .collection('projects')
-          .add(project.toMap());
+          .add(project.toFirestore());
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
