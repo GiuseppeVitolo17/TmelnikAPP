@@ -44,7 +44,7 @@ class TmelnikAppFirebaseDebug extends StatelessWidget {
             centerTitle: true,
             elevation: 2,
           ),
-          cardTheme: CardThemeData(
+          cardTheme: CardTheme(
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

@@ -65,7 +65,7 @@ class TmelnikApp extends StatelessWidget {
           centerTitle: true,
           elevation: 2,
         ),
-        cardTheme: CardThemeData(
+        cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -91,12 +91,41 @@ class TmelnikApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _isGuestMode = false;
+
+  void _enterGuestMode() {
+    setState(() {
+      _isGuestMode = true;
+    });
+    debugLogger.auth('Entered guest mode');
+  }
+
+  void _exitGuestMode() {
+    setState(() {
+      _isGuestMode = false;
+    });
+    debugLogger.auth('Exited guest mode');
+  }
 
   @override
   Widget build(BuildContext context) {
     debugLogger.ui('Building AuthWrapper widget');
+    
+    // If in guest mode, show main app with guest restrictions
+    if (_isGuestMode) {
+      return MainNavigationScreen(
+        isGuestMode: true,
+        onLoginRequested: _exitGuestMode,
+      );
+    }
     
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
@@ -111,20 +140,22 @@ class AuthWrapper extends StatelessWidget {
         if (snapshot.hasData) {
           debugLogger.auth('User is authenticated: ${snapshot.data?.email}');
           debugLogger.navigation('Navigating to MainNavigationScreen');
-          return const MainNavigationScreen();
+          return const MainNavigationScreen(isGuestMode: false);
         }
 
         // If user is not logged in, show auth screen
         debugLogger.auth('User is not authenticated, showing auth screen');
         debugLogger.navigation('Navigating to AuthScreen');
-        return const AuthScreen();
+        return AuthScreen(onGuestModeRequested: _enterGuestMode);
       },
     );
   }
 }
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final VoidCallback? onGuestModeRequested;
+  
+  const AuthScreen({super.key, this.onGuestModeRequested});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -450,6 +481,38 @@ class _AuthScreenState extends State<AuthScreen> {
                               : 'I already have an account',
                         ),
                       ),
+                      const SizedBox(height: 16),
+
+                      // Guest mode button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : () {
+                            widget.onGuestModeRequested?.call();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          child: const Text(
+                            'Continue as Guest',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'View projects and news without login',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ],
                   ),
                 ),
@@ -463,7 +526,14 @@ class _AuthScreenState extends State<AuthScreen> {
 }
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final bool isGuestMode;
+  final VoidCallback? onLoginRequested;
+  
+  const MainNavigationScreen({
+    super.key, 
+    this.isGuestMode = false,
+    this.onLoginRequested,
+  });
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -472,12 +542,22 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const ProjectOffersScreen(),
-    const FeedbackScreen(),
-    const InformationScreen(),
-    const NewsScreen(),
-  ];
+  List<Widget> get _screens {
+    if (widget.isGuestMode) {
+      return [
+        const ProjectOffersScreen(), // Projects are always accessible
+        GuestLoginScreen(title: 'Feedback', onLoginRequested: widget.onLoginRequested),
+        GuestLoginScreen(title: 'Information', onLoginRequested: widget.onLoginRequested),
+        const NewsScreen(), // News are always accessible
+      ];
+    }
+    return [
+      const ProjectOffersScreen(),
+      const FeedbackScreen(),
+      const InformationScreen(),
+      const NewsScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -485,18 +565,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tmelnik'),
+        title: Text(widget.isGuestMode ? 'Tmelnik (Guest)' : 'Tmelnik'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          IconButton(
-            onPressed: () async {
-              await debugLogger.auth('User initiated logout');
-              await FirebaseAuth.instance.signOut();
-              await GoogleSignIn().signOut(); // Sign out from Google as well
-              await debugLogger.success('User logged out successfully');
-            },
-            icon: const Icon(Icons.logout),
-          ),
+          if (widget.isGuestMode)
+            IconButton(
+              onPressed: widget.onLoginRequested,
+              icon: const Icon(Icons.login),
+              tooltip: 'Login',
+            )
+          else
+            IconButton(
+              onPressed: () async {
+                await debugLogger.auth('User initiated logout');
+                await FirebaseAuth.instance.signOut();
+                await GoogleSignIn().signOut(); // Sign out from Google as well
+                await debugLogger.success('User logged out successfully');
+              },
+              icon: const Icon(Icons.logout),
+            ),
         ],
       ),
       body: IndexedStack(
@@ -866,6 +953,77 @@ class NewsScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class GuestLoginScreen extends StatelessWidget {
+  final String title;
+  final VoidCallback? onLoginRequested;
+  
+  const GuestLoginScreen({
+    super.key,
+    required this.title,
+    this.onLoginRequested,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 80,
+                color: Colors.grey[600],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Login Required',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please log in to access $title section',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: onLoginRequested,
+                icon: const Icon(Icons.login),
+                label: const Text('Login'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Continue as guest to view projects and news',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
