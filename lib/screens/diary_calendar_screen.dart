@@ -44,7 +44,6 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       
       setState(() {
         _journalEntries = entries;
-        _projects = []; // We're using Firebase ProjectOffer instead
         _projectOffers = offers;
         _isLoading = false;
       });
