@@ -189,22 +189,41 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   calendarBuilders: CalendarBuilders(
                     markerBuilder: (context, date, events) {
                       if (events.isNotEmpty) {
+                        // Get emoji for first event
+                        String emoji = '📅';
+                        if (events.isNotEmpty) {
+                          final firstEvent = events.first as CalendarEvent;
+                          switch (firstEvent.type) {
+                            case EventType.journal:
+                              final entry = firstEvent.data as JournalEntry;
+                              emoji = entry.mood;
+                              break;
+                            case EventType.departure:
+                              emoji = '🛫';
+                              break;
+                            case EventType.returnDate:
+                              emoji = '🛬';
+                              break;
+                            case EventType.deadline:
+                              emoji = '⏰';
+                              break;
+                          }
+                        }
+                        
                         return Positioned(
                           bottom: 1,
                           child: Container(
-                            width: 16,
-                            height: 16,
+                            width: 20,
+                            height: 20,
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.secondary,
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Text(
-                                '${events.length}',
+                                emoji,
                                 style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
