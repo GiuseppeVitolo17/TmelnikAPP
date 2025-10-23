@@ -21,6 +21,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
   late ProjectStatus _selectedStatus;
   final ProjectService _projectService = ProjectService.instance;
   bool _isLoading = false;
+  DateTime? _departureDate;
+  DateTime? _returnDate;
 
   @override
   void initState() {
@@ -28,6 +30,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
     _nameController.text = widget.project.name;
     _descriptionController.text = widget.project.description;
     _selectedStatus = widget.project.status;
+    _departureDate = widget.project.departureDate;
+    _returnDate = widget.project.returnDate;
   }
 
   @override
@@ -51,6 +55,8 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
         status: _selectedStatus,
+        departureDate: _departureDate,
+        returnDate: _returnDate,
       );
 
       final success = await _projectService.updateProject(updatedProject);
@@ -182,6 +188,94 @@ class _EditProjectScreenState extends State<EditProjectScreen> {
                         ),
                         maxLines: 3,
                         enabled: !_isLoading,
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: _isLoading ? null : () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: _departureDate ?? DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                          );
+                          if (date != null) {
+                            setState(() {
+                              _departureDate = date;
+                            });
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: '🛫 Departure Date',
+                            hintText: 'Select departure date',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.flight_takeoff),
+                            suffixIcon: _departureDate != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _departureDate = null;
+                                            });
+                                          },
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            _departureDate != null
+                                ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
+                                : 'Not set',
+                            style: TextStyle(
+                              color: _departureDate != null ? Colors.black87 : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: _isLoading ? null : () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: _returnDate ?? DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                          );
+                          if (date != null) {
+                            setState(() {
+                              _returnDate = date;
+                            });
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: '🛬 Return Date',
+                            hintText: 'Select return date',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.flight_land),
+                            suffixIcon: _returnDate != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _returnDate = null;
+                                            });
+                                          },
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            _returnDate != null
+                                ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
+                                : 'Not set',
+                            style: TextStyle(
+                              color: _returnDate != null ? Colors.black87 : Colors.grey[600],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

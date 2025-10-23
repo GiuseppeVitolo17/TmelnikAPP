@@ -90,7 +90,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
           project.departureDate!.day == day.day) {
         events.add(CalendarEvent(
           type: EventType.departure,
-          title: '✈️ Departure: ${project.name}',
+          title: '🛫 Departure: ${project.name}',
           data: project,
         ));
       }
@@ -101,7 +101,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
           project.returnDate!.day == day.day) {
         events.add(CalendarEvent(
           type: EventType.returnDate,
-          title: '✈️ Return: ${project.name}',
+          title: '🛬 Return: ${project.name}',
           data: project,
         ));
       }
@@ -294,12 +294,12 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       case EventType.departure:
         return const CircleAvatar(
           backgroundColor: Colors.green,
-          child: Text('✈️', style: TextStyle(fontSize: 20)),
+          child: Text('🛫', style: TextStyle(fontSize: 20)),
         );
       case EventType.returnDate:
         return const CircleAvatar(
           backgroundColor: Colors.orange,
-          child: Text('✈️', style: TextStyle(fontSize: 20)),
+          child: Text('🛬', style: TextStyle(fontSize: 20)),
         );
       case EventType.deadline:
         return const CircleAvatar(
