@@ -31,11 +31,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   @override
   void initState() {
     super.initState();
-    // Precompile Instagram field with current user's email
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null && user.email != null) {
-      _instagramController.text = user.email!;
-    }
+    // Instagram starts empty, will be filled with saved value from Firebase
   }
 
   @override

@@ -917,7 +917,7 @@ ${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
                             const SizedBox(width: 8),
                             IconButton(
                               onPressed: () {
-                                final projectId = project['id'] ?? projects[index].id;
+                                final projectId = projects[index].id;
                                 _deleteProject(context, projectId);
                               },
                               icon: const Icon(Icons.delete, color: Colors.red),
