@@ -896,13 +896,13 @@ ${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
                           if (_isAdmin) ...[
                             const SizedBox(width: 8),
                             IconButton(
-                              onPressed: () => _editProject(context, projects[index]),
+                              onPressed: () => _editProject(context, project),
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               tooltip: 'Edit project',
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              onPressed: () => _deleteProject(context, projects[index].id),
+                              onPressed: () => _deleteProject(context, project['id']),
                               icon: const Icon(Icons.delete, color: Colors.red),
                               tooltip: 'Delete project',
                             ),
