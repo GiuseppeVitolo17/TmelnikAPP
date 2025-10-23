@@ -653,6 +653,54 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
     }
   }
 
+  Future<void> _deleteProject(BuildContext context, String projectId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Project?'),
+        content: const Text('Are you sure you want to delete this project? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('project_offers')
+            .doc(projectId)
+            .update({'isActive': false});
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Project deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Error deleting project: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _shareToInstagram(BuildContext context, Map<String, dynamic> offer) async {
     final text = '''🚀 ${offer['title']}
 
@@ -827,6 +875,14 @@ ${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
                               ),
                             ),
                           ),
+                          if (_isAdmin) ...[
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () => _deleteProject(context, projects[index].id),
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              tooltip: 'Delete project',
+                            ),
+                          ],
                         ],
                       ),
                     ],
