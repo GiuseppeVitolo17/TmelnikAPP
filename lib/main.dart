@@ -655,9 +655,10 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   }
 
   Future<void> _editProject(BuildContext context, Map<String, dynamic> projectData) async {
+    final projectId = projectData['id'] as String;
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => EditProjectOfferScreen(projectId: projectData['id']),
+        builder: (context) => EditProjectOfferScreen(projectId: projectId),
       ),
     );
     
