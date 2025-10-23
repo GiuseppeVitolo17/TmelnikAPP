@@ -9,6 +9,7 @@ import 'firebase_options.dart';
 import 'utils/debug_logger.dart';
 import 'screens/loading_screen.dart';
 import 'screens/add_project_screen.dart';
+import 'screens/diary_calendar_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -547,14 +548,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return [
         const ProjectOffersScreen(), // Projects are always accessible
         GuestLoginScreen(title: 'Feedback', onLoginRequested: widget.onLoginRequested),
-        GuestLoginScreen(title: 'Information', onLoginRequested: widget.onLoginRequested),
+        const DiaryCalendarScreen(), // Diary is accessible to guests
         const NewsScreen(), // News are always accessible
       ];
     }
     return [
       const ProjectOffersScreen(),
       const FeedbackScreen(),
-      const InformationScreen(),
+      const DiaryCalendarScreen(),
       const NewsScreen(),
     ];
   }
@@ -613,9 +614,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Feedback',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.info_outline),
-            activeIcon: Icon(Icons.info),
-            label: 'Info',
+            icon: Icon(Icons.calendar_today_outlined),
+            activeIcon: Icon(Icons.calendar_today),
+            label: 'Diary',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.newspaper_outlined),
@@ -889,40 +890,6 @@ class FeedbackScreen extends StatelessWidget {
   }
 }
 
-class InformationScreen extends StatelessWidget {
-  const InformationScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.info,
-              size: 80,
-              color: Colors.orange,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'General Information',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'This section will provide general information\nabout the platform and services.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class NewsScreen extends StatelessWidget {
   const NewsScreen({super.key});

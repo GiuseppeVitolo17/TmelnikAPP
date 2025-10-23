@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'project_offers_screen.dart';
 import 'feedback_screen.dart';
-import 'information_screen.dart';
+import 'diary_calendar_screen.dart';
 import 'news_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -17,7 +17,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = [
     const ProjectOffersScreen(),
     const FeedbackScreen(),
-    const InformationScreen(),
+    const DiaryCalendarScreen(),
     const NewsScreen(),
   ];
 
@@ -50,9 +50,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Feedback',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.info_outline),
-            activeIcon: Icon(Icons.info),
-            label: 'Info',
+            icon: Icon(Icons.calendar_today_outlined),
+            activeIcon: Icon(Icons.calendar_today),
+            label: 'Diary',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.newspaper_outlined),

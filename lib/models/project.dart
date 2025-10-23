@@ -4,6 +4,8 @@ class Project {
   final String description;
   final DateTime createdAt;
   final ProjectStatus status;
+  final DateTime? departureDate;
+  final DateTime? returnDate;
 
   Project({
     required this.id,
@@ -11,6 +13,8 @@ class Project {
     required this.description,
     required this.createdAt,
     this.status = ProjectStatus.inProgress,
+    this.departureDate,
+    this.returnDate,
   });
 
   Project copyWith({
@@ -19,6 +23,8 @@ class Project {
     String? description,
     DateTime? createdAt,
     ProjectStatus? status,
+    DateTime? departureDate,
+    DateTime? returnDate,
   }) {
     return Project(
       id: id ?? this.id,
@@ -26,6 +32,8 @@ class Project {
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      departureDate: departureDate ?? this.departureDate,
+      returnDate: returnDate ?? this.returnDate,
     );
   }
 
@@ -36,6 +44,8 @@ class Project {
       'description': description,
       'createdAt': createdAt.toIso8601String(),
       'status': status.name,
+      'departureDate': departureDate?.toIso8601String(),
+      'returnDate': returnDate?.toIso8601String(),
     };
   }
 
@@ -49,6 +59,8 @@ class Project {
         (e) => e.name == json['status'],
         orElse: () => ProjectStatus.inProgress,
       ),
+      departureDate: json['departureDate'] != null ? DateTime.parse(json['departureDate']) : null,
+      returnDate: json['returnDate'] != null ? DateTime.parse(json['returnDate']) : null,
     );
   }
 
