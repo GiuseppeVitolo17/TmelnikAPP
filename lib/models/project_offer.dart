@@ -6,12 +6,13 @@ class ProjectOffer {
   final String description;
   final String targeting;
   final String location;
-  final String duration;
+  final String? duration;
   final String requirements;
   final List<String> benefits;
   final String contactInfo;
+  final String instagramAccount;
   final DateTime createdAt;
-  final DateTime expiresAt;
+  final DateTime? expiresAt;
   final DateTime? departureDate;
   final DateTime? returnDate;
   final OfferStatus status;
@@ -24,12 +25,13 @@ class ProjectOffer {
     required this.description,
     required this.targeting,
     required this.location,
-    required this.duration,
+    this.duration,
     required this.requirements,
     required this.benefits,
     required this.contactInfo,
+    required this.instagramAccount,
     required this.createdAt,
-    required this.expiresAt,
+    this.expiresAt,
     this.departureDate,
     this.returnDate,
     this.status = OfferStatus.active,
@@ -47,6 +49,7 @@ class ProjectOffer {
     String? requirements,
     List<String>? benefits,
     String? contactInfo,
+    String? instagramAccount,
     DateTime? createdAt,
     DateTime? expiresAt,
     DateTime? departureDate,
@@ -65,6 +68,7 @@ class ProjectOffer {
       requirements: requirements ?? this.requirements,
       benefits: benefits ?? this.benefits,
       contactInfo: contactInfo ?? this.contactInfo,
+      instagramAccount: instagramAccount ?? this.instagramAccount,
       createdAt: createdAt ?? this.createdAt,
       expiresAt: expiresAt ?? this.expiresAt,
       departureDate: departureDate ?? this.departureDate,
@@ -86,8 +90,9 @@ class ProjectOffer {
       'requirements': requirements,
       'benefits': benefits,
       'contactInfo': contactInfo,
+      'instagramAccount': instagramAccount,
       'createdAt': createdAt.toIso8601String(),
-      'expiresAt': expiresAt.toIso8601String(),
+      'expiresAt': expiresAt?.toIso8601String(),
       'departureDate': departureDate?.toIso8601String(),
       'returnDate': returnDate?.toIso8601String(),
       'status': status.name,
@@ -107,8 +112,9 @@ class ProjectOffer {
       requirements: json['requirements'],
       benefits: List<String>.from(json['benefits'] ?? []),
       contactInfo: json['contactInfo'],
+      instagramAccount: json['instagramAccount'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
-      expiresAt: DateTime.parse(json['expiresAt']),
+      expiresAt: json['expiresAt'] != null ? DateTime.parse(json['expiresAt']) : null,
       departureDate: json['departureDate'] != null ? DateTime.parse(json['departureDate']) : null,
       returnDate: json['returnDate'] != null ? DateTime.parse(json['returnDate']) : null,
       status: OfferStatus.values.firstWhere(
@@ -132,8 +138,9 @@ class ProjectOffer {
       'requirements': requirements,
       'benefits': benefits,
       'contactInfo': contactInfo,
+      'instagramAccount': instagramAccount,
       'createdAt': Timestamp.fromDate(createdAt),
-      'expiresAt': Timestamp.fromDate(expiresAt),
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'departureDate': departureDate != null ? Timestamp.fromDate(departureDate!) : null,
       'returnDate': returnDate != null ? Timestamp.fromDate(returnDate!) : null,
       'status': status.name,
@@ -152,12 +159,13 @@ class ProjectOffer {
       description: data['description'] ?? '',
       targeting: data['targeting'] ?? '',
       location: data['location'] ?? '',
-      duration: data['duration'] ?? '',
+      duration: data['duration'],
       requirements: data['requirements'] ?? '',
       benefits: List<String>.from(data['benefits'] ?? []),
       contactInfo: data['contactInfo'] ?? '',
+      instagramAccount: data['instagramAccount'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
       departureDate: (data['departureDate'] as Timestamp?)?.toDate(),
       returnDate: (data['returnDate'] as Timestamp?)?.toDate(),
       status: OfferStatus.values.firstWhere(
@@ -169,13 +177,14 @@ class ProjectOffer {
     );
   }
 
-  bool get isExpired => DateTime.now().isAfter(expiresAt);
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt);
   
   bool get isActive => status == OfferStatus.active && !isExpired;
 
   String get formattedExpiryDate {
+    if (expiresAt == null) return 'No deadline';
     final now = DateTime.now();
-    final difference = expiresAt.difference(now).inDays;
+    final difference = expiresAt!.difference(now).inDays;
     
     if (difference < 0) {
       return 'Expired';
@@ -186,7 +195,7 @@ class ProjectOffer {
     } else if (difference < 7) {
       return 'Expires in $difference days';
     } else {
-      return 'Expires ${expiresAt.day}/${expiresAt.month}/${expiresAt.year}';
+      return 'Expires ${expiresAt!.day}/${expiresAt!.month}/${expiresAt!.year}';
     }
   }
 
@@ -194,7 +203,7 @@ class ProjectOffer {
     return '''🚀 ${title}
 
 📍 ${location}
-⏰ ${duration}
+⏰ ${duration ?? (departureDate != null && returnDate != null ? '${returnDate!.difference(departureDate!).inDays} days' : 'Duration not specified')}
 🎯 ${targeting}
 
 ${description}

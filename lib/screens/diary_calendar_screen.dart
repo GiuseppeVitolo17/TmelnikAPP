@@ -104,9 +104,10 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       }
       
       // Deadline dates
-      if (offer.expiresAt.year == day.year &&
-          offer.expiresAt.month == day.month &&
-          offer.expiresAt.day == day.day) {
+      if (offer.expiresAt != null &&
+          offer.expiresAt!.year == day.year &&
+          offer.expiresAt!.month == day.month &&
+          offer.expiresAt!.day == day.day) {
         events.add(CalendarEvent(
           type: EventType.deadline,
           title: '⏰ Deadline: ${offer.title}',

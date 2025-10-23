@@ -16,10 +16,11 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _locationController = TextEditingController();
-  final _durationController = TextEditingController();
+  final _durationController = TextEditingController(); // Opzionale
   final _targetingController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _contactController = TextEditingController();
+  final _instagramController = TextEditingController();
   final _expiresController = TextEditingController();
   DateTime? _selectedDate;
   
@@ -29,6 +30,16 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   DateTime? _returnDate;
 
   @override
+  void initState() {
+    super.initState();
+    // Precompile Instagram field with current user's email
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && user.email != null) {
+      _instagramController.text = user.email!;
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _locationController.dispose();
@@ -36,6 +47,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     _targetingController.dispose();
     _descriptionController.dispose();
     _contactController.dispose();
+    _instagramController.dispose();
     _expiresController.dispose();
     for (var controller in _benefitControllers) {
       controller.dispose();
@@ -114,14 +126,15 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         id: '', // Firestore will generate this
         title: _titleController.text.trim(),
         location: _locationController.text.trim(),
-        duration: _durationController.text.trim(),
+        duration: _durationController.text.trim().isEmpty ? null : _durationController.text.trim(),
         targeting: _targetingController.text.trim(),
         description: _descriptionController.text.trim(),
         requirements: '', // Empty for now
         benefits: benefits,
         contactInfo: _contactController.text.trim(),
+        instagramAccount: _instagramController.text.trim(),
         createdAt: DateTime.now(),
-        expiresAt: _selectedDate ?? DateTime.now().add(const Duration(days: 30)),
+        expiresAt: _selectedDate,
         departureDate: _departureDate,
         returnDate: _returnDate,
       );
@@ -197,13 +210,11 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                     TextFormField(
                       controller: _durationController,
                       decoration: const InputDecoration(
-                        labelText: 'Duration *',
+                        labelText: 'Duration (optional)',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.schedule),
-                        hintText: 'e.g., 3 months',
+                        hintText: 'e.g., 3 months (auto-calculated from dates)',
                       ),
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -278,7 +289,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                     TextFormField(
                       controller: _contactController,
                       decoration: const InputDecoration(
-                        labelText: 'Contact (Instagram) *',
+                        labelText: 'Contact Info *',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.alternate_email),
                         hintText: '@tmelnik_cz',
@@ -288,21 +299,46 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
-                      controller: _expiresController,
-                      decoration: InputDecoration(
-                        labelText: 'Application Deadline *',
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.calendar_today),
-                        hintText: 'YYYY-MM-DD',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.calendar_month),
-                          onPressed: _selectDate,
-                        ),
+                      controller: _instagramController,
+                      decoration: const InputDecoration(
+                        labelText: 'Instagram Account *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.camera_alt),
+                        hintText: 'Instagram username or handle',
                       ),
-                      readOnly: true,
-                      onTap: _selectDate,
                       validator: (value) =>
                           value?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: _selectDate,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Application Deadline (optional)',
+                          hintText: 'Select deadline date',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.calendar_today),
+                          suffixIcon: _selectedDate != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedDate = null;
+                                      _expiresController.clear();
+                                    });
+                                  },
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          _selectedDate != null
+                              ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                              : 'Not set',
+                          style: TextStyle(
+                            color: _selectedDate != null ? Colors.black87 : Colors.grey[600],
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     InkWell(
