@@ -419,12 +419,15 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
             FilledButton(
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
+                  final now = DateTime.now();
+                  final humorText = 'Humor ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
                   final entry = JournalEntry(
                     id: _uuid.v4(),
                     date: date,
                     content: textController.text,
-                    createdAt: DateTime.now(),
+                    createdAt: now,
                     mood: selectedMood,
+                    humor: humorText,
                   );
                   
                   final success = await _journalService.addEntry(entry);
@@ -522,10 +525,13 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
             FilledButton(
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
+                  final now = DateTime.now();
+                  final humorText = 'Humor ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
                   final updatedEntry = entry.copyWith(
                     content: textController.text,
                     mood: selectedMood,
-                    updatedAt: DateTime.now(),
+                    humor: humorText,
+                    updatedAt: now,
                   );
                   
                   final success = await _journalService.updateEntry(updatedEntry);
