@@ -23,12 +23,15 @@ class JournalService {
       final snapshot = await _firestore
           .collection(_collection)
           .where('userId', isEqualTo: _userId)
-          .orderBy('date', descending: true)
           .get();
       
-      return snapshot.docs
+      final entries = snapshot.docs
           .map((doc) => JournalEntry.fromFirestore(doc))
           .toList();
+      
+      // Sort by date descending (client-side)
+      entries.sort((a, b) => b.date.compareTo(a.date));
+      return entries;
     } catch (e) {
       print('Error loading journal entries: $e');
       return [];
