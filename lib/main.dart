@@ -10,6 +10,7 @@ import 'utils/debug_logger.dart';
 import 'screens/loading_screen.dart';
 import 'screens/add_project_screen.dart';
 import 'screens/diary_calendar_screen.dart';
+import 'screens/edit_project_offer_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -653,6 +654,23 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
     }
   }
 
+  Future<void> _editProject(BuildContext context, Map<String, dynamic> projectData) async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditProjectOfferScreen(projectId: projectData['id']),
+      ),
+    );
+    
+    if (result == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Project updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
   Future<void> _deleteProject(BuildContext context, String projectId) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -876,6 +894,12 @@ ${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
                             ),
                           ),
                           if (_isAdmin) ...[
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () => _editProject(context, projects[index]),
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              tooltip: 'Edit project',
+                            ),
                             const SizedBox(width: 8),
                             IconButton(
                               onPressed: () => _deleteProject(context, projects[index].id),

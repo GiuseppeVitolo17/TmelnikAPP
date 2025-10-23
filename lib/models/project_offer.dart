@@ -177,7 +177,7 @@ class ProjectOffer {
     );
   }
 
-  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt);
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
   
   bool get isActive => status == OfferStatus.active && !isExpired;
 
