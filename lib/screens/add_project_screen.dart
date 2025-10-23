@@ -19,7 +19,6 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   final _durationController = TextEditingController(); // Opzionale
   final _targetingController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _contactController = TextEditingController();
   final _instagramController = TextEditingController();
   final _expiresController = TextEditingController();
   DateTime? _selectedDate;
@@ -46,7 +45,6 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     _durationController.dispose();
     _targetingController.dispose();
     _descriptionController.dispose();
-    _contactController.dispose();
     _instagramController.dispose();
     _expiresController.dispose();
     for (var controller in _benefitControllers) {
@@ -131,7 +129,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         description: _descriptionController.text.trim(),
         requirements: '', // Empty for now
         benefits: benefits,
-        contactInfo: _contactController.text.trim(),
+        contactInfo: _instagramController.text.trim(), // Use Instagram as contact
         instagramAccount: _instagramController.text.trim(),
         createdAt: DateTime.now(),
         expiresAt: _selectedDate,
@@ -284,18 +282,6 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _contactController,
-                      decoration: const InputDecoration(
-                        labelText: 'Contact Info *',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.alternate_email),
-                        hintText: '@tmelnik_cz',
-                      ),
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

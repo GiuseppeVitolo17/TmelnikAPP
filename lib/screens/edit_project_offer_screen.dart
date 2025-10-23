@@ -23,7 +23,6 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
   final _durationController = TextEditingController();
   final _targetingController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _contactController = TextEditingController();
   final _instagramController = TextEditingController();
   
   DateTime? _selectedDate;
@@ -58,7 +57,6 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
           _durationController.text = offer.duration ?? '';
           _targetingController.text = offer.targeting;
           _descriptionController.text = offer.description;
-          _contactController.text = offer.contactInfo;
           _instagramController.text = offer.instagramAccount;
           _selectedDate = offer.expiresAt;
           _departureDate = offer.departureDate;
@@ -92,7 +90,6 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
     _durationController.dispose();
     _targetingController.dispose();
     _descriptionController.dispose();
-    _contactController.dispose();
     _instagramController.dispose();
     for (var controller in _benefitControllers) {
       controller.dispose();
@@ -170,7 +167,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
         targeting: _targetingController.text.trim(),
         description: _descriptionController.text.trim(),
         benefits: benefits,
-        contactInfo: _contactController.text.trim(),
+        contactInfo: _instagramController.text.trim(), // Use Instagram as contact
         instagramAccount: _instagramController.text.trim(),
         expiresAt: _selectedDate,
         departureDate: _departureDate,
@@ -318,18 +315,6 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _contactController,
-                      decoration: const InputDecoration(
-                        labelText: 'Contact Info *',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.alternate_email),
-                        hintText: '@tmelnik_cz',
-                      ),
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
