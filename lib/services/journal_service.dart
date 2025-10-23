@@ -1,23 +1,34 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/journal_entry.dart';
 
 class JournalService {
-  static const String _journalKey = 'journal_entries';
+  static const String _collection = 'journal_entries';
   static JournalService? _instance;
   static JournalService get instance => _instance ??= JournalService._();
   
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
   JournalService._();
+  
+  String? get _userId => _auth.currentUser?.uid;
+  
+  bool get isAuthenticated => _userId != null;
 
   Future<List<JournalEntry>> getAllEntries() async {
+    if (!isAuthenticated) return [];
+    
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final entriesJson = prefs.getStringList(_journalKey) ?? [];
+      final snapshot = await _firestore
+          .collection(_collection)
+          .where('userId', isEqualTo: _userId)
+          .orderBy('date', descending: true)
+          .get();
       
-      return entriesJson
-          .map((json) => JournalEntry.fromJson(jsonDecode(json)))
-          .toList()
-        ..sort((a, b) => b.date.compareTo(a.date));
+      return snapshot.docs
+          .map((doc) => JournalEntry.fromFirestore(doc))
+          .toList();
     } catch (e) {
       print('Error loading journal entries: $e');
       return [];
@@ -52,10 +63,14 @@ class JournalService {
   }
 
   Future<bool> addEntry(JournalEntry entry) async {
+    if (!isAuthenticated) return false;
+    
     try {
-      final entries = await getAllEntries();
-      entries.add(entry);
-      return await _saveEntries(entries);
+      await _firestore
+          .collection(_collection)
+          .doc(entry.id)
+          .set(entry.toFirestore(_userId!));
+      return true;
     } catch (e) {
       print('Error adding entry: $e');
       return false;
@@ -63,17 +78,14 @@ class JournalService {
   }
 
   Future<bool> updateEntry(JournalEntry entry) async {
+    if (!isAuthenticated) return false;
+    
     try {
-      final entries = await getAllEntries();
-      final index = entries.indexWhere((e) => e.id == entry.id);
-      
-      if (index == -1) {
-        print('Entry not found for update');
-        return false;
-      }
-      
-      entries[index] = entry.copyWith(updatedAt: DateTime.now());
-      return await _saveEntries(entries);
+      await _firestore
+          .collection(_collection)
+          .doc(entry.id)
+          .update(entry.toFirestore(_userId!));
+      return true;
     } catch (e) {
       print('Error updating entry: $e');
       return false;
@@ -81,23 +93,16 @@ class JournalService {
   }
 
   Future<bool> deleteEntry(String id) async {
+    if (!isAuthenticated) return false;
+    
     try {
-      final entries = await getAllEntries();
-      entries.removeWhere((entry) => entry.id == id);
-      return await _saveEntries(entries);
+      await _firestore
+          .collection(_collection)
+          .doc(id)
+          .delete();
+      return true;
     } catch (e) {
       print('Error deleting entry: $e');
-      return false;
-    }
-  }
-
-  Future<bool> _saveEntries(List<JournalEntry> entries) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final entriesJson = entries.map((entry) => jsonEncode(entry.toJson())).toList();
-      return await prefs.setStringList(_journalKey, entriesJson);
-    } catch (e) {
-      print('Error saving entries: $e');
       return false;
     }
   }

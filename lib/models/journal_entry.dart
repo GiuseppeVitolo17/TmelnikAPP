@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class JournalEntry {
   final String id;
   final DateTime date;
@@ -47,6 +49,33 @@ class JournalEntry {
       'mood': mood,
       'tags': tags,
     };
+  }
+
+  // Firestore methods
+  Map<String, dynamic> toFirestore(String userId) {
+    return {
+      'id': id,
+      'userId': userId,
+      'date': date.toIso8601String(),
+      'content': content,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'mood': mood,
+      'tags': tags,
+    };
+  }
+
+  factory JournalEntry.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return JournalEntry(
+      id: data['id'] ?? doc.id,
+      date: DateTime.parse(data['date']),
+      content: data['content'] ?? '',
+      createdAt: DateTime.parse(data['createdAt']),
+      updatedAt: data['updatedAt'] != null ? DateTime.parse(data['updatedAt']) : null,
+      mood: data['mood'] ?? '😊',
+      tags: List<String>.from(data['tags'] ?? []),
+    );
   }
 
   factory JournalEntry.fromJson(Map<String, dynamic> json) {

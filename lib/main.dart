@@ -548,7 +548,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return [
         const ProjectOffersScreen(), // Projects are always accessible
         GuestLoginScreen(title: 'Feedback', onLoginRequested: widget.onLoginRequested),
-        const DiaryCalendarScreen(), // Diary is accessible to guests
+        GuestLoginScreen(title: 'Diary', onLoginRequested: widget.onLoginRequested), // Diary requires login
         const NewsScreen(), // News are always accessible
       ];
     }
