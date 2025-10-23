@@ -673,6 +673,19 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   }
 
   Future<void> _deleteProject(BuildContext context, String projectId) async {
+    // Validate projectId
+    if (projectId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error: Invalid project ID'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -903,7 +916,10 @@ ${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              onPressed: () => _deleteProject(context, project['id']),
+                              onPressed: () {
+                                final projectId = project['id'] ?? projects[index].id;
+                                _deleteProject(context, projectId);
+                              },
                               icon: const Icon(Icons.delete, color: Colors.red),
                               tooltip: 'Delete project',
                             ),
