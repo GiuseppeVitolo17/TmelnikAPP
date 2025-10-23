@@ -70,9 +70,12 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     ).toList();
     
     for (var entry in entries) {
+      final title = entry.humor.isNotEmpty 
+          ? entry.humor 
+          : '${entry.mood} ${entry.content.length > 30 ? entry.content.substring(0, 30) + "..." : entry.content}';
       events.add(CalendarEvent(
         type: EventType.journal,
-        title: '${entry.mood} ${entry.content.length > 30 ? entry.content.substring(0, 30) + "..." : entry.content}',
+        title: title,
         data: entry,
       ));
     }
