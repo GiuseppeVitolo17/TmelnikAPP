@@ -655,10 +655,23 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   }
 
   Future<void> _editProject(BuildContext context, Map<String, dynamic> projectData) async {
-    final projectId = projectData['id'] as String;
+    // Get project ID from document ID, not from data
+    final projectDocId = projectData['_docId'] as String?;
+    if (projectDocId == null || projectDocId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error: Cannot edit project - invalid ID'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => EditProjectOfferScreen(projectId: projectId),
+        builder: (context) => EditProjectOfferScreen(projectId: projectDocId),
       ),
     );
     
@@ -834,6 +847,7 @@ ${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
             itemCount: projects.length,
             itemBuilder: (context, index) {
               final project = projects[index].data() as Map<String, dynamic>;
+              project['_docId'] = projects[index].id; // Add document ID
               
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
