@@ -712,8 +712,8 @@ ${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('projects')
-            .orderBy('createdAt', descending: true)
+            .collection('project_offers')
+            .where('isActive', isEqualTo: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {

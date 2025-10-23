@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/journal_entry.dart';
-import '../models/project.dart';
 import '../models/project_offer.dart';
 import '../services/journal_service.dart';
-import '../services/project_service.dart';
 import '../services/firebase_firestore_service.dart';
 import 'package:uuid/uuid.dart';
 
@@ -17,7 +15,6 @@ class DiaryCalendarScreen extends StatefulWidget {
 
 class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
   final JournalService _journalService = JournalService.instance;
-  final ProjectService _projectService = ProjectService.instance;
   final FirebaseFirestoreService _firestoreService = FirebaseFirestoreService();
   final _uuid = const Uuid();
   
@@ -26,7 +23,6 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   
   List<JournalEntry> _journalEntries = [];
-  List<Project> _projects = [];
   List<ProjectOffer> _projectOffers = [];
   bool _isLoading = true;
 
@@ -43,12 +39,12 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 
     try {
       final entries = await _journalService.getAllEntries();
-      final projects = await _projectService.getAllProjects();
+      // Note: Using ProjectOffer from Firebase instead of local Projects
       final offers = await _firestoreService.getProjectOffers();
       
       setState(() {
         _journalEntries = entries;
-        _projects = projects;
+        _projects = []; // We're using Firebase ProjectOffer instead
         _projectOffers = offers;
         _isLoading = false;
       });
@@ -82,33 +78,33 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       ));
     }
     
-    // Project departure dates
-    for (var project in _projects) {
-      if (project.departureDate != null &&
-          project.departureDate!.year == day.year &&
-          project.departureDate!.month == day.month &&
-          project.departureDate!.day == day.day) {
+    // Project offers - departure, return, and deadline dates
+    for (var offer in _projectOffers) {
+      // Departure dates
+      if (offer.departureDate != null &&
+          offer.departureDate!.year == day.year &&
+          offer.departureDate!.month == day.month &&
+          offer.departureDate!.day == day.day) {
         events.add(CalendarEvent(
           type: EventType.departure,
-          title: '🛫 Departure: ${project.name}',
-          data: project,
+          title: '🛫 Departure: ${offer.title}',
+          data: offer,
         ));
       }
       
-      if (project.returnDate != null &&
-          project.returnDate!.year == day.year &&
-          project.returnDate!.month == day.month &&
-          project.returnDate!.day == day.day) {
+      // Return dates
+      if (offer.returnDate != null &&
+          offer.returnDate!.year == day.year &&
+          offer.returnDate!.month == day.month &&
+          offer.returnDate!.day == day.day) {
         events.add(CalendarEvent(
           type: EventType.returnDate,
-          title: '🛬 Return: ${project.name}',
-          data: project,
+          title: '🛬 Return: ${offer.title}',
+          data: offer,
         ));
       }
-    }
-    
-    // Project offer expiration dates
-    for (var offer in _projectOffers) {
+      
+      // Deadline dates
       if (offer.expiresAt.year == day.year &&
           offer.expiresAt.month == day.month &&
           offer.expiresAt.day == day.day) {
@@ -336,11 +332,11 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
           ],
         );
       case EventType.departure:
-        final project = event.data as Project;
-        return Text('Departure for ${project.name}');
+        final offer = event.data as ProjectOffer;
+        return Text('Departure for ${offer.title}');
       case EventType.returnDate:
-        final project = event.data as Project;
-        return Text('Return from ${project.name}');
+        final offer = event.data as ProjectOffer;
+        return Text('Return from ${offer.title}');
       case EventType.deadline:
         final offer = event.data as ProjectOffer;
         return Text('Application deadline for ${offer.title}');

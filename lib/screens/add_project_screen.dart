@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/project_offer.dart';
+import '../services/user_role_service.dart';
 
 /// Screen for admins to add new project offers
 class AddProjectScreen extends StatefulWidget {
@@ -23,6 +25,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   
   final List<TextEditingController> _benefitControllers = [TextEditingController()];
   bool _isLoading = false;
+  DateTime? _departureDate;
+  DateTime? _returnDate;
 
   @override
   void dispose() {
@@ -67,6 +71,34 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     }
   }
 
+  Future<void> _selectDepartureDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _departureDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+    if (picked != null) {
+      setState(() {
+        _departureDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectReturnDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _returnDate ?? (_departureDate ?? DateTime.now()),
+      firstDate: _departureDate ?? DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+    if (picked != null) {
+      setState(() {
+        _returnDate = picked;
+      });
+    }
+  }
+
   Future<void> _saveProject() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -90,11 +122,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         contactInfo: _contactController.text.trim(),
         createdAt: DateTime.now(),
         expiresAt: _selectedDate ?? DateTime.now().add(const Duration(days: 30)),
+        departureDate: _departureDate,
+        returnDate: _returnDate,
       );
 
       // Save to Firestore
       await FirebaseFirestore.instance
-          .collection('projects')
+          .collection('project_offers')
           .add(project.toFirestore());
 
       if (mounted) {
@@ -256,7 +290,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                     TextFormField(
                       controller: _expiresController,
                       decoration: InputDecoration(
-                        labelText: 'Expiration Date *',
+                        labelText: 'Application Deadline *',
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.calendar_today),
                         hintText: 'YYYY-MM-DD',
@@ -269,6 +303,66 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                       onTap: _selectDate,
                       validator: (value) =>
                           value?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: _selectDepartureDate,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: '🛫 Departure Date',
+                          hintText: 'Select departure date',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.flight_takeoff),
+                          suffixIcon: _departureDate != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    setState(() {
+                                      _departureDate = null;
+                                    });
+                                  },
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          _departureDate != null
+                              ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
+                              : 'Not set',
+                          style: TextStyle(
+                            color: _departureDate != null ? Colors.black87 : Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: _selectReturnDate,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: '🛬 Return Date',
+                          hintText: 'Select return date',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.flight_land),
+                          suffixIcon: _returnDate != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    setState(() {
+                                      _returnDate = null;
+                                    });
+                                  },
+                                )
+                              : null,
+                        ),
+                        child: Text(
+                          _returnDate != null
+                              ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
+                              : 'Not set',
+                          style: TextStyle(
+                            color: _returnDate != null ? Colors.black87 : Colors.grey[600],
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(

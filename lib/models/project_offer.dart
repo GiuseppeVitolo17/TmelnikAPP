@@ -12,6 +12,8 @@ class ProjectOffer {
   final String contactInfo;
   final DateTime createdAt;
   final DateTime expiresAt;
+  final DateTime? departureDate;
+  final DateTime? returnDate;
   final OfferStatus status;
   final int shareCount;
   final String imageUrl;
@@ -28,6 +30,8 @@ class ProjectOffer {
     required this.contactInfo,
     required this.createdAt,
     required this.expiresAt,
+    this.departureDate,
+    this.returnDate,
     this.status = OfferStatus.active,
     this.shareCount = 0,
     this.imageUrl = '',
@@ -45,6 +49,8 @@ class ProjectOffer {
     String? contactInfo,
     DateTime? createdAt,
     DateTime? expiresAt,
+    DateTime? departureDate,
+    DateTime? returnDate,
     OfferStatus? status,
     int? shareCount,
     String? imageUrl,
@@ -61,6 +67,8 @@ class ProjectOffer {
       contactInfo: contactInfo ?? this.contactInfo,
       createdAt: createdAt ?? this.createdAt,
       expiresAt: expiresAt ?? this.expiresAt,
+      departureDate: departureDate ?? this.departureDate,
+      returnDate: returnDate ?? this.returnDate,
       status: status ?? this.status,
       shareCount: shareCount ?? this.shareCount,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -80,6 +88,8 @@ class ProjectOffer {
       'contactInfo': contactInfo,
       'createdAt': createdAt.toIso8601String(),
       'expiresAt': expiresAt.toIso8601String(),
+      'departureDate': departureDate?.toIso8601String(),
+      'returnDate': returnDate?.toIso8601String(),
       'status': status.name,
       'shareCount': shareCount,
       'imageUrl': imageUrl,
@@ -99,6 +109,8 @@ class ProjectOffer {
       contactInfo: json['contactInfo'],
       createdAt: DateTime.parse(json['createdAt']),
       expiresAt: DateTime.parse(json['expiresAt']),
+      departureDate: json['departureDate'] != null ? DateTime.parse(json['departureDate']) : null,
+      returnDate: json['returnDate'] != null ? DateTime.parse(json['returnDate']) : null,
       status: OfferStatus.values.firstWhere(
         (e) => e.name == json['status'],
         orElse: () => OfferStatus.active,
@@ -122,6 +134,8 @@ class ProjectOffer {
       'contactInfo': contactInfo,
       'createdAt': Timestamp.fromDate(createdAt),
       'expiresAt': Timestamp.fromDate(expiresAt),
+      'departureDate': departureDate != null ? Timestamp.fromDate(departureDate!) : null,
+      'returnDate': returnDate != null ? Timestamp.fromDate(returnDate!) : null,
       'status': status.name,
       'shareCount': shareCount,
       'imageUrl': imageUrl,
@@ -144,6 +158,8 @@ class ProjectOffer {
       contactInfo: data['contactInfo'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      departureDate: (data['departureDate'] as Timestamp?)?.toDate(),
+      returnDate: (data['returnDate'] as Timestamp?)?.toDate(),
       status: OfferStatus.values.firstWhere(
         (e) => e.name == data['status'],
         orElse: () => OfferStatus.active,
