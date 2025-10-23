@@ -7,6 +7,7 @@ class JournalEntry {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final String mood; // 😊 😢 😴 🎉 🙏 etc.
+  final String humor; // Fixed field showing mood entry time
   final List<String> tags;
 
   JournalEntry({
@@ -16,6 +17,7 @@ class JournalEntry {
     required this.createdAt,
     this.updatedAt,
     this.mood = '😊',
+    this.humor = '',
     this.tags = const [],
   });
 
@@ -26,6 +28,7 @@ class JournalEntry {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? mood,
+    String? humor,
     List<String>? tags,
   }) {
     return JournalEntry(
@@ -35,6 +38,7 @@ class JournalEntry {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       mood: mood ?? this.mood,
+      humor: humor ?? this.humor,
       tags: tags ?? this.tags,
     );
   }
@@ -47,6 +51,7 @@ class JournalEntry {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'mood': mood,
+      'humor': humor,
       'tags': tags,
     };
   }
@@ -61,6 +66,7 @@ class JournalEntry {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'mood': mood,
+      'humor': humor,
       'tags': tags,
     };
   }
@@ -74,6 +80,7 @@ class JournalEntry {
       createdAt: DateTime.parse(data['createdAt']),
       updatedAt: data['updatedAt'] != null ? DateTime.parse(data['updatedAt']) : null,
       mood: data['mood'] ?? '😊',
+      humor: data['humor'] ?? '',
       tags: List<String>.from(data['tags'] ?? []),
     );
   }
@@ -86,6 +93,7 @@ class JournalEntry {
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       mood: json['mood'] ?? '😊',
+      humor: json['humor'] ?? '',
       tags: List<String>.from(json['tags'] ?? []),
     );
   }
