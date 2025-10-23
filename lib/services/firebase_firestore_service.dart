@@ -31,12 +31,15 @@ class FirebaseFirestoreService {
       final snapshot = await _firestore
           .collection(_offersCollection)
           .where('isActive', isEqualTo: true)
-          .orderBy('createdAt', descending: true)
           .get();
 
-      return snapshot.docs
+      final offers = snapshot.docs
           .map((doc) => ProjectOffer.fromFirestore(doc))
           .toList();
+      
+      // Sort by createdAt descending (client-side to avoid index requirement)
+      offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return offers;
     } catch (e) {
       throw Exception('Error getting project offers: $e');
     }
