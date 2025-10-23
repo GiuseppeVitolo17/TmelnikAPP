@@ -36,7 +36,10 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProject();
+    // Load project after widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadProject();
+    });
   }
 
   Future<void> _loadProject() async {
@@ -62,9 +65,10 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
           _departureDate = offer.departureDate;
           _returnDate = offer.returnDate;
           
-          // Load benefits
+          // Load benefits - ensure unique
           _benefitControllers.clear();
-          for (var benefit in offer.benefits) {
+          final uniqueBenefits = offer.benefits.toSet().toList(); // Remove duplicates
+          for (var benefit in uniqueBenefits) {
             _benefitControllers.add(TextEditingController(text: benefit));
           }
           if (_benefitControllers.isEmpty) {
