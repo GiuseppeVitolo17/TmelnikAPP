@@ -77,7 +77,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     for (var entry in entries) {
       events.add(CalendarEvent(
         type: EventType.journal,
-        title: '${entry.mood} Journal',
+        title: '${entry.mood} ${entry.content.length > 30 ? entry.content.substring(0, 30) + "..." : entry.content}',
         data: entry,
       ));
     }
@@ -268,7 +268,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
-            leading: _getEventIcon(event.type),
+            leading: _getEventIcon(event),
             title: Text(event.title),
             subtitle: _getEventSubtitle(event),
             trailing: event.type == EventType.journal
@@ -284,12 +284,16 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     );
   }
 
-  Widget _getEventIcon(EventType type) {
-    switch (type) {
+  Widget _getEventIcon(CalendarEvent event) {
+    switch (event.type) {
       case EventType.journal:
-        return const CircleAvatar(
+        final entry = event.data as JournalEntry;
+        return CircleAvatar(
           backgroundColor: Colors.blue,
-          child: Icon(Icons.book, color: Colors.white),
+          child: Text(
+            entry.mood,
+            style: const TextStyle(fontSize: 20),
+          ),
         );
       case EventType.departure:
         return const CircleAvatar(
@@ -313,12 +317,23 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     switch (event.type) {
       case EventType.journal:
         final entry = event.data as JournalEntry;
-        return Text(
-          entry.content.length > 50 
-              ? '${entry.content.substring(0, 50)}...' 
-              : entry.content,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        return Row(
+          children: [
+            Text(
+              entry.mood,
+              style: const TextStyle(fontSize: 20),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                entry.content.length > 50 
+                    ? '${entry.content.substring(0, 50)}...' 
+                    : entry.content,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         );
       case EventType.departure:
         final project = event.data as Project;
