@@ -1,4 +1,4 @@
-package com.example.tmelnik_app
+package com.example.tmelnik
 
 import io.flutter.embedding.android.FlutterActivity
 

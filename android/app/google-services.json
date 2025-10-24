@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "950924265668",
+    "project_id": "tmelnikapp",
+    "storage_bucket": "tmelnikapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950924265668:android:7d650f69e7e41751206191",
+        "android_client_info": {
+          "package_name": "com.example.tmelnik"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "950924265668-hjj4c9busd5dob87s3u3j6lqv2sujd1d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tmelnik",
+            "certificate_hash": "50a2e0cd0460ea02397194d21788247b592c717b"
+          }
+        },
+        {
+          "client_id": "950924265668-m1ajd0cur7oi8uf90qqarfm1f5r3plj4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFP7t3TStyW1REzU20JOeZTsq5ehgqpV4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "950924265668-m1ajd0cur7oi8uf90qqarfm1f5r3plj4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

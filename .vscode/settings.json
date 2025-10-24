@@ -1,0 +1,14 @@
+{
+    "gradle.nestedProjects": true,
+    "gradle.buildServer.enabled": true,
+    "gradle.java.home": "/usr/lib/jvm/java-17-openjdk-amd64",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "gradle.autoDetect": "on",
+    "java.home": "/usr/lib/jvm/java-17-openjdk-amd64",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-17",
+            "path": "/usr/lib/jvm/java-17-openjdk-amd64"
+        }
+    ]
+}
