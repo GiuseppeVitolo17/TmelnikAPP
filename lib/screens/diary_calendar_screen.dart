@@ -270,7 +270,6 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                       String emoji = '📅';
                       
                       final firstEvent = events.first as CalendarEvent;
-                      final isSelected = isSameDay(date, _selectedDay);
                       
                       switch (firstEvent.type) {
                         case EventType.reflection:
@@ -278,7 +277,6 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                           emoji = reflection.moodEmoji.isNotEmpty 
                               ? reflection.moodEmoji 
                               : '📝';
-                          // Emoji Unicode sono già colorate, non possiamo cambiarle
                           break;
                         case EventType.journal:
                           emoji = '📝';
@@ -294,23 +292,30 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                           break;
                       }
                       
-                      // Show emoji positioned at bottom center to avoid overlap with date numbers
-                      // Use smaller size and proper positioning
+                      // Position emoji above the day number like a sticker
+                      // This makes it clear which day the emoji belongs to
                       return Positioned(
-                        bottom: 2,
-                        right: 4,
-                        child: Text(
-                          emoji,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.0, // Remove extra line height
-                            shadows: isSelected ? [
-                              const Shadow(
-                                color: Colors.black54,
-                                blurRadius: 3,
-                                offset: Offset(0, 1),
+                        top: 2,
+                        right: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 2,
+                                offset: const Offset(0, 1),
                               ),
-                            ] : null,
+                            ],
+                          ),
+                          child: Text(
+                            emoji,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              height: 1.0,
+                            ),
                           ),
                         ),
                       );
