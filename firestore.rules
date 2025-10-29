@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function per verificare se l'utente è admin
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Helper per verificare se l'utente è autenticato
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // ============================================================
+    // COLLECTION: users
+    // ============================================================
+    match /users/{userId} {
+      // Lettura: ogni utente può leggere il proprio profilo, gli admin tutti
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == userId || isAdmin());
+      
+      // Scrittura: solo il proprietario può modificare il proprio profilo
+      // Solo gli admin possono modificare il campo isAdmin
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      allow update: if isAuthenticated() && (
+        // L'utente può modificare solo certi campi del proprio profilo
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']))
+        ||
+        // Gli admin possono modificare qualsiasi campo
+        isAdmin()
+      );
+      
+      allow delete: if isAdmin() && request.auth.uid != userId;
+    }
+    
+    // ============================================================
+    // COLLECTION: project_offers
+    // ============================================================
+    match /project_offers/{offerId} {
+      // Lettura: chiunque autenticato può leggere le offerte attive
+      allow read: if isAuthenticated() && 
+                     (!resource.data.isActive || isAdmin());
+      
+      // Creazione: solo admin
+      allow create: if isAdmin();
+      
+      // Aggiornamento: solo admin
+      allow update: if isAdmin();
+      
+      // Eliminazione: solo admin (soft delete impostando isActive = false)
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================================
+    // COLLECTION: journal_entries (DIARI PERSONALI)
+    // ============================================================
+    match /journal_entries/{entryId} {
+      // SOLO il proprietario può leggere/scrivere il proprio diario
+      allow read, write: if isAuthenticated() && 
+                           resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================================
+    // COLLECTION: feedback
+    // ============================================================
+    match /feedback/{feedbackId} {
+      // Lettura: tutti possono vedere feedback pubblici e attivi
+      allow read: if isAuthenticated();
+      
+      // Creazione: chiunque autenticato può creare feedback
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Aggiornamento: solo il proprietario o admin
+      allow update: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Eliminazione: solo il proprietario o admin
+      allow delete: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // ============================================================
+    // COLLECTION: news
+    // ============================================================
+    match /news/{newsId} {
+      // Lettura: tutti gli utenti autenticati possono vedere news attive
+      allow read: if isAuthenticated() && 
+                     (!resource.data.isActive || isAdmin());
+      
+      // Scrittura: solo admin
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // ============================================================
+    // COLLECTION: info_items (Informazioni generali)
+    // ============================================================
+    match /info_items/{itemId} {
+      // Lettura: pubblica per tutti autenticati
+      allow read: if isAuthenticated();
+      
+      // Scrittura: solo admin
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
