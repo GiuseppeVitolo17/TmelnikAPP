@@ -1,0 +1,139 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.63 available)
+  async 2.11.0 (2.13.0 available)
+  boolean_selector 2.1.1 (2.1.2 available)
+  characters 1.3.0 (1.4.1 available)
+  clock 1.1.1 (1.1.2 available)
+  cloud_firestore 5.6.12 (6.0.3 available)
+  cloud_firestore_platform_interface 6.6.12 (7.0.3 available)
+  cloud_firestore_web 4.4.12 (5.0.3 available)
+  collection 1.18.0 (1.19.1 available)
+  fake_async 1.3.1 (1.3.3 available)
+  ffi 2.1.3 (2.1.4 available)
+  firebase_auth 5.7.0 (6.1.1 available)
+  firebase_auth_platform_interface 7.7.3 (8.1.3 available)
+  firebase_auth_web 5.15.3 (6.0.4 available)
+  firebase_core 3.15.2 (4.2.0 available)
+  firebase_core_platform_interface 6.0.1 (6.0.2 available)
+  firebase_core_web 2.24.1 (3.2.0 available)
+  firebase_messaging 15.2.10 (16.0.3 available)
+  firebase_messaging_platform_interface 4.6.10 (4.7.3 available)
+  firebase_messaging_web 3.10.10 (4.0.3 available)
+  flutter_lints 3.0.2 (6.0.0 available)
+  flutter_local_notifications 17.2.4 (19.5.0 available)
+  flutter_local_notifications_linux 4.0.1 (6.0.0 available)
+  flutter_local_notifications_platform_interface 7.2.0 (9.1.0 available)
+  google_sign_in 6.2.2 (7.2.0 available)
+  google_sign_in_android 6.1.35 (7.2.2 available)
+  google_sign_in_ios 5.9.0 (6.2.2 available)
+  google_sign_in_platform_interface 2.5.0 (3.1.0 available)
+  google_sign_in_web 0.12.4+4 (1.1.0 available)
+  http_parser 4.0.2 (4.1.2 available)
+  leak_tracker 10.0.5 (11.0.2 available)
+  leak_tracker_flutter_testing 3.0.5 (3.0.10 available)
+  leak_tracker_testing 3.0.1 (3.0.2 available)
+  lints 3.0.0 (6.0.0 available)
+  matcher 0.12.16+1 (0.12.17 available)
+  material_color_utilities 0.11.1 (0.13.0 available)
+  meta 1.15.0 (1.17.0 available)
+  path 1.9.0 (1.9.1 available)
+  path_provider_android 2.2.15 (2.2.20 available)
+  path_provider_foundation 2.4.1 (2.4.3 available)
+  petitparser 6.0.2 (7.0.1 available)
+  shared_preferences_android 2.4.7 (2.4.15 available)
+  shared_preferences_foundation 2.5.4 (2.5.5 available)
+  source_span 1.10.0 (1.10.1 available)
+  sqflite 2.4.1 (2.4.2 available)
+  sqflite_android 2.4.0 (2.4.2+2 available)
+  sqflite_common 2.5.4+6 (2.5.6 available)
+  sqflite_darwin 2.4.1+1 (2.4.2 available)
+  stack_trace 1.11.1 (1.12.1 available)
+  stream_channel 2.1.2 (2.1.4 available)
+  string_scanner 1.2.0 (1.4.1 available)
+  synchronized 3.3.0+3 (3.4.0 available)
+  term_glyph 1.2.1 (1.2.2 available)
+  test_api 0.7.2 (0.7.7 available)
+  timezone 0.9.4 (0.10.1 available)
+  url_launcher 6.3.1 (6.3.2 available)
+  url_launcher_android 6.3.14 (6.3.24 available)
+  url_launcher_ios 6.3.3 (6.3.5 available)
+  url_launcher_macos 3.2.2 (3.2.4 available)
+  url_launcher_web 2.3.3 (2.4.1 available)
+  vector_math 2.1.4 (2.2.0 available)
+  vm_service 14.2.5 (15.0.2 available)
+  xml 6.5.0 (6.6.1 available)
+Got dependencies!
+63 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Launching lib/main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...             30,6s
+This app is linked to the debug service: ws://127.0.0.1:43699/nz1GFem5wAs=/ws
+Debug service listening on ws://127.0.0.1:43699/nz1GFem5wAs=/ws
+
+🔥  To hot restart changes while running, press "r" or "R".
+For a more detailed help message, press "h". To quit, press "q".
+
+A Dart VM Service on Chrome is available at: http://127.0.0.1:43699/nz1GFem5wAs=
+🔧 Loading Screen Configuration:
+   • Minimum Duration: 3000ms (3s)
+   • Maximum Duration: 8000ms (8s)
+   • Fade Out Duration: 800ms (0.8s)
+   • Debug Mode: true
+🆕 Log system initialized (Web mode - console only)
+🚀 Tmelnik App started - 2025-10-29 12:17:48.219
+📱 Platform: Web
+📝 [2025-10-29T12:17:48.224] [INFO] App starting...
+📝 [2025-10-29T12:17:48.224] [FIREBASE] 🔥 FIREBASE: Starting Firebase initialization...
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:9100?uri=http://127.0.0.1:43699/nz1GFem5wAs=
+📝 [2025-10-29T12:17:48.696] [FIREBASE] 🔥 FIREBASE: Firebase initialized successfully
+✅ Firebase initialized successfully
+📝 [2025-10-29T12:17:48.698] [INFO] Starting TmelnikApp...
+📝 [2025-10-29T12:17:48.804] [UI] 🎨 UI: Building TmelnikApp widget
+📝 [2025-10-29T12:17:49.003] [UI] 🎨 UI: Building AuthWrapper widget
+📝 [2025-10-29T12:17:49.016] [AUTH] 🔐 AUTH: Auth state: checking...
+📝 [2025-10-29T12:17:49.123] [AUTH] 🔐 AUTH: User is not authenticated, showing auth screen
+📝 [2025-10-29T12:17:49.124] [NAV] 🧭 NAV: Navigating to AuthScreen
+📝 [2025-10-29T12:17:49.130] [UI] 🎨 UI: Building AuthScreen widget
+🎬 Flutter first frame detected (backup method)
+[GSI_LOGGER]: Evaluating FedCM mode support.
+[GSI_LOGGER]: FedCM mode supported.
+[GSI_LOGGER-TOKEN_CLIENT]: Instantiated.
+🎯 Flutter is ready! Hiding loading screen...
+🎭 Starting fade out animation...
+🎯 Flutter marked as ready! Loading screen will hide immediately.
+✅ Loading screen hidden
+📝 [2025-10-29T12:18:02.642] [AUTH] 🔐 AUTH: Starting email/password authentication
+📝 [2025-10-29T12:18:02.643] [AUTH] 🔐 AUTH: Attempting sign in with email: flapore1711@gmail.com
+📝 [2025-10-29T12:18:02.650] [UI] 🎨 UI: Building AuthScreen widget
+📝 [2025-10-29T12:18:03.685] [AUTH] 🔐 AUTH: User is authenticated: flapore1711@gmail.com
+📝 [2025-10-29T12:18:03.685] [NAV] 🧭 NAV: Navigating to MainNavigationScreen
+📝 [2025-10-29T12:18:03.692] [UI] 🎨 UI: Building MainNavigationScreen widget
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 0
+✅ Is admin: false
+📝 [2025-10-29T12:18:04.733] [AUTH] 🔐 AUTH: Email/password sign in successful
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+🔔 🎯 Don't miss out! Join test in berlin on 24 November
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+🔍 Loading project with ID: nvnscCyUDkgD6fUDMMBI
+📄 Document exists: true
+✅ Loaded project: test (ID: nvnscCyUDkgD6fUDMMBI)
+   Location: berlin
+   Description: test...
+✅ Form fields populated successfully
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+📝 [2025-10-29T12:18:23.502] [NAV] 🧭 NAV: Navigated to screen: 2
+📝 [2025-10-29T12:18:23.510] [UI] 🎨 UI: Building MainNavigationScreen widget
+Application finished.

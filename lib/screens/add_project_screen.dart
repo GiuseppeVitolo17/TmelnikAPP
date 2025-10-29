@@ -133,10 +133,13 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         returnDate: _returnDate,
       );
 
-      // Save to Firestore
-      await FirebaseFirestore.instance
+      // Save to Firestore - use .add() to get auto-generated ID
+      final docRef = await FirebaseFirestore.instance
           .collection('project_offers')
           .add(project.toFirestore());
+      
+      // Update the document with its own ID for consistency
+      await docRef.update({'id': docRef.id});
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +148,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true); // Return true to indicate success
       }
     } catch (e) {
       if (mounted) {

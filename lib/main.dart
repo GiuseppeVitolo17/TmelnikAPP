@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'utils/debug_logger.dart';
+import 'theme/app_theme.dart';
 import 'screens/loading_screen.dart';
 import 'screens/add_project_screen.dart';
 import 'screens/diary_calendar_screen.dart';
@@ -15,6 +16,7 @@ import 'screens/project_offers_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,8 +39,21 @@ void main() async {
     await debugLogger.error('Error initializing Firebase', e);
     print('❌ Error initializing Firebase: $e');
   }
+
+  // Initialize notification service for mobile platforms
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugLogger.error('Error initializing notifications', e);
+  }
   
   await debugLogger.log('Starting TmelnikApp...');
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   
   // Signal that Flutter is ready after app starts
   Future.delayed(const Duration(milliseconds: 100), () {
@@ -55,27 +70,13 @@ class TmelnikApp extends StatelessWidget {
   Widget build(BuildContext context) {
     debugLogger.ui('Building TmelnikApp widget');
     
+    // Use centralized theme and merge with additional customizations
+    final baseTheme = buildAppTheme();
+    
     return MaterialApp(
       title: 'Tmelnik - Youth Exchange Management',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0066FF),
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF5F6FA),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          titleTextStyle: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      theme: baseTheme.copyWith(
         cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -570,11 +571,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ];
   }
 
-  String get _currentScreenTitle {
+  String? get _currentScreenTitle {
+    // Hide AppBar title for Projects screen (index 0) - header is shown in the screen itself
+    if (_currentIndex == 0) {
+      return null; // This will hide the title
+    }
+    
     if (widget.isGuestMode) {
       switch (_currentIndex) {
-        case 0:
-          return 'PROJECTS';
         case 1:
           return 'Feedback';
         case 2:
@@ -586,8 +590,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       }
     } else {
       switch (_currentIndex) {
-        case 0:
-          return 'PROJECTS';
         case 1:
           return 'Feedback';
         case 2:
@@ -605,12 +607,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     debugLogger.ui('Building MainNavigationScreen widget');
     
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentScreenTitle),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+      appBar: _currentScreenTitle != null
+          ? AppBar(
+              title: Text(_currentScreenTitle!),
+              centerTitle: true,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              elevation: 0,
         actions: [
           if (widget.isGuestMode)
             IconButton(
@@ -629,6 +632,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               icon: const Icon(Icons.logout),
             ),
         ],
+            )
+          : PreferredSize(
+              preferredSize: const Size.fromHeight(0),
+              child: Container(), // Empty AppBar for Projects screen
       ),
       body: IndexedStack(
         index: _currentIndex,

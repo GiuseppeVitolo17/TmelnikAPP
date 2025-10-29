@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/project_offer.dart';
@@ -46,13 +47,34 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
     setState(() => _isLoading = true);
     
     try {
+      debugPrint('🔍 Loading project with ID: ${widget.projectId}');
+      
+      if (widget.projectId.isEmpty) {
+        debugPrint('❌ Project ID is empty!');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Project ID is missing'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+      
       final doc = await FirebaseFirestore.instance
           .collection('project_offers')
           .doc(widget.projectId)
           .get();
       
+      debugPrint('📄 Document exists: ${doc.exists}');
+      
       if (doc.exists) {
         final offer = ProjectOffer.fromFirestore(doc);
+        debugPrint('✅ Loaded project: ${offer.title} (ID: ${offer.id})');
+        debugPrint('   Location: ${offer.location}');
+        debugPrint('   Description: ${offer.description.substring(0, offer.description.length > 50 ? 50 : offer.description.length)}...');
+        
         setState(() {
           _projectOffer = offer;
           _titleController.text = offer.title;
@@ -75,8 +97,22 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
             _benefitControllers.add(TextEditingController());
           }
         });
+        
+        debugPrint('✅ Form fields populated successfully');
+      } else {
+        debugPrint('❌ Document does not exist for ID: ${widget.projectId}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Project not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error loading project: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading project: $e')),

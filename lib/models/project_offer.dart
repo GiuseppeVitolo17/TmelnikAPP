@@ -153,8 +153,13 @@ class ProjectOffer {
 
   factory ProjectOffer.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    // Use doc.id if data['id'] is null or empty
+    final id = (data['id'] as String?)?.isNotEmpty == true 
+        ? data['id'] as String 
+        : doc.id;
+    
     return ProjectOffer(
-      id: data['id'] ?? doc.id,
+      id: id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       targeting: data['targeting'] ?? '',

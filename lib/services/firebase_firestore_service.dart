@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/project_offer.dart';
 import '../models/feedback.dart';
@@ -16,14 +17,37 @@ class FirebaseFirestoreService {
 
   // Project Offers
   Stream<List<ProjectOffer>> getProjectOffersStream() {
-    return _firestore
-        .collection(_offersCollection)
-        .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ProjectOffer.fromFirestore(doc))
-            .toList());
+    try {
+      return _firestore
+          .collection(_offersCollection)
+          .where('isActive', isEqualTo: true)
+          .snapshots()
+          .map((snapshot) {
+            final offers = snapshot.docs
+                .map((doc) {
+                  try {
+                    return ProjectOffer.fromFirestore(doc);
+                  } catch (e) {
+                    debugPrint('Error parsing project offer ${doc.id}: $e');
+                    return null;
+                  }
+                })
+                .whereType<ProjectOffer>()
+                .toList();
+            
+            // Sort by createdAt descending (client-side to avoid index requirement)
+            offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            return offers;
+          })
+          .handleError((error) {
+            debugPrint('Firestore stream error: $error');
+            // Return empty list on error
+            return <ProjectOffer>[];
+          });
+    } catch (e) {
+      debugPrint('Error creating stream: $e');
+      return Stream.value(<ProjectOffer>[]);
+    }
   }
 
   Future<List<ProjectOffer>> getProjectOffers() async {

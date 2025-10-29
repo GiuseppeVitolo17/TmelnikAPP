@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../theme/app_theme.dart';
 
 /// Reusable card widget for displaying project information
 /// with modern design: rounded white card, shadow, image banner, and action buttons
@@ -7,16 +7,26 @@ class ProjectCard extends StatelessWidget {
   final String imagePathOrUrl;
   final String title;
   final String dates;
+  final String? deadline; // Application deadline (optional)
   final VoidCallback onApply;
   final VoidCallback onInfo;
+  
+  // Admin-only actions (only shown if callbacks are provided)
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool showAdminActions;
 
   const ProjectCard({
     super.key,
     required this.imagePathOrUrl,
     required this.title,
     required this.dates,
+    this.deadline,
     required this.onApply,
     required this.onInfo,
+    this.onEdit,
+    this.onDelete,
+    this.showAdminActions = false,
   });
 
   @override
@@ -26,16 +36,9 @@ class ProjectCard extends StatelessWidget {
       return Container(
         margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 20,
-              spreadRadius: 0,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: AppColors.cardBackground,
+          borderRadius: AppRadius.large,
+          boxShadow: AppShadows.soft,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,43 +55,38 @@ class ProjectCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.cardBackground,
+        borderRadius: AppRadius.large,
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Image banner with rounded top corners only
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(20),
+            borderRadius: BorderRadius.vertical(
+              top: AppRadius.large.topLeft,
             ),
             child: isNetworkImage
-                ? CachedNetworkImage(
-                    imageUrl: imagePathOrUrl,
+                ? Image.network(
+                    imagePathOrUrl,
                     width: double.infinity,
-                    height: 200,
+                    height: 180,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      width: double.infinity,
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        width: double.infinity,
+                        height: 180,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Text('Loading...'),
                         ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => _buildPlaceholderImage(),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildPlaceholderImage();
+                    },
                   )
                 : Image.asset(
                     imagePathOrUrl,
@@ -119,78 +117,134 @@ class ProjectCard extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
-              letterSpacing: -0.5,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
           
-          // Date range (grey)
+          // Date range
           Text(
             dates,
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w400,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
             ),
           ),
+          // Deadline (if provided)
+          if (deadline != null && deadline!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: Colors.orange[700],
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Deadline: $deadline',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.orange[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 20),
+          
+          // Admin actions row (if enabled and callbacks provided) - ben visibili in primo piano
+          if (showAdminActions && (onEdit != null || onDelete != null)) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundGrey,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (onEdit != null)
+                    ElevatedButton.icon(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('Edit'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        minimumSize: const Size(0, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  if (onEdit != null && onDelete != null)
+                    const SizedBox(width: 12),
+                  if (onDelete != null)
+                    ElevatedButton.icon(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete, size: 18),
+                      label: const Text('Delete'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        minimumSize: const Size(0, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           
           // Action buttons row - MUST be side by side
           IntrinsicHeight(
             child: Row(
               mainAxisSize: MainAxisSize.max,
               children: [
-                // Infopack button (yellow #FFC107)
+                // Infopack button (yellow background, black text)
                 Expanded(
                   child: ElevatedButton(
                     onPressed: onInfo,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFC107),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.secondaryYellow,
+                      foregroundColor: AppColors.textPrimary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppRadius.medium,
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       minimumSize: const Size(0, 52),
                     ),
-                    child: const Text(
-                      'Infopack',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: const Text('Infopack'),
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Apply button (blue #0066FF)
+                // Apply button (blue background, white text)
                 Expanded(
                   child: ElevatedButton(
                     onPressed: onApply,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0066FF),
+                      backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppRadius.medium,
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       minimumSize: const Size(0, 52),
                     ),
-                    child: const Text(
-                      'Apply',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
+                    child: const Text('Apply'),
                   ),
                 ),
               ],
@@ -203,30 +257,15 @@ class ProjectCard extends StatelessWidget {
 
   Widget _buildPlaceholderImage() {
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(20),
+      borderRadius: BorderRadius.vertical(
+        top: AppRadius.large.topLeft,
       ),
       child: Container(
         width: double.infinity,
-        height: 200,
+        height: 180,
         color: Colors.grey[300],
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.image,
-              size: 48,
-              color: Colors.grey[600],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Image not available',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
-            ),
-          ],
+        child: const Center(
+          child: Text('No image'),
         ),
       ),
     );

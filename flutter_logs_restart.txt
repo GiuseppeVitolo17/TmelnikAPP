@@ -1,41 +1,77 @@
 Launching lib/main.dart on Chrome in debug mode...
-Waiting for connection from debug service on Chrome...             28,9s
-This app is linked to the debug service: ws://127.0.0.1:39433/IHgVYJYxL9c=/ws
-Debug service listening on ws://127.0.0.1:39433/IHgVYJYxL9c=/ws
+Waiting for connection from debug service on Chrome...             28,1s
+This app is linked to the debug service: ws://127.0.0.1:44533/EOnMBo_F-Oo=/ws
+Debug service listening on ws://127.0.0.1:44533/EOnMBo_F-Oo=/ws
 
 🔥  To hot restart changes while running, press "r" or "R".
 For a more detailed help message, press "h". To quit, press "q".
 
-A Dart VM Service on Chrome is available at: http://127.0.0.1:39433/IHgVYJYxL9c=
+A Dart VM Service on Chrome is available at: http://127.0.0.1:44533/EOnMBo_F-Oo=
 🔧 Loading Screen Configuration:
    • Minimum Duration: 3000ms (3s)
    • Maximum Duration: 8000ms (8s)
    • Fade Out Duration: 800ms (0.8s)
    • Debug Mode: true
 🆕 Log system initialized (Web mode - console only)
-🚀 Tmelnik App started - 2025-10-29 11:03:50.790
+🚀 Tmelnik App started - 2025-10-29 12:03:54.804
 📱 Platform: Web
-📝 [2025-10-29T11:03:50.796] [INFO] App starting...
-📝 [2025-10-29T11:03:50.797] [FIREBASE] 🔥 FIREBASE: Starting Firebase initialization...
-The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:9100?uri=http://127.0.0.1:39433/IHgVYJYxL9c=
-📝 [2025-10-29T11:03:51.189] [FIREBASE] 🔥 FIREBASE: Firebase initialized successfully
+📝 [2025-10-29T12:03:54.808] [INFO] App starting...
+📝 [2025-10-29T12:03:54.808] [FIREBASE] 🔥 FIREBASE: Starting Firebase initialization...
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:9100?uri=http://127.0.0.1:44533/EOnMBo_F-Oo=
+📝 [2025-10-29T12:03:55.838] [FIREBASE] 🔥 FIREBASE: Firebase initialized successfully
 ✅ Firebase initialized successfully
-📝 [2025-10-29T11:03:51.190] [INFO] Starting TmelnikApp...
-📝 [2025-10-29T11:03:51.224] [UI] 🎨 UI: Building TmelnikApp widget
-📝 [2025-10-29T11:03:51.422] [UI] 🎨 UI: Building AuthWrapper widget
-📝 [2025-10-29T11:03:51.440] [AUTH] 🔐 AUTH: Auth state: checking...
-📝 [2025-10-29T11:03:51.551] [AUTH] 🔐 AUTH: User is not authenticated, showing auth screen
-📝 [2025-10-29T11:03:51.551] [NAV] 🧭 NAV: Navigating to AuthScreen
-📝 [2025-10-29T11:03:51.556] [UI] 🎨 UI: Building AuthScreen widget
+📝 [2025-10-29T12:03:55.839] [INFO] Starting TmelnikApp...
+📝 [2025-10-29T12:03:55.907] [UI] 🎨 UI: Building TmelnikApp widget
+📝 [2025-10-29T12:03:56.100] [UI] 🎨 UI: Building AuthWrapper widget
+📝 [2025-10-29T12:03:56.112] [AUTH] 🔐 AUTH: Auth state: checking...
+📝 [2025-10-29T12:03:56.224] [AUTH] 🔐 AUTH: User is authenticated: flapore1711@gmail.com
+📝 [2025-10-29T12:03:56.225] [NAV] 🧭 NAV: Navigating to MainNavigationScreen
+📝 [2025-10-29T12:03:56.228] [UI] 🎨 UI: Building MainNavigationScreen widget
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 0
+✅ Is admin: false
 🎬 Flutter first frame detected (backup method)
-[GSI_LOGGER]: Evaluating FedCM mode support.
-[GSI_LOGGER]: FedCM mode supported.
-[GSI_LOGGER-TOKEN_CLIENT]: Instantiated.
 🎯 Flutter is ready! Hiding loading screen...
 🎭 Starting fade out animation...
 🎯 Flutter marked as ready! Loading screen will hide immediately.
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
 ✅ Loading screen hidden
-📝 [2025-10-29T11:04:23.990] [AUTH] 🔐 AUTH: Entered guest mode
-📝 [2025-10-29T11:04:23.992] [UI] 🎨 UI: Building AuthWrapper widget
-📝 [2025-10-29T11:04:23.998] [UI] 🎨 UI: Building MainNavigationScreen widget
+🔍 Loading project with ID: nvnscCyUDkgD6fUDMMBI
+📄 Document exists: true
+✅ Loaded project: test (ID: nvnscCyUDkgD6fUDMMBI)
+   Location: berlin
+   Description: test...
+✅ Form fields populated successfully
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+📝 [2025-10-29T12:05:08.258] [NAV] 🧭 NAV: Navigated to screen: 1
+📝 [2025-10-29T12:05:08.261] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T12:05:10.410] [AUTH] 🔐 AUTH: User initiated logout
+[GSI_LOGGER]: Evaluating FedCM mode support.
+[GSI_LOGGER]: FedCM mode supported.
+[GSI_LOGGER-TOKEN_CLIENT]: Instantiated.
+📝 [2025-10-29T12:05:10.504] [SUCCESS] ✅ SUCCESS: User logged out successfully
+📝 [2025-10-29T12:05:10.507] [AUTH] 🔐 AUTH: User is not authenticated, showing auth screen
+📝 [2025-10-29T12:05:10.508] [NAV] 🧭 NAV: Navigating to AuthScreen
+📝 [2025-10-29T12:05:10.521] [UI] 🎨 UI: Building AuthScreen widget
+📝 [2025-10-29T12:05:11.661] [AUTH] 🔐 AUTH: Entered guest mode
+📝 [2025-10-29T12:05:11.668] [UI] 🎨 UI: Building AuthWrapper widget
+📝 [2025-10-29T12:05:11.672] [UI] 🎨 UI: Building MainNavigationScreen widget
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 0
+✅ Is admin: false
+✅ Firestore offers count: 1
+✅ Is admin: false
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
 Application finished.
