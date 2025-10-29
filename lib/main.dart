@@ -11,6 +11,7 @@ import 'screens/loading_screen.dart';
 import 'screens/add_project_screen.dart';
 import 'screens/diary_calendar_screen.dart';
 import 'screens/edit_project_offer_screen.dart';
+import 'screens/project_offers_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -59,13 +60,21 @@ class TmelnikApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: const Color(0xFF0066FF),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF5F6FA),
         appBarTheme: const AppBarTheme(
           centerTitle: true,
-          elevation: 2,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         cardTheme: CardTheme(
           elevation: 2,
@@ -561,14 +570,47 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ];
   }
 
+  String get _currentScreenTitle {
+    if (widget.isGuestMode) {
+      switch (_currentIndex) {
+        case 0:
+          return 'PROJECTS';
+        case 1:
+          return 'Feedback';
+        case 2:
+          return 'Diary';
+        case 3:
+          return 'News';
+        default:
+          return 'Tmelnik (Guest)';
+      }
+    } else {
+      switch (_currentIndex) {
+        case 0:
+          return 'PROJECTS';
+        case 1:
+          return 'Feedback';
+        case 2:
+          return 'Diary';
+        case 3:
+          return 'News';
+        default:
+          return 'Tmelnik';
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     debugLogger.ui('Building MainNavigationScreen widget');
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isGuestMode ? 'Tmelnik (Guest)' : 'Tmelnik'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(_currentScreenTitle),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
         actions: [
           if (widget.isGuestMode)
             IconButton(
@@ -630,341 +672,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
-// Placeholder screens - these will be implemented with full functionality
-class ProjectOffersScreen extends StatefulWidget {
-  const ProjectOffersScreen({super.key});
-
-  @override
-  State<ProjectOffersScreen> createState() => _ProjectOffersScreenState();
-}
-
-class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
-  bool _isAdmin = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAdminStatus();
-  }
-
-  Future<void> _checkAdminStatus() async {
-    final isAdmin = await userRoleService.isCurrentUserAdmin();
-    if (mounted) {
-      setState(() => _isAdmin = isAdmin);
-    }
-  }
-
-  Future<void> _editProject(BuildContext context, Map<String, dynamic> projectData) async {
-    // Get project ID from document ID, not from data
-    final projectDocId = projectData['_docId'] as String?;
-    if (projectDocId == null || projectDocId.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Error: Cannot edit project - invalid ID'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-    
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => EditProjectOfferScreen(projectId: projectDocId),
-      ),
-    );
-    
-    if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Project updated successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
-  }
-
-  Future<void> _deleteProject(BuildContext context, String projectId) async {
-    // Validate projectId
-    if (projectId.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Error: Invalid project ID'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Project?'),
-        content: const Text('Are you sure you want to delete this project? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('project_offers')
-            .doc(projectId)
-            .update({'isActive': false});
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Project deleted successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ Error deleting project: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _shareToInstagram(BuildContext context, Map<String, dynamic> offer) async {
-    final text = '''🚀 ${offer['title']}
-
-📍 ${offer['location']}
-⏰ ${offer['duration']}
-🎯 ${offer['targeting']}
-
-${offer['description']}
-
-✅ Benefits:
-${(offer['benefits'] as List).map((b) => '• $b').join('\n')}
-
-📱 Contact us on Instagram: @tmelnik_cz
-
-#TmelnikProject #TravelOpportunity #WorkAbroad #YouthExchange''';
-
-    try {
-      await Clipboard.setData(ClipboardData(text: text));
-      
-      final instagramAppUrl = Uri.parse('instagram://user?username=tmelnik_cz');
-      final instagramWebUrl = Uri.parse('https://www.instagram.com/tmelnik_cz/');
-      
-      try {
-        await launchUrl(instagramAppUrl, mode: LaunchMode.externalApplication);
-      } catch (e) {
-        await launchUrl(instagramWebUrl, mode: LaunchMode.externalApplication);
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Text copied to clipboard! Instagram opened.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error opening Instagram: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Project Offers'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('project_offers')
-            .where('isActive', isEqualTo: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final projects = snapshot.data?.docs ?? [];
-
-          if (projects.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.work_off, size: 80, color: Colors.grey),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'No projects available yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  if (_isAdmin) ...[
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Tap + to add a new project',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              final project = projects[index].data() as Map<String, dynamic>;
-              project['_docId'] = projects[index].id; // Add document ID
-              
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        project['title'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on, size: 16, color: Colors.blue),
-                          const SizedBox(width: 4),
-                          Text(project['location'] ?? ''),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.schedule, size: 16, color: Colors.green),
-                          const SizedBox(width: 4),
-                          Text(project['duration'] ?? ''),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.people, size: 16, color: Colors.orange),
-                          const SizedBox(width: 4),
-                          Text(project['targeting'] ?? ''),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(project['description'] ?? ''),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Benefits:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      ...(project['benefits'] as List? ?? []).map((benefit) => 
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8, top: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('• '),
-                              Expanded(child: Text(benefit.toString())),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _shareToInstagram(context, project),
-                              icon: const Icon(Icons.share),
-                              label: const Text('Share on Instagram'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.purple,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
-                          if (_isAdmin) ...[
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () => _editProject(context, project),
-                              icon: const Icon(Icons.edit, color: Colors.blue),
-                              tooltip: 'Edit project',
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () {
-                                final projectId = projects[index].id;
-                                _deleteProject(context, projectId);
-                              },
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              tooltip: 'Delete project',
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: _isAdmin
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddProjectScreen(),
-                  ),
-                );
-              },
-              backgroundColor: Colors.blue,
-              child: const Icon(Icons.add),
-            )
-          : null,
-    );
-  }
-}
+// ProjectOffersScreen is now in screens/project_offers_screen.dart
 
 class FeedbackScreen extends StatelessWidget {
   const FeedbackScreen({super.key});

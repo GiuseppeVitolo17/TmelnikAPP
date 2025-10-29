@@ -1,0 +1,22 @@
+Launching lib/main.dart on Chrome in debug mode...
+Failed to bind web development server:
+SocketException: Failed to create server socket (OS Error: Address already in use, errno = 98), address = localhost, port = 5000
+#0      _NativeSocket.bind (dart:io-patch/socket_patch.dart:1032:7)
+<asynchronous suspension>
+#1      _RawServerSocket.bind.<anonymous closure> (dart:io-patch/socket_patch.dart:1818:15)
+<asynchronous suspension>
+#2      _ServerSocket.bind.<anonymous closure> (dart:io-patch/socket_patch.dart:2103:15)
+<asynchronous suspension>
+#3      _HttpServer.bind.<anonymous closure> (dart:_http/http_impl.dart:3190:27)
+<asynchronous suspension>
+#4      WebAssetServer.start (package:flutter_tools/src/isolated/devfs_web.dart:207:24)
+<asynchronous suspension>
+#5      WebDevFS.create (package:flutter_tools/src/isolated/devfs_web.dart:860:22)
+<asynchronous suspension>
+#6      ResidentWebRunner.run.<anonymous closure> (package:flutter_tools/src/isolated/resident_web_runner.dart:328:19)
+<asynchronous suspension>
+#7      asyncGuard.<anonymous closure> (package:flutter_tools/src/base/async_guard.dart:111:24)
+<asynchronous suspension>
+
+Failed to bind web development server:
+SocketException: Failed to create server socket (OS Error: Address already in use, errno = 98), address = localhost, port = 5000
