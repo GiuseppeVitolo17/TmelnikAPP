@@ -4,6 +4,7 @@ import '../models/project_offer.dart';
 import '../models/feedback.dart';
 import '../models/news.dart';
 import '../models/info_item.dart';
+import '../models/daily_reflection.dart';
 
 class FirebaseFirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -14,6 +15,7 @@ class FirebaseFirestoreService {
   static const String _newsCollection = 'news';
   static const String _infoCollection = 'info_items';
   static const String _usersCollection = 'users';
+  static const String _dailyReflectionsCollection = 'daily_reflections';
 
   // Project Offers
   Stream<List<ProjectOffer>> getProjectOffersStream() {
@@ -309,6 +311,91 @@ class FirebaseFirestoreService {
       };
     } catch (e) {
       throw Exception('Error getting statistics: $e');
+    }
+  }
+
+  // Daily Reflections
+  Future<DailyReflection?> getDailyReflectionForDate(String userId, DateTime date) async {
+    try {
+      // Normalize date to start of day for comparison
+      final normalizedDate = DateTime(date.year, date.month, date.day);
+      
+      final snapshot = await _firestore
+          .collection(_dailyReflectionsCollection)
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      final reflections = snapshot.docs
+          .map((doc) => DailyReflection.fromFirestore(doc))
+          .where((r) {
+            final rDate = DateTime(r.date.year, r.date.month, r.date.day);
+            return rDate.isAtSameMomentAs(normalizedDate);
+          })
+          .toList();
+
+      return reflections.isNotEmpty ? reflections.first : null;
+    } catch (e) {
+      debugPrint('Error getting daily reflection: $e');
+      return null;
+    }
+  }
+
+  Future<void> saveDailyReflection(DailyReflection reflection) async {
+    try {
+      // Check if reflection for this date already exists
+      final existing = await getDailyReflectionForDate(reflection.userId, reflection.date);
+      
+      if (existing != null) {
+        // Update existing reflection
+        await _firestore
+            .collection(_dailyReflectionsCollection)
+            .doc(existing.id)
+            .update(reflection.copyWith(
+              id: existing.id,
+              updatedAt: DateTime.now(),
+            ).toFirestore());
+      } else {
+        // Create new reflection
+        await _firestore
+            .collection(_dailyReflectionsCollection)
+            .doc(reflection.id)
+            .set(reflection.toFirestore());
+      }
+    } catch (e) {
+      throw Exception('Error saving daily reflection: $e');
+    }
+  }
+
+  Stream<List<DailyReflection>> getDailyReflectionsStream(String userId) {
+    try {
+      return _firestore
+          .collection(_dailyReflectionsCollection)
+          .where('userId', isEqualTo: userId)
+          .snapshots()
+          .map((snapshot) {
+            final reflections = snapshot.docs
+                .map((doc) {
+                  try {
+                    return DailyReflection.fromFirestore(doc);
+                  } catch (e) {
+                    debugPrint('Error parsing daily reflection ${doc.id}: $e');
+                    return null;
+                  }
+                })
+                .whereType<DailyReflection>()
+                .toList();
+            
+            // Sort by date descending
+            reflections.sort((a, b) => b.date.compareTo(a.date));
+            return reflections;
+          })
+          .handleError((error) {
+            debugPrint('Firestore stream error: $error');
+            return <DailyReflection>[];
+          });
+    } catch (e) {
+      debugPrint('Error creating stream: $e');
+      return Stream.value(<DailyReflection>[]);
     }
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import '../widgets/project_card.dart';
 import '../services/pexels_service.dart';
 import '../services/firebase_firestore_service.dart';
@@ -226,72 +225,11 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    final isGuestMode = FirebaseAuth.instance.currentUser == null;
-    
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 12, 16), // Reduced padding
-      color: Colors.white,
-      width: double.infinity,
-      child: Row(
-        children: [
-          // Icona mappa del mondo (emoji)
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: AppColors.backgroundGrey,
-            ),
-            child: const Text(
-              '🌍',
-              style: TextStyle(
-                fontSize: 32,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Testo "Plan your next trip"
-          const Expanded(
-                              child: Text(
-              'Plan your next trip',
-                                style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.5,
-                                ),
-                              ),
-                            ),
-          // Profile/Logout button
-          IconButton(
-            onPressed: () async {
-              if (isGuestMode) {
-                // In guest mode, show login option (if MainNavigationScreen provides callback)
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please log in to access your profile'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              } else {
-                // Logout functionality
-                await FirebaseAuth.instance.signOut();
-                await GoogleSignIn().signOut();
-              }
-            },
-            icon: Icon(
-              isGuestMode ? Icons.login : Icons.person,
-              color: AppColors.textPrimary,
-            ),
-            tooltip: isGuestMode ? 'Login' : 'Profile',
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
+    // Header is now managed by MainNavigationScreen
+    // This Scaffold only provides background color
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       body: StreamBuilder<List<ProjectOffer>>(
@@ -320,13 +258,9 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
             });
           }
           
-          return Column(
-                          children: [
-              _buildHeader(),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                          children: [
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
                     // Debug info (rimuovere in produzione)
                     if (snapshot.hasError)
                       Container(
@@ -419,9 +353,6 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                   },
                 );
               }),
-                  ],
-                ),
-              ),
             ],
           );
         },

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/journal_entry.dart';
 import '../models/project_offer.dart';
+import '../models/daily_reflection.dart';
 import '../services/journal_service.dart';
 import '../services/firebase_firestore_service.dart';
+import '../theme/app_theme.dart';
 import 'package:uuid/uuid.dart';
 
 class DiaryCalendarScreen extends StatefulWidget {
@@ -24,6 +28,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
   
   List<JournalEntry> _journalEntries = [];
   List<ProjectOffer> _projectOffers = [];
+  List<DailyReflection> _dailyReflections = [];
   bool _isLoading = true;
 
   @override
@@ -42,9 +47,20 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       // Note: Using ProjectOffer from Firebase instead of local Projects
       final offers = await _firestoreService.getProjectOffers();
       
+      // Load Daily Reflections for current user
+      final user = FirebaseAuth.instance.currentUser;
+      List<DailyReflection> reflections = [];
+      if (user != null) {
+        final allReflections = await _firestoreService.getDailyReflectionsStream(user.uid).first;
+        reflections = allReflections;
+      }
+      
+      debugPrint('📅 [CALENDAR] Loaded ${entries.length} journal entries, ${offers.length} projects, ${reflections.length} daily reflections');
+      
       setState(() {
         _journalEntries = entries;
         _projectOffers = offers;
+        _dailyReflections = reflections;
         _isLoading = false;
       });
     } catch (e) {
@@ -62,7 +78,30 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
   List<CalendarEvent> _getEventsForDay(DateTime day) {
     final events = <CalendarEvent>[];
     
-    // Journal entries
+    // Daily Reflections (from Daily Reflection screen)
+    final reflections = _dailyReflections.where((reflection) =>
+      reflection.date.year == day.year &&
+      reflection.date.month == day.month &&
+      reflection.date.day == day.day
+    ).toList();
+    
+    for (var reflection in reflections) {
+      String title = 'Daily Reflection';
+      if (reflection.mood != null) {
+        title = '${reflection.moodEmoji} Daily Reflection';
+      }
+      if (reflection.activities.isNotEmpty) {
+        title += ' (${reflection.activities.length} activities)';
+      }
+      
+      events.add(CalendarEvent(
+        type: EventType.reflection,
+        title: title,
+        data: reflection,
+      ));
+    }
+    
+    // Journal entries (notes)
     final entries = _journalEntries.where((entry) =>
       entry.date.year == day.year &&
       entry.date.month == day.month &&
@@ -70,9 +109,9 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     ).toList();
     
     for (var entry in entries) {
-      final title = entry.humor.isNotEmpty 
-          ? entry.humor 
-          : '${entry.mood} ${entry.content.length > 30 ? entry.content.substring(0, 30) + "..." : entry.content}';
+      final title = entry.content.length > 30 
+          ? '${entry.content.substring(0, 30)}...' 
+          : entry.content;
       events.add(CalendarEvent(
         type: EventType.journal,
         title: title,
@@ -124,20 +163,10 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Header is managed by MainNavigationScreen
+    // This Scaffold only provides background color
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('📅 Personal Diary'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            onPressed: () {
-              _showAddJournalDialog(_selectedDay);
-            },
-            icon: const Icon(Icons.add),
-            tooltip: 'Add journal entry',
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.backgroundGrey,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -197,9 +226,14 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                         if (events.isNotEmpty) {
                           final firstEvent = events.first as CalendarEvent;
                           switch (firstEvent.type) {
+                            case EventType.reflection:
+                              final reflection = firstEvent.data as DailyReflection;
+                              emoji = reflection.moodEmoji.isNotEmpty 
+                                  ? reflection.moodEmoji 
+                                  : '📝';
+                              break;
                             case EventType.journal:
-                              final entry = firstEvent.data as JournalEntry;
-                              emoji = entry.mood;
+                              emoji = '📝';
                               break;
                             case EventType.departure:
                               emoji = '🛫';
@@ -269,9 +303,9 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
             ),
             const SizedBox(height: 8),
             TextButton.icon(
-              onPressed: () => _showAddJournalDialog(_selectedDay),
+              onPressed: () => _showAddNoteDialog(_selectedDay),
               icon: const Icon(Icons.add),
-              label: const Text('Add journal entry'),
+              label: const Text('Add note'),
             ),
           ],
         ),
@@ -294,7 +328,12 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                     icon: const Icon(Icons.edit),
                     onPressed: () => _editJournalEntry(event.data as JournalEntry),
                   )
-                : null,
+                : event.type == EventType.reflection
+                    ? IconButton(
+                        icon: const Icon(Icons.visibility),
+                        onPressed: () => _showReflectionDetails(event.data as DailyReflection),
+                      )
+                    : null,
             onTap: () => _handleEventTap(event),
           ),
         );
@@ -304,14 +343,19 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 
   Widget _getEventIcon(CalendarEvent event) {
     switch (event.type) {
-      case EventType.journal:
-        final entry = event.data as JournalEntry;
+      case EventType.reflection:
+        final reflection = event.data as DailyReflection;
         return CircleAvatar(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.purple,
           child: Text(
-            entry.mood,
+            reflection.moodEmoji.isNotEmpty ? reflection.moodEmoji : '📝',
             style: const TextStyle(fontSize: 20),
           ),
+        );
+      case EventType.journal:
+        return const CircleAvatar(
+          backgroundColor: Colors.blue,
+          child: Text('📝', style: TextStyle(fontSize: 20)),
         );
       case EventType.departure:
         return const CircleAvatar(
@@ -333,25 +377,22 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 
   Widget? _getEventSubtitle(CalendarEvent event) {
     switch (event.type) {
+      case EventType.reflection:
+        final reflection = event.data as DailyReflection;
+        if (reflection.activities.isNotEmpty) {
+          return Text('${reflection.activities.length} activities - ${reflection.activities.take(2).map((a) => a.name).join(", ")}');
+        }
+        return reflection.mood != null 
+            ? Text('Mood: ${reflection.moodEmoji}')
+            : const Text('Daily reflection');
       case EventType.journal:
         final entry = event.data as JournalEntry;
-        return Row(
-          children: [
-            Text(
-              entry.mood,
-              style: const TextStyle(fontSize: 20),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                entry.content.length > 50 
-                    ? '${entry.content.substring(0, 50)}...' 
-                    : entry.content,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+        return Text(
+          entry.content.length > 50 
+              ? '${entry.content.substring(0, 50)}...' 
+              : entry.content,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         );
       case EventType.departure:
         final offer = event.data as ProjectOffer;
@@ -368,6 +409,8 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
   void _handleEventTap(CalendarEvent event) {
     if (event.type == EventType.journal) {
       _showJournalDetails(event.data as JournalEntry);
+    } else if (event.type == EventType.reflection) {
+      _showReflectionDetails(event.data as DailyReflection);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(event.title)),
@@ -375,182 +418,301 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     }
   }
 
-  void _showAddJournalDialog(DateTime date) {
+  void _showAddNoteDialog(DateTime date) {
     final textController = TextEditingController();
-    String selectedMood = '😊';
     
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('📝 New Journal Entry - ${_formatDate(date)}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: textController,
-                decoration: const InputDecoration(
-                  hintText: 'Write your thoughts...',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 5,
-              ),
-              const SizedBox(height: 16),
-              const Text('How are you feeling?'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: ['😊', '😢', '😴', '🎉', '🙏', '😎', '😤', '❤️'].map((mood) {
-                  return ChoiceChip(
-                    label: Text(mood, style: const TextStyle(fontSize: 24)),
-                    selected: selectedMood == mood,
-                    onSelected: (selected) {
-                      setDialogState(() {
-                        selectedMood = mood;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-            ],
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.medium,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Row(
+                  children: [
+                    const Icon(Icons.note_add, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '📝 Add Note - ${_formatDate(date)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Scrollable content
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: textController,
+                          decoration: const InputDecoration(
+                            hintText: 'Write your note...',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 5,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Actions
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () async {
+                        if (textController.text.isNotEmpty) {
+                          final now = DateTime.now();
+                          final entry = JournalEntry(
+                            id: _uuid.v4(),
+                            date: date,
+                            content: textController.text,
+                            createdAt: now,
+                            mood: '📝', // Simple note icon
+                            humor: '', // No humor field
+                          );
+                          
+                          final success = await _journalService.addEntry(entry);
+                          if (success && mounted) {
+                            Navigator.pop(context);
+                            _loadData();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Note added!')),
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            FilledButton(
-              onPressed: () async {
-                if (textController.text.isNotEmpty) {
-                  final now = DateTime.now();
-                  final humorText = 'Humor ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                  final entry = JournalEntry(
-                    id: _uuid.v4(),
-                    date: date,
-                    content: textController.text,
-                    createdAt: now,
-                    mood: selectedMood,
-                    humor: humorText,
-                  );
-                  
-                  final success = await _journalService.addEntry(entry);
-                  if (success && mounted) {
-                    Navigator.pop(context);
-                    _loadData();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Journal entry added!')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
+  void _showAddJournalDialog(DateTime date) {
+    _showAddNoteDialog(date); // Redirect to note dialog
+  }
+
   void _editJournalEntry(JournalEntry entry) {
     final textController = TextEditingController(text: entry.content);
-    String selectedMood = entry.mood;
     
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('✏️ Edit Journal Entry - ${_formatDate(entry.date)}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: textController,
-                decoration: const InputDecoration(
-                  hintText: 'Write your thoughts...',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 5,
-              ),
-              const SizedBox(height: 16),
-              const Text('How are you feeling?'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: ['😊', '😢', '😴', '🎉', '🙏', '😎', '😤', '❤️'].map((mood) {
-                  return ChoiceChip(
-                    label: Text(mood, style: const TextStyle(fontSize: 24)),
-                    selected: selectedMood == mood,
-                    onSelected: (selected) {
-                      setDialogState(() {
-                        selectedMood = mood;
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-            ],
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.medium,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Delete Entry?'),
-                    content: const Text('Are you sure you want to delete this journal entry?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Row(
+                  children: [
+                    const Icon(Icons.edit, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '✏️ Edit Note - ${_formatDate(entry.date)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Delete'),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Scrollable content
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: textController,
+                          decoration: const InputDecoration(
+                            hintText: 'Write your note...',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 5,
+                        ),
+                      ],
+                    ),
                   ),
-                );
-                
-                if (confirmed == true && mounted) {
-                  await _journalService.deleteEntry(entry.id);
-                  Navigator.pop(context);
-                  _loadData();
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
+                ),
+                const SizedBox(height: 16),
+                // Actions
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Note?'),
+                            content: const Text('Are you sure you want to delete this note?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        
+                        if (confirmed == true && mounted) {
+                          await _journalService.deleteEntry(entry.id);
+                          Navigator.pop(context);
+                          _loadData();
+                        }
+                      },
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Delete'),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: () async {
+                            if (textController.text.isNotEmpty) {
+                              final now = DateTime.now();
+                              final updatedEntry = entry.copyWith(
+                                content: textController.text,
+                                updatedAt: now,
+                                humor: '', // No humor field
+                              );
+                              
+                              final success = await _journalService.updateEntry(updatedEntry);
+                              if (success && mounted) {
+                                Navigator.pop(context);
+                                _loadData();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Note updated!')),
+                                );
+                              }
+                            }
+                          },
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showReflectionDetails(DailyReflection reflection) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Text(
+              reflection.moodEmoji.isNotEmpty ? reflection.moodEmoji : '📝',
+              style: const TextStyle(fontSize: 32),
             ),
-            FilledButton(
-              onPressed: () async {
-                if (textController.text.isNotEmpty) {
-                  final now = DateTime.now();
-                  final humorText = 'Humor ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                  final updatedEntry = entry.copyWith(
-                    content: textController.text,
-                    mood: selectedMood,
-                    humor: humorText,
-                    updatedAt: now,
-                  );
-                  
-                  final success = await _journalService.updateEntry(updatedEntry);
-                  if (success && mounted) {
-                    Navigator.pop(context);
-                    _loadData();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Journal entry updated!')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Save'),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Daily Reflection - ${_formatDate(reflection.date)}',
+                style: const TextStyle(fontSize: 18),
+              ),
             ),
           ],
         ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (reflection.mood != null) ...[
+              Text(
+                'Mood: ${reflection.moodEmoji}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (reflection.activities.isNotEmpty) ...[
+              const Text(
+                'Activities:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ...reflection.activities.map((activity) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Text(activity.name),
+                    if (activity.rating != null) ...[
+                      const SizedBox(width: 8),
+                      Text(activity.ratingEmoji),
+                    ],
+                  ],
+                ),
+              )),
+            ] else
+              const Text('No activities recorded'),
+            const SizedBox(height: 16),
+            Text(
+              'Created: ${_formatDateTime(reflection.createdAt)}',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -561,11 +723,11 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Text(entry.mood, style: const TextStyle(fontSize: 32)),
+            const Text('📝', style: TextStyle(fontSize: 32)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _formatDate(entry.date),
+                'Note - ${_formatDate(entry.date)}',
                 style: const TextStyle(fontSize: 18),
               ),
             ),
@@ -625,7 +787,8 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 }
 
 enum EventType {
-  journal,
+  reflection,  // Daily Reflection
+  journal,     // Notes
   departure,
   returnDate,
   deadline,

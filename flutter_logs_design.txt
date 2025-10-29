@@ -1,0 +1,60 @@
+Launching lib/main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...             28,5s
+This app is linked to the debug service: ws://127.0.0.1:38523/h5mobcJHnnI=/ws
+Debug service listening on ws://127.0.0.1:38523/h5mobcJHnnI=/ws
+
+🔥  To hot restart changes while running, press "r" or "R".
+For a more detailed help message, press "h". To quit, press "q".
+
+A Dart VM Service on Chrome is available at: http://127.0.0.1:38523/h5mobcJHnnI=
+🔧 Loading Screen Configuration:
+   • Minimum Duration: 3000ms (3s)
+   • Maximum Duration: 8000ms (8s)
+   • Fade Out Duration: 800ms (0.8s)
+   • Debug Mode: true
+🆕 Log system initialized (Web mode - console only)
+🚀 Tmelnik App started - 2025-10-29 12:25:04.911
+📱 Platform: Web
+📝 [2025-10-29T12:25:04.915] [INFO] App starting...
+📝 [2025-10-29T12:25:04.916] [FIREBASE] 🔥 FIREBASE: Starting Firebase initialization...
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:9100?uri=http://127.0.0.1:38523/h5mobcJHnnI=
+📝 [2025-10-29T12:25:05.872] [FIREBASE] 🔥 FIREBASE: Firebase initialized successfully
+✅ Firebase initialized successfully
+📝 [2025-10-29T12:25:05.873] [INFO] Starting TmelnikApp...
+📝 [2025-10-29T12:25:05.909] [UI] 🎨 UI: Building TmelnikApp widget
+📝 [2025-10-29T12:25:06.107] [UI] 🎨 UI: Building AuthWrapper widget
+📝 [2025-10-29T12:25:06.123] [AUTH] 🔐 AUTH: Auth state: checking...
+📝 [2025-10-29T12:25:06.240] [AUTH] 🔐 AUTH: User is authenticated: flapore1711@gmail.com
+📝 [2025-10-29T12:25:06.241] [NAV] 🧭 NAV: Navigating to MainNavigationScreen
+📝 [2025-10-29T12:25:06.244] [UI] 🎨 UI: Building MainNavigationScreen widget
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 0
+✅ Is admin: false
+🎬 Flutter first frame detected (backup method)
+🎯 Flutter is ready! Hiding loading screen...
+🎭 Starting fade out animation...
+🎯 Flutter marked as ready! Loading screen will hide immediately.
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+🔔 🎉 Fresh project alert! Join test in berlin starting 24 November
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+✅ Loading screen hidden
+📝 [2025-10-29T12:25:19.596] [NAV] 🧭 NAV: Navigated to screen: 1
+📝 [2025-10-29T12:25:19.602] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T12:25:21.670] [NAV] 🧭 NAV: Navigated to screen: 2
+📝 [2025-10-29T12:25:21.672] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T12:25:22.999] [NAV] 🧭 NAV: Navigated to screen: 3
+📝 [2025-10-29T12:25:23.003] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T12:25:25.297] [AUTH] 🔐 AUTH: User initiated logout
+[GSI_LOGGER]: Evaluating FedCM mode support.
+[GSI_LOGGER]: FedCM mode supported.
+[GSI_LOGGER-TOKEN_CLIENT]: Instantiated.
+📝 [2025-10-29T12:25:25.385] [SUCCESS] ✅ SUCCESS: User logged out successfully
+📝 [2025-10-29T12:25:25.389] [AUTH] 🔐 AUTH: User is not authenticated, showing auth screen
+📝 [2025-10-29T12:25:25.389] [NAV] 🧭 NAV: Navigating to AuthScreen
+📝 [2025-10-29T12:25:25.401] [UI] 🎨 UI: Building AuthScreen widget
+Application finished.

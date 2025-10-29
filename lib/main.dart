@@ -13,6 +13,7 @@ import 'screens/add_project_screen.dart';
 import 'screens/diary_calendar_screen.dart';
 import 'screens/edit_project_offer_screen.dart';
 import 'screens/project_offers_screen.dart';
+import 'screens/daily_reflection_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -334,47 +335,82 @@ class _AuthScreenState extends State<AuthScreen> {
     debugLogger.ui('Building AuthScreen widget');
     
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.primary.withOpacity(0.8),
-              Theme.of(context).colorScheme.secondary.withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: Center(
+      backgroundColor: AppColors.backgroundGrey,
+      body: SafeArea(
           child: SingleChildScrollView(
-            child: Card(
-              margin: const EdgeInsets.all(20),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
                   child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                  const SizedBox(height: 20),
+                  // Logo/Icon section - icona Tmelnik senza quadrato
+                  Image.asset(
+                    'assets/images/app_icon.png',
+                    width: 80,
+                    height: 80,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback se l'icona non esiste
+                      return const Icon(
+                        Icons.account_tree,
+                        size: 80,
+                        color: AppColors.primaryBlue,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Title
                       Text(
                         _isLogin ? 'Welcome Back!' : 'Join Tmelnik',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    style: const TextStyle(
+                      fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _isLogin 
+                        ? 'Sign in to continue your adventure'
+                        : 'Create your account to get started',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
 
+                  // Login Card
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.cardBackground,
+                      borderRadius: AppRadius.large,
+                      boxShadow: AppShadows.soft,
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                       // Google Sign In button (prominent)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
+                          ElevatedButton.icon(
                           onPressed: _isLoading ? null : _signInWithGoogle,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: Colors.black87,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                              foregroundColor: AppColors.textPrimary,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                             side: BorderSide(color: Colors.grey[300]!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppRadius.medium,
+                              ),
                           ),
                           icon: const Icon(
                             Icons.g_mobiledata,
@@ -385,16 +421,21 @@ class _AuthScreenState extends State<AuthScreen> {
                             'Continue with Google',
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
+                                fontSize: 16,
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                          const SizedBox(height: 20),
 
                       // Divider
                       Row(
                         children: [
-                          const Expanded(child: Divider()),
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.grey[300],
+                                  thickness: 1,
+                                ),
+                              ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
@@ -402,24 +443,44 @@ class _AuthScreenState extends State<AuthScreen> {
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontWeight: FontWeight.w500,
+                                    fontSize: 12,
                               ),
                             ),
                           ),
-                          const Expanded(child: Divider()),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.grey[300],
+                                  thickness: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
 
                       // Email input
                       TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Email Address',
+                              labelStyle: const TextStyle(color: AppColors.textSecondary),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          prefixIcon: const Icon(Icons.email),
+                                borderRadius: AppRadius.medium,
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: AppRadius.medium,
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: AppRadius.medium,
+                                borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: AppColors.backgroundGrey,
+                              prefixIcon: const Icon(Icons.email, color: AppColors.textSecondary, size: 20),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
                         keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
                         autocorrect: false,
                         textCapitalization: TextCapitalization.none,
                         validator: (value) {
@@ -431,6 +492,10 @@ class _AuthScreenState extends State<AuthScreen> {
                         onSaved: (value) {
                           _email = value!;
                         },
+                            onFieldSubmitted: (_) {
+                              // Focus on password field when Enter is pressed
+                              FocusScope.of(context).nextFocus();
+                            },
                       ),
                       const SizedBox(height: 16),
 
@@ -438,12 +503,26 @@ class _AuthScreenState extends State<AuthScreen> {
                       TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Password',
+                              labelStyle: const TextStyle(color: AppColors.textSecondary),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          prefixIcon: const Icon(Icons.lock),
+                                borderRadius: AppRadius.medium,
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: AppRadius.medium,
+                                borderSide: BorderSide(color: Colors.grey[300]!),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: AppRadius.medium,
+                                borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+                              ),
+                              filled: true,
+                              fillColor: AppColors.backgroundGrey,
+                              prefixIcon: const Icon(Icons.lock, color: AppColors.textSecondary, size: 20),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
                         obscureText: true,
+                            textInputAction: TextInputAction.done,
                         validator: (value) {
                           if (value == null || value.isEmpty || value.length < 6) {
                             return 'Password must be at least 6 characters long.';
@@ -453,16 +532,26 @@ class _AuthScreenState extends State<AuthScreen> {
                         onSaved: (value) {
                           _password = value!;
                         },
-                      ),
-                      const SizedBox(height: 24),
+                            onFieldSubmitted: (_) {
+                              // Submit form when Enter is pressed on password field
+                              if (!_isLoading) {
+                                _submit();
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 20),
 
                       // Submit button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
+                          ElevatedButton(
                           onPressed: _isLoading ? null : _submit,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: AppColors.primaryBlue,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppRadius.medium,
+                              ),
                           ),
                           child: _isLoading
                               ? const SizedBox(
@@ -473,7 +562,12 @@ class _AuthScreenState extends State<AuthScreen> {
                                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                   ),
                                 )
-                              : Text(_isLogin ? 'Sign In' : 'Create Account'),
+                                : Text(
+                                    _isLogin ? 'Sign In' : 'Create Account',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -487,32 +581,43 @@ class _AuthScreenState extends State<AuthScreen> {
                                   _isLogin = !_isLogin;
                                 });
                               },
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primaryBlue,
+                            ),
                         child: Text(
                           _isLogin
                               ? 'Create an account'
                               : 'I already have an account',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Guest mode button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
+                  OutlinedButton(
                           onPressed: _isLoading ? null : () {
                             widget.onGuestModeRequested?.call();
                           },
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
+                      foregroundColor: AppColors.primaryBlue,
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                      side: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.medium,
                             ),
                           ),
                           child: const Text(
                             'Continue as Guest',
                             style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                            ),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
                           ),
                         ),
                       ),
@@ -520,14 +625,13 @@ class _AuthScreenState extends State<AuthScreen> {
                       Text(
                         'View projects and news without login',
                         style: TextStyle(
-                          fontSize: 12,
+                      fontSize: 11,
                           color: Colors.grey[600],
                         ),
                         textAlign: TextAlign.center,
                       ),
+                  const SizedBox(height: 20),
                     ],
-                  ),
-                ),
               ),
             ),
           ),
@@ -558,48 +662,130 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     if (widget.isGuestMode) {
       return [
         const ProjectOffersScreen(), // Projects are always accessible
-        GuestLoginScreen(title: 'Feedback', onLoginRequested: widget.onLoginRequested),
+        GuestLoginScreen(title: 'Daily reflection', onLoginRequested: widget.onLoginRequested),
         GuestLoginScreen(title: 'Diary', onLoginRequested: widget.onLoginRequested), // Diary requires login
         const NewsScreen(), // News are always accessible
       ];
     }
     return [
       const ProjectOffersScreen(),
-      const FeedbackScreen(),
+      const DailyReflectionScreen(),
       const DiaryCalendarScreen(),
       const NewsScreen(),
     ];
   }
 
-  String? get _currentScreenTitle {
-    // Hide AppBar title for Projects screen (index 0) - header is shown in the screen itself
-    if (_currentIndex == 0) {
-      return null; // This will hide the title
+  String get _currentScreenTitle {
+    // Centralized header titles for all screens
+    switch (_currentIndex) {
+      case 0:
+        return 'Plan your next trip';
+      case 1:
+        return 'Daily reflection';
+      case 2:
+        return 'Diary';
+      case 3:
+        return 'News';
+      default:
+        return widget.isGuestMode ? 'Tmelnik (Guest)' : 'Tmelnik';
+    }
+  }
+
+  /// Builds a reusable header widget matching the Projects screen style
+  Widget _buildHeader(String title) {
+    final isGuestMode = widget.isGuestMode;
+    
+    // Get emoji based on screen title
+    String headerEmoji;
+    switch (title) {
+      case 'Plan your next trip':
+        headerEmoji = '🌍';
+        break;
+      case 'Daily reflection':
+        headerEmoji = '✏️';
+        break;
+      case 'Diary':
+        headerEmoji = '📅';
+        break;
+      case 'News':
+        headerEmoji = '📰';
+        break;
+      default:
+        headerEmoji = '🌍';
     }
     
-    if (widget.isGuestMode) {
-      switch (_currentIndex) {
-        case 1:
-          return 'Feedback';
-        case 2:
-          return 'Diary';
-        case 3:
-          return 'News';
-        default:
-          return 'Tmelnik (Guest)';
-      }
-    } else {
-      switch (_currentIndex) {
-        case 1:
-          return 'Feedback';
-        case 2:
-          return 'Diary';
-        case 3:
-          return 'News';
-        default:
-          return 'Tmelnik';
-      }
-    }
+    // Emoji container size (square)
+    const double emojiSize = 40.0;
+    const double emojiContainerSize = 56.0; // Container size (square)
+    const double emojiPadding = (emojiContainerSize - emojiSize) / 2; // Center the emoji
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      color: Colors.white,
+      width: double.infinity,
+      height: emojiContainerSize + 24, // Container size + vertical padding
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Emoji container - square with fixed size
+          SizedBox(
+            width: emojiContainerSize,
+            height: emojiContainerSize,
+            child: Container(
+              padding: EdgeInsets.all(emojiPadding),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: AppColors.backgroundGrey,
+              ),
+              child: Center(
+                child: Text(
+                  headerEmoji,
+                  style: const TextStyle(
+                    fontSize: emojiSize,
+                    height: 1.0, // Remove extra line height
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Titolo - vertically centered
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                  height: 1.2, // Better line height
+                ),
+              ),
+            ),
+          ),
+          // Profile/Logout button
+            IconButton(
+              onPressed: () async {
+              if (isGuestMode) {
+                widget.onLoginRequested?.call();
+              } else {
+                await debugLogger.auth('User initiated logout');
+                await FirebaseAuth.instance.signOut();
+                await GoogleSignIn().signOut();
+                await debugLogger.success('User logged out successfully');
+              }
+            },
+            icon: Icon(
+              isGuestMode ? Icons.login : Icons.person,
+              color: Colors.black,
+            ),
+            tooltip: isGuestMode ? 'Login' : 'Profile',
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -607,41 +793,26 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     debugLogger.ui('Building MainNavigationScreen widget');
     
     return Scaffold(
-      appBar: _currentScreenTitle != null
-          ? AppBar(
-              title: Text(_currentScreenTitle!),
-              centerTitle: true,
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0,
-        actions: [
-          if (widget.isGuestMode)
-            IconButton(
-              onPressed: widget.onLoginRequested,
-              icon: const Icon(Icons.login),
-              tooltip: 'Login',
-            )
-          else
-            IconButton(
-              onPressed: () async {
-                await debugLogger.auth('User initiated logout');
-                await FirebaseAuth.instance.signOut();
-                await GoogleSignIn().signOut(); // Sign out from Google as well
-                await debugLogger.success('User logged out successfully');
-              },
-              icon: const Icon(Icons.logout),
-            ),
-        ],
-            )
-          : PreferredSize(
-              preferredSize: const Size.fromHeight(0),
-              child: Container(), // Empty AppBar for Projects screen
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80), // Increased to match new header height
+        child: _buildHeader(_currentScreenTitle),
       ),
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -650,8 +821,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           });
           debugLogger.navigation('Navigated to screen: $index');
         },
-        selectedItemColor: Theme.of(context).colorScheme.primary,
+          selectedItemColor: AppColors.primaryBlue,
         unselectedItemColor: Colors.grey[600],
+          backgroundColor: Colors.white,
+          elevation: 0,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.work_outline),
@@ -659,9 +834,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Offers',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.feedback_outlined),
-            activeIcon: Icon(Icons.feedback),
-            label: 'Feedback',
+              icon: Icon(Icons.edit_note_outlined),
+              activeIcon: Icon(Icons.edit_note),
+              label: 'Reflection',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),
@@ -675,8 +850,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
         ],
       ),
-    );
-  }
+          ),
+        );
+      }
 }
 
 // ProjectOffersScreen is now in screens/project_offers_screen.dart
@@ -687,29 +863,51 @@ class FeedbackScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundGrey,
       body: Center(
+        child: Container(
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: AppRadius.large,
+            boxShadow: AppShadows.soft,
+          ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: AppRadius.large,
+                ),
+                child: const Icon(
               Icons.feedback,
-              size: 80,
+                  size: 64,
               color: Colors.green,
             ),
-            const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 24),
             const Text(
               'Feedback Collection',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+              const SizedBox(height: 16),
+              Text(
               'This section will collect user feedback\nand suggestions.',
               textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -723,29 +921,51 @@ class NewsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundGrey,
       body: Center(
+        child: Container(
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: AppRadius.large,
+            boxShadow: AppShadows.soft,
+          ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: AppRadius.large,
+                ),
+                child: const Icon(
               Icons.newspaper,
-              size: 80,
+                  size: 64,
               color: Colors.red,
             ),
-            const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 24),
             const Text(
               'Hot News & Interactions',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+              const SizedBox(height: 16),
+              Text(
               'This section will show the latest news\nand user interactions.',
               textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -765,32 +985,46 @@ class GuestLoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundGrey,
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: Container(
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: AppRadius.large,
+            boxShadow: AppShadows.soft,
+          ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: AppRadius.large,
+                ),
+                child: Icon(
                 Icons.lock_outline,
-                size: 80,
+                  size: 64,
                 color: Colors.grey[600],
+                ),
               ),
               const SizedBox(height: 24),
-              Text(
+              const Text(
                 'Login Required',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Please log in to access $title section',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[600],
+                  color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -800,9 +1034,14 @@ class GuestLoginScreen extends StatelessWidget {
                 icon: const Icon(Icons.login),
                 label: const Text('Login'),
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
                     vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppRadius.medium,
                   ),
                 ),
               ),
@@ -811,7 +1050,7 @@ class GuestLoginScreen extends StatelessWidget {
                 'Continue as guest to view projects and news',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[500],
+                  color: Colors.grey[600],
                 ),
                 textAlign: TextAlign.center,
               ),
