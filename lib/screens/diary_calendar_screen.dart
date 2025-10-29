@@ -182,17 +182,39 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   startingDayOfWeek: StartingDayOfWeek.monday,
                   calendarStyle: CalendarStyle(
                     outsideDaysVisible: false,
+                    // Selected day: blue background with white text
                     selectedDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: AppColors.primaryBlue,
                       shape: BoxShape.circle,
                     ),
+                    selectedTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    // Today: light blue background
                     todayDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                      color: AppColors.primaryBlue.withOpacity(0.2),
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primaryBlue,
+                        width: 2,
+                      ),
                     ),
-                    markerDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary,
-                      shape: BoxShape.circle,
+                    todayTextStyle: TextStyle(
+                      color: AppColors.primaryBlue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    // Regular day styling
+                    defaultTextStyle: const TextStyle(
+                      color: AppColors.textPrimary,
+                    ),
+                    // Weekend styling
+                    weekendTextStyle: TextStyle(
+                      color: Colors.grey[600],
+                    ),
+                    // Outside month days
+                    outsideTextStyle: TextStyle(
+                      color: Colors.grey[300],
                     ),
                   ),
                   headerStyle: HeaderStyle(
@@ -200,8 +222,28 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                     titleCentered: true,
                     formatButtonShowsNext: false,
                     formatButtonDecoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
+                      color: AppColors.backgroundGrey,
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.grey[300]!,
+                      ),
+                    ),
+                    formatButtonTextStyle: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    titleTextStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                    leftChevronIcon: Icon(
+                      Icons.chevron_left,
+                      color: AppColors.textPrimary,
+                    ),
+                    rightChevronIcon: Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   onDaySelected: (selectedDay, focusedDay) {
@@ -220,54 +262,58 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   },
                   calendarBuilders: CalendarBuilders(
                     markerBuilder: (context, date, events) {
-                      if (events.isNotEmpty) {
-                        // Get emoji for first event
-                        String emoji = '📅';
-                        if (events.isNotEmpty) {
-                          final firstEvent = events.first as CalendarEvent;
-                          switch (firstEvent.type) {
-                            case EventType.reflection:
-                              final reflection = firstEvent.data as DailyReflection;
-                              emoji = reflection.moodEmoji.isNotEmpty 
-                                  ? reflection.moodEmoji 
-                                  : '📝';
-                              break;
-                            case EventType.journal:
-                              emoji = '📝';
-                              break;
-                            case EventType.departure:
-                              emoji = '🛫';
-                              break;
-                            case EventType.returnDate:
-                              emoji = '🛬';
-                              break;
-                            case EventType.deadline:
-                              emoji = '⏰';
-                              break;
-                          }
-                        }
-                        
-                        return Positioned(
-                          bottom: 1,
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.secondary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                emoji,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
+                      if (events.isEmpty) {
+                        return const SizedBox.shrink();
                       }
-                      return const SizedBox.shrink();
+                      
+                      // Get emoji for first event
+                      String emoji = '📅';
+                      
+                      final firstEvent = events.first as CalendarEvent;
+                      final isSelected = isSameDay(date, _selectedDay);
+                      
+                      switch (firstEvent.type) {
+                        case EventType.reflection:
+                          final reflection = firstEvent.data as DailyReflection;
+                          emoji = reflection.moodEmoji.isNotEmpty 
+                              ? reflection.moodEmoji 
+                              : '📝';
+                          // Emoji Unicode sono già colorate, non possiamo cambiarle
+                          break;
+                        case EventType.journal:
+                          emoji = '📝';
+                          break;
+                        case EventType.departure:
+                          emoji = '🛫';
+                          break;
+                        case EventType.returnDate:
+                          emoji = '🛬';
+                          break;
+                        case EventType.deadline:
+                          emoji = '⏰';
+                          break;
+                      }
+                      
+                      // Show emoji positioned at bottom center to avoid overlap with date numbers
+                      // Use smaller size and proper positioning
+                      return Positioned(
+                        bottom: 2,
+                        right: 4,
+                        child: Text(
+                          emoji,
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.0, // Remove extra line height
+                            shadows: isSelected ? [
+                              const Shadow(
+                                color: Colors.black54,
+                                blurRadius: 3,
+                                offset: Offset(0, 1),
+                              ),
+                            ] : null,
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ),

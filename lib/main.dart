@@ -727,24 +727,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Emoji container - square with fixed size
-          SizedBox(
+          // Emoji container - square with fixed size, properly centered
+          Container(
             width: emojiContainerSize,
             height: emojiContainerSize,
-            child: Container(
-              padding: EdgeInsets.all(emojiPadding),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: AppColors.backgroundGrey,
-              ),
-              child: Center(
-                child: Text(
-                  headerEmoji,
-                  style: const TextStyle(
-                    fontSize: emojiSize,
-                    height: 1.0, // Remove extra line height
-                  ),
-                ),
+            alignment: Alignment.center, // Center the content
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: AppColors.backgroundGrey,
+            ),
+            child: Text(
+              headerEmoji,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: emojiSize,
+                height: 1.0, // Remove extra line height
               ),
             ),
           ),
