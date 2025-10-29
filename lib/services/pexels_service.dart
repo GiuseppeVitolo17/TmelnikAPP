@@ -8,15 +8,14 @@ class PexelsService {
   static const String _baseUrl = 'https://api.pexels.com/v1/search';
   
   /// Returns a customized search query for specific cities
-  /// This helps get more appropriate images (panoramas, famous monuments) instead of artistic ones
+  /// This helps get more appropriate images (panoramas, famous monuments, churches) instead of artistic ones
   static String _getCityQuery(String city) {
-    final cityLower = city.toLowerCase();
+    final cityLower = city.toLowerCase().trim();
     
     // Custom queries for specific cities to get better results
     switch (cityLower) {
       case 'krakow':
       case 'cracovia':
-        return 'Krakow main square panorama'; // Piazza principale o panoramica normale
       case 'kraków':
         return 'Krakow main square panorama';
       case 'berlin':
@@ -34,10 +33,28 @@ class PexelsService {
         return 'Vienna city center panorama';
       case 'budapest':
         return 'Budapest parliament panorama';
+      case 'ischia':
+        return 'Ischia island churches monuments';
+      case 'isola d\'ischia':
+        return 'Ischia island churches monuments';
       default:
-        // Default fallback: try panorama first, then skyline
+        // Default: try city name with panorama
         return '$city panorama';
     }
+  }
+  
+  /// Returns a list of fallback queries to try if the main query fails
+  /// Includes churches, monuments, architecture, and landmarks
+  static List<String> _getFallbackQueries(String city) {
+    final cityLower = city.toLowerCase().trim();
+    return [
+      '$city churches',      // Try churches first
+      '$city monuments',     // Then monuments
+      '$city architecture',   // Architecture
+      '$city landmarks',     // Landmarks
+      '$city skyline',       // Skyline
+      '$city',               // Just the city name as last resort
+    ];
   }
   
   /// Fetches a landscape image URL for a given city
@@ -45,20 +62,39 @@ class PexelsService {
   /// (ProjectCard will show inline placeholder widget for empty string)
   static Future<String> fetchCityImageUrl(String city) async {
     try {
+      debugPrint('🖼️ [PEXELS] Searching for images of: $city');
+      
       // First try with custom query
       String query = _getCityQuery(city);
+      debugPrint('🖼️ [PEXELS] Trying primary query: "$query"');
       String? imageUrl = await _tryFetchImage(query);
       
-      // If no result, try fallback with skyline query
+      // If no result, try all fallback queries
       if (imageUrl == null || imageUrl.isEmpty) {
-        imageUrl = await _tryFetchImage('$city skyline');
+        final fallbackQueries = _getFallbackQueries(city);
+        debugPrint('🖼️ [PEXELS] Primary query failed, trying ${fallbackQueries.length} fallback queries');
+        
+        for (final fallbackQuery in fallbackQueries) {
+          debugPrint('🖼️ [PEXELS] Trying fallback: "$fallbackQuery"');
+          imageUrl = await _tryFetchImage(fallbackQuery);
+          if (imageUrl != null && imageUrl.isNotEmpty) {
+            debugPrint('🖼️ [PEXELS] ✅ Found image with query: "$fallbackQuery"');
+            break;
+          }
+        }
+      } else {
+        debugPrint('🖼️ [PEXELS] ✅ Found image with primary query: "$query"');
+      }
+      
+      if (imageUrl == null || imageUrl.isEmpty) {
+        debugPrint('🖼️ [PEXELS] ❌ No image found for $city after all queries');
       }
       
       return imageUrl ?? '';
     } catch (e) {
       // Log error silently and return empty string
       // ProjectCard will handle empty string and show inline placeholder
-      debugPrint('Pexels API error for $city: $e');
+      debugPrint('🖼️ [PEXELS] ❌ Error fetching image for $city: $e');
       return '';
     }
   }
@@ -84,15 +120,24 @@ class PexelsService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final photos = data['photos'] as List?;
+        final totalResults = data['total_results'] as int? ?? 0;
+        
+        debugPrint('🖼️ [PEXELS] Query "$query": status ${response.statusCode}, found $totalResults results');
         
         if (photos != null && photos.isNotEmpty) {
           final photo = photos[0] as Map<String, dynamic>;
           final src = photo['src'] as Map<String, dynamic>?;
           
           if (src != null && src.containsKey('landscape')) {
-            return src['landscape'] as String;
+            final imageUrl = src['landscape'] as String;
+            debugPrint('🖼️ [PEXELS] ✅ Successfully fetched image URL for "$query"');
+            return imageUrl;
           }
+        } else {
+          debugPrint('🖼️ [PEXELS] ⚠️ No photos found for query "$query"');
         }
+      } else {
+        debugPrint('🖼️ [PEXELS] ⚠️ HTTP error ${response.statusCode} for query "$query"');
       }
       
       return null;
