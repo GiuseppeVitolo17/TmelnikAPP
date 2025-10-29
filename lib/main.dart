@@ -14,6 +14,7 @@ import 'screens/diary_calendar_screen.dart';
 import 'screens/edit_project_offer_screen.dart';
 import 'screens/project_offers_screen.dart';
 import 'screens/daily_reflection_screen.dart';
+import 'screens/news_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -912,62 +913,7 @@ class FeedbackScreen extends StatelessWidget {
 }
 
 
-class NewsScreen extends StatelessWidget {
-  const NewsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundGrey,
-      body: Center(
-        child: Container(
-          margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: AppRadius.large,
-            boxShadow: AppShadows.soft,
-          ),
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-          children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: AppRadius.large,
-                ),
-                child: const Icon(
-              Icons.newspaper,
-                  size: 64,
-              color: Colors.red,
-            ),
-              ),
-              const SizedBox(height: 24),
-            const Text(
-              'Hot News & Interactions',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-              ),
-            ),
-              const SizedBox(height: 16),
-              Text(
-              'This section will show the latest news\nand user interactions.',
-              textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
-                ),
-            ),
-          ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+// NewsScreen is now in screens/news_screen.dart with RSS feed integration
 
 class GuestLoginScreen extends StatelessWidget {
   final String title;

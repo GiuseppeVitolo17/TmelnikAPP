@@ -21,22 +21,85 @@ class NewsCard extends StatelessWidget {
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppShadows.soft,
+        border: newsItem.isNew || newsItem.isUpdated
+            ? Border.all(
+                color: newsItem.isNew ? Colors.green : Colors.orange,
+                width: 2,
+              )
+            : null,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Date
-            if (newsItem.date.isNotEmpty)
-              Text(
-                _formatDate(newsItem.date),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+            // Date and status badges row
+            Row(
+              children: [
+                // Date
+                Expanded(
+                  child: Text(
+                    newsItem.formattedDate.isNotEmpty 
+                        ? newsItem.formattedDate
+                        : newsItem.date,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
                 ),
-              ),
-            if (newsItem.date.isNotEmpty) const SizedBox(height: 8),
+                // New/Updated badges
+                if (newsItem.isNew)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.fiber_new, size: 14, color: Colors.green[700]),
+                        const SizedBox(width: 4),
+                        Text(
+                          'NEW',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (newsItem.isUpdated && !newsItem.isNew)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange, width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.update, size: 14, color: Colors.orange[700]),
+                        const SizedBox(width: 4),
+                        Text(
+                          'UPDATED',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
             
             // Title
             Text(
@@ -50,17 +113,18 @@ class NewsCard extends StatelessWidget {
             const SizedBox(height: 12),
             
             // Summary (max 3 lines)
-            Text(
-              newsItem.summary,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-                height: 1.5,
+            if (newsItem.summary.isNotEmpty)
+              Text(
+                newsItem.summary,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+            if (newsItem.summary.isNotEmpty) const SizedBox(height: 16),
             
             // Read more button
             SizedBox(
@@ -91,7 +155,8 @@ class NewsCard extends StatelessWidget {
     );
   }
 
-  /// Formats the date string for display.
+  /// Formats the date string for display (deprecated - use newsItem.formattedDate instead).
+  @Deprecated('Use newsItem.formattedDate instead')
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return '';
     

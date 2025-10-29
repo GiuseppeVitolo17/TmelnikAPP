@@ -466,6 +466,9 @@ class _DailyReflectionScreenState extends State<DailyReflectionScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Spacing below header (like Projects screen)
+            const SizedBox(height: 16),
+            
             // Mood selection buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -34,9 +34,9 @@ class PexelsService {
       case 'budapest':
         return 'Budapest parliament panorama';
       case 'ischia':
-        return 'Ischia island churches monuments';
       case 'isola d\'ischia':
-        return 'Ischia island churches monuments';
+        // Very specific query to get Ischia, Italy images, not other islands
+        return 'Ischia Italy island beach panorama';
       default:
         // Default: try city name with panorama
         return '$city panorama';
@@ -103,7 +103,7 @@ class PexelsService {
   static Future<String?> _tryFetchImage(String query) async {
     try {
       final encodedQuery = Uri.encodeComponent(query);
-      final uri = Uri.parse('$_baseUrl?query=$encodedQuery&per_page=1&orientation=landscape');
+      final uri = Uri.parse('$_baseUrl?query=$encodedQuery&per_page=5&orientation=landscape');
       
       final response = await http.get(
         uri,
@@ -125,12 +125,48 @@ class PexelsService {
         debugPrint('🖼️ [PEXELS] Query "$query": status ${response.statusCode}, found $totalResults results');
         
         if (photos != null && photos.isNotEmpty) {
+          // For Ischia, try to filter out Montenegro/Kotor results
+          if (query.toLowerCase().contains('ischia')) {
+            for (final photo in photos) {
+              final photoMap = photo as Map<String, dynamic>;
+              final photographer = (photoMap['photographer'] as String? ?? '').toLowerCase();
+              final alt = (photoMap['alt'] as String? ?? '').toLowerCase();
+              final url = (photoMap['url'] as String? ?? '').toLowerCase();
+              
+              // Skip images that mention Montenegro or Kotor
+              if (photographer.contains('montenegro') || 
+                  alt.contains('montenegro') || 
+                  alt.contains('kotor') ||
+                  url.contains('montenegro') ||
+                  url.contains('kotor')) {
+                debugPrint('🖼️ [PEXELS] ⚠️ Skipping image (Montenegro detected): $alt');
+                continue;
+              }
+              
+              // Prefer images that mention Italy, Ischia, or Naples
+              if (alt.contains('italy') || 
+                  alt.contains('ischia') || 
+                  alt.contains('napoli') ||
+                  alt.contains('naples') ||
+                  photographer.contains('italy')) {
+                final src = photoMap['src'] as Map<String, dynamic>?;
+                if (src != null && src.containsKey('landscape')) {
+                  final imageUrl = src['landscape'] as String;
+                  debugPrint('🖼️ [PEXELS] ✅ Found Ischia image (Italy): "$alt"');
+                  return imageUrl;
+                }
+              }
+            }
+          }
+          
+          // Default: take first photo
           final photo = photos[0] as Map<String, dynamic>;
           final src = photo['src'] as Map<String, dynamic>?;
           
           if (src != null && src.containsKey('landscape')) {
             final imageUrl = src['landscape'] as String;
-            debugPrint('🖼️ [PEXELS] ✅ Successfully fetched image URL for "$query"');
+            final alt = (photo['alt'] as String? ?? '');
+            debugPrint('🖼️ [PEXELS] ✅ Successfully fetched image URL for "$query" (alt: $alt)');
             return imageUrl;
           }
         } else {
@@ -143,7 +179,7 @@ class PexelsService {
       return null;
     } catch (e) {
       // Silently handle errors - debugLogger would be better but keeping it simple
-      debugPrint('Pexels API fetch error for query "$query": $e');
+      debugPrint('🖼️ [PEXELS] ❌ Pexels API fetch error for query "$query": $e');
       return null;
     }
   }

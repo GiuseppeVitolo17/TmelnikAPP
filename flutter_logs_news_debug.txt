@@ -1,0 +1,114 @@
+Launching lib/main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...             30,0s
+This app is linked to the debug service: ws://127.0.0.1:33531/ADOP6Wdv6gs=/ws
+Debug service listening on ws://127.0.0.1:33531/ADOP6Wdv6gs=/ws
+
+🔥  To hot restart changes while running, press "r" or "R".
+For a more detailed help message, press "h". To quit, press "q".
+
+A Dart VM Service on Chrome is available at: http://127.0.0.1:33531/ADOP6Wdv6gs=
+🔧 Loading Screen Configuration:
+   • Minimum Duration: 3000ms (3s)
+   • Maximum Duration: 8000ms (8s)
+   • Fade Out Duration: 800ms (0.8s)
+   • Debug Mode: true
+🆕 Log system initialized (Web mode - console only)
+🚀 Tmelnik App started - 2025-10-29 13:41:15.939
+📱 Platform: Web
+📝 [2025-10-29T13:41:15.942] [INFO] App starting...
+📝 [2025-10-29T13:41:15.942] [FIREBASE] 🔥 FIREBASE: Starting Firebase initialization...
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:9101?uri=http://127.0.0.1:33531/ADOP6Wdv6gs=
+📝 [2025-10-29T13:41:16.774] [FIREBASE] 🔥 FIREBASE: Firebase initialized successfully
+✅ Firebase initialized successfully
+📝 [2025-10-29T13:41:16.776] [INFO] Starting TmelnikApp...
+📝 [2025-10-29T13:41:16.824] [UI] 🎨 UI: Building TmelnikApp widget
+📝 [2025-10-29T13:41:16.970] [UI] 🎨 UI: Building AuthWrapper widget
+📝 [2025-10-29T13:41:16.980] [AUTH] 🔐 AUTH: Auth state: checking...
+📝 [2025-10-29T13:41:17.058] [AUTH] 🔐 AUTH: User is authenticated: flapore1711@gmail.com
+📝 [2025-10-29T13:41:17.059] [NAV] 🧭 NAV: Navigating to MainNavigationScreen
+📝 [2025-10-29T13:41:17.062] [UI] 🎨 UI: Building MainNavigationScreen widget
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 0
+✅ Is admin: false
+🖼️ [PEXELS] Searching for images of: Berlin
+🖼️ [PEXELS] Trying primary query: "Berlin Brandenburg Gate panorama"
+🖼️ [PEXELS] Searching for images of: Brno
+🖼️ [PEXELS] Trying primary query: "Brno city center panorama"
+🖼️ [PEXELS] Searching for images of: Krakow
+🖼️ [PEXELS] Trying primary query: "Krakow main square panorama"
+🎬 Flutter first frame detected (backup method)
+🎯 Flutter is ready! Hiding loading screen...
+🎭 Starting fade out animation...
+🎯 Flutter marked as ready! Loading screen will hide immediately.
+🖼️ [PEXELS] Query "Krakow main square panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Krakow main square panorama" (alt: Eros Bendato sculpture in Krakow's Main Square with historical architecture in the background.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Krakow main square panorama"
+🖼️ [PEXELS] Query "Berlin Brandenburg Gate panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Berlin Brandenburg Gate panorama" (alt: The majestic Brandenburg Gate in Berlin against a bright blue sky.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Berlin Brandenburg Gate panorama"
+⏳ StreamBuilder: waiting for data
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+🖼️ [PEXELS] Searching for images of: Berlin
+🖼️ [PEXELS] Trying primary query: "Berlin Brandenburg Gate panorama"
+🖼️ [PEXELS] Searching for images of: Brno
+🖼️ [PEXELS] Trying primary query: "Brno city center panorama"
+🖼️ [PEXELS] Searching for images of: Krakow
+🖼️ [PEXELS] Trying primary query: "Krakow main square panorama"
+🖼️ [PEXELS] Searching for images of: ischia
+🖼️ [PEXELS] Trying primary query: "Ischia Italy island beach panorama"
+🔔 🎉 Fresh project alert! Join test in ischia starting 24 November
+🖼️ [PEXELS] Query "Brno city center panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Brno city center panorama" (alt: Stunning aerial view of Dublin cityscape featuring the river, modern architecture, and bridges.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Brno city center panorama"
+✅ Loading screen hidden
+✅ Firestore offers count: 1
+✅ Is admin: true
+✅ First offer: test (ID: nvnscCyUDkgD6fUDMMBI)
+🖼️ [PEXELS] Searching for images of: Berlin
+🖼️ [PEXELS] Trying primary query: "Berlin Brandenburg Gate panorama"
+🖼️ [PEXELS] Searching for images of: Brno
+🖼️ [PEXELS] Trying primary query: "Brno city center panorama"
+🖼️ [PEXELS] Searching for images of: Krakow
+🖼️ [PEXELS] Trying primary query: "Krakow main square panorama"
+🖼️ [PEXELS] Searching for images of: ischia
+🖼️ [PEXELS] Trying primary query: "Ischia Italy island beach panorama"
+📅 [CALENDAR] Loaded 1 journal entries, 1 projects, 1 daily reflections
+🖼️ [PEXELS] Query "Berlin Brandenburg Gate panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Berlin Brandenburg Gate panorama" (alt: The majestic Brandenburg Gate in Berlin against a bright blue sky.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Berlin Brandenburg Gate panorama"
+🖼️ [PEXELS] Query "Brno city center panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Brno city center panorama" (alt: Stunning aerial view of Dublin cityscape featuring the river, modern architecture, and bridges.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Brno city center panorama"
+🖼️ [PEXELS] Query "Krakow main square panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Krakow main square panorama" (alt: Eros Bendato sculpture in Krakow's Main Square with historical architecture in the background.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Krakow main square panorama"
+🖼️ [PEXELS] Query "Berlin Brandenburg Gate panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Berlin Brandenburg Gate panorama" (alt: The majestic Brandenburg Gate in Berlin against a bright blue sky.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Berlin Brandenburg Gate panorama"
+🖼️ [PEXELS] Query "Brno city center panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Brno city center panorama" (alt: Stunning aerial view of Dublin cityscape featuring the river, modern architecture, and bridges.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Brno city center panorama"
+🖼️ [PEXELS] Query "Krakow main square panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Krakow main square panorama" (alt: Eros Bendato sculpture in Krakow's Main Square with historical architecture in the background.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Krakow main square panorama"
+🖼️ [PEXELS] Query "Ischia Italy island beach panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Found Ischia image (Italy): "stunning aerial view of the picturesque port of sant'angelo in ischia, italy."
+🖼️ [PEXELS] ✅ Found image with primary query: "Ischia Italy island beach panorama"
+🖼️ [PEXELS] Query "Ischia Italy island beach panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Found Ischia image (Italy): "stunning aerial view of the picturesque port of sant'angelo in ischia, italy."
+🖼️ [PEXELS] ✅ Found image with primary query: "Ischia Italy island beach panorama"
+📝 [2025-10-29T13:41:43.493] [NAV] 🧭 NAV: Navigated to screen: 3
+📝 [2025-10-29T13:41:43.496] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:41:44.922] [NAV] 🧭 NAV: Navigated to screen: 2
+📝 [2025-10-29T13:41:44.930] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:41:46.189] [NAV] 🧭 NAV: Navigated to screen: 1
+📝 [2025-10-29T13:41:46.196] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:41:47.341] [NAV] 🧭 NAV: Navigated to screen: 2
+📝 [2025-10-29T13:41:47.347] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:41:47.964] [NAV] 🧭 NAV: Navigated to screen: 3
+📝 [2025-10-29T13:41:47.966] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:41:51.033] [NAV] 🧭 NAV: Navigated to screen: 0
+📝 [2025-10-29T13:41:51.035] [UI] 🎨 UI: Building MainNavigationScreen widget
+Application finished.
