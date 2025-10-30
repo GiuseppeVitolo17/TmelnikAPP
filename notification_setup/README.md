@@ -1,19 +1,19 @@
 Notification setup (FCM topic + Cloud Function)
 
-Contenuto
-- functions/index.js: function Firestore onCreate su `project_offers/{id}` che invia un messaggio FCM data-only al topic `projects` con `{ type: 'project_created', projectId }`.
-- firebase.json, .firebaserc: config esempio per progetto `tmelnikapp`.
-- functions/package.json: dipendenze minime (`firebase-admin`, `firebase-functions`) e engine Node 18.
+Contents
+- functions/index.js: Firestore onCreate function on `project_offers/{id}` that sends a data-only FCM message to the `projects` topic with `{ type: 'project_created', projectId }`.
+- firebase.json, .firebaserc: example config targeting project `tmelnikapp`.
+- functions/package.json: minimal deps (`firebase-admin`, `firebase-functions`) and Node 18 engine.
 
-Deploy (best practice)
-1) Requisiti
-   - Node 18 (consigliato nvm)
+Deploy (best practices)
+1) Requirements
+   - Node 18 (nvm recommended)
    - Firebase CLI (`npm i -g firebase-tools`)
 
-2) Seleziona il progetto
-   - Modifica `.firebaserc` se necessario (default: `tmelnikapp`).
+2) Select the project
+   - Edit `.firebaserc` if needed (default: `tmelnikapp`).
 
-3) Installa dipendenze e deploy
+3) Install deps and deploy
    ```bash
    cd notification_setup/functions
    npm install
@@ -22,9 +22,9 @@ Deploy (best practice)
    firebase deploy --only functions
    ```
 
-Funzionamento client
-- L'app è iscritta a `projects`. Quando riceve `project_created` con `projectId`, recupera il progetto da Firestore, genera la frase “catchy” localmente e mostra una notifica locale solo in background.
+Client behavior
+- The app subscribes to `projects`. When it receives `project_created` with `projectId`, it fetches the project from Firestore, generates the “catchy” text locally, and shows a local notification only in background.
 
-Nota
-- Nessun popup in-app a schermo; log in foreground.
+Note
+- No intrusive in-app popups; logs only in foreground.
 

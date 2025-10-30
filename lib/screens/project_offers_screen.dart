@@ -227,7 +227,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
           return ListView(
                     padding: const EdgeInsets.all(16),
                       children: [
-                    // Debug info (rimuovere in produzione)
+                    // Debug info (remove in production)
                     if (snapshot.hasError)
                             Container(
                         padding: const EdgeInsets.all(16),

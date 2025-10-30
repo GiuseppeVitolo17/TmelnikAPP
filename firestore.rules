@@ -2,14 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function per verificare se l'utente è admin
+    // Helper function: check if the user is an admin
     function isAdmin() {
       return request.auth != null && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // Helper per verificare se l'utente è autenticato
+    // Helper: check if the user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -18,19 +18,19 @@ service cloud.firestore {
     // COLLECTION: users
     // ============================================================
     match /users/{userId} {
-      // Lettura: ogni utente può leggere il proprio profilo, gli admin tutti
+      // Read: users can read their own profile, admins can read all
       allow read: if isAuthenticated() && 
                      (request.auth.uid == userId || isAdmin());
       
-      // Scrittura: solo il proprietario può modificare il proprio profilo
-      // Solo gli admin possono modificare il campo isAdmin
+      // Write: only the owner can update their profile
+      // Only admins can change the isAdmin field
       allow create: if isAuthenticated() && request.auth.uid == userId;
       
       allow update: if isAuthenticated() && (
-        // L'utente può modificare solo certi campi del proprio profilo
+        // A user can change only specific fields of their profile
         (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']))
         ||
-        // Gli admin possono modificare qualsiasi campo
+        // Admins may update any field
         isAdmin()
       );
       
@@ -41,25 +41,25 @@ service cloud.firestore {
     // COLLECTION: project_offers
     // ============================================================
     match /project_offers/{offerId} {
-      // Lettura: chiunque autenticato può leggere le offerte attive
+      // Read: any authenticated user can read active offers
       allow read: if isAuthenticated() && 
                      (!resource.data.isActive || isAdmin());
       
-      // Creazione: solo admin
+      // Create: admins only
       allow create: if isAdmin();
       
-      // Aggiornamento: solo admin
+      // Update: admins only
       allow update: if isAdmin();
       
-      // Eliminazione: solo admin (soft delete impostando isActive = false)
+      // Delete: admins only (soft delete by setting isActive = false)
       allow delete: if isAdmin();
     }
     
     // ============================================================
-    // COLLECTION: journal_entries (DIARI PERSONALI)
+    // COLLECTION: journal_entries (personal diaries)
     // ============================================================
     match /journal_entries/{entryId} {
-      // SOLO il proprietario può leggere/scrivere il proprio diario
+      // Only the owner can read/write their own diary
       allow read, write: if isAuthenticated() && 
                            resource.data.userId == request.auth.uid;
     }
@@ -68,18 +68,18 @@ service cloud.firestore {
     // COLLECTION: feedback
     // ============================================================
     match /feedback/{feedbackId} {
-      // Lettura: tutti possono vedere feedback pubblici e attivi
+      // Read: any authenticated user can view feedback items
       allow read: if isAuthenticated();
       
-      // Creazione: chiunque autenticato può creare feedback
+      // Create: any authenticated user can create feedback
       allow create: if isAuthenticated() && 
                        request.resource.data.userId == request.auth.uid;
       
-      // Aggiornamento: solo il proprietario o admin
+      // Update: owner or admins only
       allow update: if isAuthenticated() && 
                        (resource.data.userId == request.auth.uid || isAdmin());
       
-      // Eliminazione: solo il proprietario o admin
+      // Delete: owner or admins only
       allow delete: if isAuthenticated() && 
                        (resource.data.userId == request.auth.uid || isAdmin());
     }
@@ -88,22 +88,22 @@ service cloud.firestore {
     // COLLECTION: news
     // ============================================================
     match /news/{newsId} {
-      // Lettura: tutti gli utenti autenticati possono vedere news attive
+      // Read: any authenticated user can view active news
       allow read: if isAuthenticated() && 
                      (!resource.data.isActive || isAdmin());
       
-      // Scrittura: solo admin
+      // Write: admins only
       allow create, update, delete: if isAdmin();
     }
     
     // ============================================================
-    // COLLECTION: info_items (Informazioni generali)
+    // COLLECTION: info_items (general information)
     // ============================================================
     match /info_items/{itemId} {
-      // Lettura: pubblica per tutti autenticati
+      // Read: public to any authenticated user
       allow read: if isAuthenticated();
       
-      // Scrittura: solo admin
+      // Write: admins only
       allow create, update, delete: if isAdmin();
     }
   }

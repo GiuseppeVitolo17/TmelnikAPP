@@ -1,0 +1,9 @@
+{
+  "name": "tmelnik-functions",
+  "engines": { "node": "18" },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^4.5.0"
+  }
+}
+

@@ -76,7 +76,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
 
     if (result == true && mounted) {
-      // Ricarica i dati del progetto aggiornato
+      // Reload updated project data
       final updatedProject = await _projectService.getProjectById(_project.id);
       if (updatedProject != null) {
         setState(() {
@@ -145,7 +145,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Card principale con informazioni del progetto
+            // Main card with project information
             Card(
               elevation: 4,
               child: Padding(

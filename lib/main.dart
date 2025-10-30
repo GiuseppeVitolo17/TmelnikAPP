@@ -371,13 +371,13 @@ class _AuthScreenState extends State<AuthScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                   const SizedBox(height: 20),
-                  // Logo/Icon section - icona Tmelnik senza quadrato
+                  // Logo/Icon section - Tmelnik icon without colored square
                   Image.asset(
                     'assets/images/app_icon.png',
                     width: 80,
                     height: 80,
                     errorBuilder: (context, error, stackTrace) {
-                      // Fallback se l'icona non esiste
+                      // Fallback if the icon asset is missing
                       return const Icon(
                         Icons.account_tree,
                         size: 80,
