@@ -1,18 +1,18 @@
-# TmelnikAPP - Linee Guida di Sviluppo
+# TmelnikAPP - Development Guidelines
 
-## 📋 Panoramica
+## 📋 Overview
 
-Questo documento contiene le linee guida per lo sviluppo del progetto TmelnikAPP, un'app Flutter per la gestione di scambi giovanili. Segui queste direttive per mantenere la coerenza del codice e evitare di rompere funzionalità esistenti.
+This document outlines the development guidelines for TmelnikAPP, a Flutter app for youth exchange management. Follow these to keep code consistent and avoid breaking existing features.
 
 ---
 
-## 🎨 Sistema di Theme
+## 🎨 Theme System
 
-### Struttura
-Il tema dell'app è centralizzato in `lib/theme/app_theme.dart`.
+### Structure
+The app theme is centralized in `lib/theme/app_theme.dart`.
 
-### Utilizzo
-**✅ SEMPRE usa le costanti del tema invece di valori hardcoded:**
+### Usage
+**✅ ALWAYS use theme constants instead of hardcoded values:**
 
 ```dart
 import '../theme/app_theme.dart';
@@ -26,7 +26,7 @@ Container(
   ),
 )
 
-// ❌ ERRATO
+// ❌ WRONG
 Container(
   color: const Color(0xFFF5F6FA),
   decoration: BoxDecoration(
@@ -35,7 +35,7 @@ Container(
 )
 ```
 
-### Costanti Disponibili
+### Available Constants
 
 **AppColors:**
 - `primaryBlue` - Color(0xFF0066FF)
@@ -53,145 +53,145 @@ Container(
 - `soft` - BoxShadow con opacity 0.08, blur 10, offset (0, 4)
 
 **buildAppTheme():**
-- Funzione che ritorna il ThemeData completo per l'app
-- Utilizzata in `main.dart` come base del tema
+- Returns the complete ThemeData for the app
+- Used in `main.dart` as the base theme
 
 ---
 
-## 🧩 Componenti UI Riutilizzabili
+## 🧩 Reusable UI Components
 
 ### ProjectCard Widget
 
-**Posizione:** `lib/widgets/project_card.dart`
+**Location:** `lib/widgets/project_card.dart`
 
-**Utilizzo:**
+**Usage:**
 ```dart
 ProjectCard(
   title: 'Project Berlin',
   dates: '14 July / 19 July',
   imagePathOrUrl: 'assets/images/berlin.jpg', // o URL HTTP
   onApply: () {
-    // Gestisci click su Apply
+    // Handle Apply click
   },
   onInfo: () {
-    // Gestisci click su Infopack
+    // Handle Infopack click
   },
 )
 ```
 
-**Caratteristiche:**
-- Widget puro UI, nessuna logica di business
-- Supporta sia immagini locali (`assets/`) che remote (HTTP)
-- Gestione automatica di loading ed errori
-- Utilizza il sistema di theme centralizzato
+**Features:**
+- Pure UI widget, no business logic
+- Supports local (`assets/`) and remote (HTTP) images
+- Built-in loading and error handling
+- Uses centralized theme system
 
-**⚠️ IMPORTANTE:**
-- Non aggiungere logica HTTP o Firestore dentro questo widget
-- Mantieni il widget stateless e puramente UI
+**⚠️ IMPORTANT:**
+- Do not add HTTP/Firestore logic here
+- Keep the widget stateless and purely UI
 
 ---
 
-## ⚠️ ZONE PROTETTE - NON MODIFICARE
+## ⚠️ PROTECTED AREAS - DO NOT MODIFY
 
 ### 🔥 Firebase & Authentication
 
-**File che NON devono essere modificati senza autorizzazione esplicita:**
+**Files that must NOT be changed without explicit approval:**
 - `lib/firebase_options.dart`
 - `lib/screens/auth_screen.dart`
 - `lib/screens/auth_screen_firebase.dart`
 - `lib/screens/auth_wrapper.dart`
 - `lib/services/firebase_*_service.dart`
 
-**Cosa NON fare:**
+**Do NOT:**
 - ❌ Rimuovere inizializzazione Firebase da `main.dart`
 - ❌ Modificare il flusso di autenticazione
 - ❌ Cambiare la struttura di AuthWrapper
 - ❌ Rimuovere import di Firebase o Auth
 
-**Cosa puoi fare:**
-- ✅ Usare Firebase nei servizi esistenti
-- ✅ Chiamare metodi di autenticazione già definiti
-- ✅ Aggiungere nuove funzionalità senza toccare l'infrastruttura esistente
+**You MAY:**
+- ✅ Use Firebase via existing services
+- ✅ Use existing auth methods
+- ✅ Add features without touching core infrastructure
 
 ### 🧭 Navigazione
 
-**File protetti:**
+**Protected files:**
 - `lib/main.dart` - struttura MaterialApp e AuthWrapper
 - `lib/screens/main_navigation_screen.dart` - navigazione principale
 
-**Cosa NON fare:**
+**Do NOT:**
 - ❌ Modificare la struttura di navigazione esistente
 - ❌ Rimuovere route o screen già configurati
 - ❌ Cambiare il BottomNavigationBar structure
 
-### 📦 Servizi e Modelli
+### 📦 Services and Models
 
-**Non eliminare:**
+**Do not remove:**
 - Classi di modelli in `lib/models/`
 - Servizi esistenti in `lib/services/`
 - Logica di progetto/admin esistente
 
 ---
 
-## 🏗️ Struttura Progetto
+## 🏗️ Project Structure
 
 ```
 lib/
 ├── theme/
-│   └── app_theme.dart          # Sistema di theme centralizzato
+│   └── app_theme.dart          # Centralized theme system
 ├── widgets/
-│   └── project_card.dart       # Widget riutilizzabile per card progetti
+│   └── project_card.dart       # Reusable project card widget
 ├── screens/
-│   ├── project_offers_screen.dart  # Schermata progetti (usa ProjectCard)
+│   ├── project_offers_screen.dart  # Projects screen (uses ProjectCard)
 │   ├── auth_screen.dart           # ⚠️ PROTETTO
 │   └── ...
 ├── services/
-│   ├── pexels_service.dart        # Service per immagini Pexels
-│   └── ...                         # ⚠️ Non modificare servizi Firebase
-├── models/                        # Modelli dati
-└── main.dart                      # ⚠️ Solo modifiche al theme consentite
+│   ├── pexels_service.dart        # Pexels images service
+│   └── ...                         # ⚠️ Do not modify Firebase services
+├── models/                        # Data models
+└── main.dart                      # ⚠️ Only theme edits allowed
 ```
 
 ---
 
-## ✅ Best Practices
+## ✅ Best practices
 
-### 1. Uso del Theme
-- **SEMPRE** importa `app_theme.dart` per nuovi widget
-- **SEMPRE** usa `AppColors`, `AppRadius`, `AppShadows` invece di valori hardcoded
-- Mantieni la coerenza visiva in tutta l'app
+### 1. Theme usage
+- **ALWAYS** import `app_theme.dart` for new widgets
+- **ALWAYS** use `AppColors`, `AppRadius`, `AppShadows` instead of hardcoded values
+- Keep visual consistency across the app
 
-### 2. Nuovi Widget
-- Crea widget riutilizzabili in `lib/widgets/`
-- Mantieni widget stateless quando possibile
-- Separa logica UI da logica di business
-- Non includere chiamate HTTP o Firestore direttamente nei widget
+### 2. New Widgets
+- Create reusable widgets in `lib/widgets/`
+- Keep widgets stateless when possible
+- Separate UI from business logic
+- Do not call HTTP/Firestore directly in widgets
 
-### 3. Test
-- Aggiungi test minimi per nuovi widget in `test/`
-- Non inizializzare Firebase nei test
-- Usa `MaterialApp` wrapper per i test widget
+### 3. Tests
+- Add minimal tests for new widgets in `test/`
+- Do not initialize Firebase in tests
+- Use a `MaterialApp` wrapper for widget tests
 
-### 4. Immagini
-- Usa `Image.network()` per URL HTTP
-- Usa `Image.asset()` per immagini locali
-- Gestisci sempre loading e error states
-- Usa placeholder appropriati
+### 4. Images
+- Use `Image.network()` for HTTP URLs
+- Use `Image.asset()` for local images
+- Always handle loading and error states
+- Use appropriate placeholders
 
-### 5. Gestione Errori
-- Usa try-catch per operazioni async
-- Fornisci fallback UI appropriati
-- Logga errori con `debugPrint` (non `print`)
+### 5. Error handling
+- Use try-catch for async operations
+- Provide proper UI fallbacks
+- Log errors with `debugPrint` (not `print`)
 
 ---
 
 ## 🧪 Testing
 
-### Struttura Test
-- Test widget in `test/` directory
-- Non inizializzare Firebase nei test
-- Usa `MaterialApp` wrapper
-- Test minimi ma significativi
+### Test structure
+- Widget tests in `test/` directory
+- Do not initialize Firebase in tests
+- Use `MaterialApp` wrapper
+- Minimal but meaningful tests
 
 **Esempio:**
 ```dart
@@ -208,15 +208,15 @@ testWidgets('Widget displays content', (WidgetTester tester) async {
 
 ---
 
-## 📝 Convenzioni Codice
+## 📝 Code conventions
 
 ### Naming
-- **File:** `snake_case.dart`
-- **Classi:** `PascalCase`
-- **Variabili/Funzioni:** `camelCase`
-- **Costanti:** `PascalCase` per classi, `camelCase` per costanti statiche
+- **Files:** `snake_case.dart`
+- **Classes:** `PascalCase`
+- **Variables/Functions:** `camelCase`
+- **Constants:** `PascalCase` for classes, `camelCase` for static constants
 
-### Organizzazione Codice
+### Code organization
 1. Imports (dart:, package:, relative)
 2. Class definition
 3. Fields
@@ -225,16 +225,16 @@ testWidgets('Widget displays content', (WidgetTester tester) async {
 6. Private methods
 7. Public methods
 
-### Commenti
-- Usa commenti per spiegare "perché", non "cosa"
-- Documenta widget pubblici con commenti DartDoc
-- Aggiungi commenti per logica complessa
+### Comments
+- Explain "why", not "what"
+- Document public widgets with DartDoc
+- Add comments for complex logic
 
 ---
 
-## 🚀 Workflow di Sviluppo
+## 🚀 Development workflow
 
-### Quando aggiungi nuove funzionalità:
+### When adding new features:
 
 1. **Controlla il sistema di theme** - usa costanti esistenti
 2. **Crea widget riutilizzabili** - in `lib/widgets/` se appropriato
@@ -242,7 +242,7 @@ testWidgets('Widget displays content', (WidgetTester tester) async {
 4. **Aggiungi test minimi** - per nuovi widget
 5. **Verifica che nulla sia rotto** - testa navigazione e auth
 
-### Quando modifichi UI esistente:
+### When modifying existing UI:
 
 1. **Aggiorna per usare theme** - sostituisci valori hardcoded
 2. **Mantieni comportamento esistente** - non rompere funzionalità
@@ -250,42 +250,42 @@ testWidgets('Widget displays content', (WidgetTester tester) async {
 
 ---
 
-## 📦 Dipendenze Importanti
+## 📦 Important dependencies
 
 ### Core UI
-- `cached_network_image` - per cache immagini remote
-- `http` - per chiamate API (usato in PexelsService)
+- `cached_network_image` - remote image caching
+- `http` - API calls (used in PexelsService)
 
-### Firebase (⚠️ Non modificare configurazione)
+### Firebase (⚠️ Do not change configuration)
 - `firebase_core`
 - `firebase_auth`
 - `cloud_firestore`
 
 ---
 
-## 🔍 Checklist Pre-Commit
+## 🔍 Pre-commit checklist
 
-Prima di fare commit, verifica:
+Before committing, verify:
 
-- [ ] Nessun valore hardcoded (usa theme)
-- [ ] Nessuna modifica a Firebase/Auth senza autorizzazione
-- [ ] Navigazione funziona correttamente
-- [ ] Widget nuovi sono testati
-- [ ] Codice compila senza errori (`flutter analyze`)
-- [ ] Test passano (`flutter test`)
+- [ ] No hardcoded values (use theme)
+- [ ] No changes to Firebase/Auth without approval
+- [ ] Navigation works correctly
+- [ ] New widgets are tested
+- [ ] Code compiles without errors (`flutter analyze`)
+- [ ] Tests pass (`flutter test`)
 
 ---
 
-## 📞 Riferimenti Rapidi
+## 📞 Quick references
 
 **Theme System:** `lib/theme/app_theme.dart`  
 **ProjectCard Widget:** `lib/widgets/project_card.dart`  
-**Progetti Screen:** `lib/screens/project_offers_screen.dart`  
+**Projects Screen:** `lib/screens/project_offers_screen.dart`  
 **Main Entry:** `lib/main.dart`  
 
 ---
 
-## 🎯 Obiettivo Qualità
+## 🎯 Quality target
 
 Target: **~80% standard professionale**
 
@@ -293,10 +293,10 @@ Target: **~80% standard professionale**
 - ✅ Theme centralizzato
 - ✅ Widget testati
 - ✅ Gestione errori robusta
-- ✅ Nessuna breaking change a Firebase/Auth
+- ✅ No breaking changes to Firebase/Auth
 
 ---
 
-**Ultima aggiornamento:** 2025-10-29  
-**Versione:** 1.0
+**Last update:** 2025-10-29  
+**Version:** 1.0
 
