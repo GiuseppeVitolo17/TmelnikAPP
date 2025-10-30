@@ -26,7 +26,119 @@ class _NewsScreenState extends State<NewsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadNews();
+    _loadNewsOptimized();
+  }
+
+  /// Optimized loading: Shows cache immediately, then fetches fresh data in background
+  Future<void> _loadNewsOptimized() async {
+    debugPrint('📰 [NEWS_SCREEN] ========== _loadNewsOptimized STARTED ==========');
+    
+    // STEP 1: Show cache immediately (even if expired) - INSTANT UI
+    debugPrint('📰 [NEWS_SCREEN] Loading cache for instant display...');
+    final cachedNews = await _cacheService.getFromCache();
+    
+    if (cachedNews.isNotEmpty) {
+      debugPrint('📰 [NEWS_SCREEN] ⚡ Showing cached news immediately (${cachedNews.length} items)');
+      setState(() {
+        _newsItems = cachedNews;
+        _isLoading = false; // UI ready immediately!
+      });
+    } else {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    // STEP 2: Fetch fresh data in background (non-blocking)
+    debugPrint('📰 [NEWS_SCREEN] 🔄 Fetching fresh news in background...');
+    _fetchAndUpdateNews();
+  }
+
+  /// Fetches fresh news and updates UI incrementally
+  Future<void> _fetchAndUpdateNews() async {
+    try {
+      final cachedNews = await _cacheService.getFromCache();
+      
+      await _rssService.fetchErasmusNews(
+        onItemFound: (item) async {
+          // Add item immediately when found
+          if (mounted) {
+            // Quick check for new/updated status
+            final cachedItem = cachedNews.firstWhere(
+              (cached) => cached.url == item.url,
+              orElse: () => NewsItem(
+                title: '',
+                summary: '',
+                date: '',
+                url: '',
+              ),
+            );
+            
+            final isNew = cachedItem.url.isEmpty;
+            final isUpdated = cachedItem.url.isNotEmpty && 
+                            item.pubDateTimestamp != null && 
+                            cachedItem.pubDateTimestamp != null &&
+                            item.pubDateTimestamp!.isAfter(cachedItem.pubDateTimestamp!);
+            
+            final processedItem = item.copyWith(
+              isNew: isNew,
+              isUpdated: isUpdated,
+            );
+            
+            setState(() {
+              // Remove old item if exists, then add new one at the top
+              _newsItems.removeWhere((existing) => existing.url == processedItem.url);
+              _newsItems.insert(0, processedItem); // Insert at top for newest first
+              debugPrint('📰 [NEWS_SCREEN] ⚡ Added item ${_newsItems.length}: ${processedItem.title}');
+            });
+          }
+        },
+      ).then((fetchedNews) async {
+        if (fetchedNews.isEmpty) {
+          debugPrint('📰 [NEWS_SCREEN] ⚠️ No fresh news fetched');
+          return;
+        }
+
+        // Final comparison and cache update (non-blocking)
+        debugPrint('📰 [NEWS_SCREEN] Finalizing cache update...');
+        final comparison = await _cacheService.compareWithCache(fetchedNews);
+        
+        // Update items with final comparison results
+        if (mounted) {
+          final finalItems = _newsItems.map((item) {
+            final isNew = comparison['new']?.any((n) => n.url == item.url) ?? false;
+            final isUpdated = comparison['updated']?.any((n) => n.url == item.url) ?? false;
+            return item.copyWith(isNew: isNew, isUpdated: isUpdated);
+          }).toList();
+
+          // Save to cache (async, non-blocking)
+          _cacheService.saveToCache(finalItems).then((_) {
+            debugPrint('📰 [NEWS_SCREEN] ✅ Cache updated in background');
+          });
+
+          setState(() {
+            _newsItems = finalItems;
+            _isLoading = false;
+          });
+
+          debugPrint('📰 [NEWS_SCREEN] ✅ Updated ${finalItems.length} news items');
+        }
+      }).catchError((e) {
+        debugPrint('📰 [NEWS_SCREEN] ❌ Background fetch error: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      });
+    } catch (e) {
+      debugPrint('❌ [NEWS_SCREEN] Error in _fetchAndUpdateNews: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   /// Loads news from cache first, then fetches fresh data if cache is expired
@@ -59,9 +171,51 @@ class _NewsScreenState extends State<NewsScreen> {
       // Fetch fresh data (unless cache is valid and not forcing refresh)
       if (!isCacheValid || forceRefresh) {
         debugPrint('📰 [NEWS_SCREEN] 🔄 Fetching fresh news from RSS feed...');
-        final fetchedNews = await _rssService.fetchErasmusNews();
+        
+        // Clear current items when starting fresh (but keep loading state)
+        setState(() {
+          _newsItems = [];
+          _isLoading = true;
+        });
+        
+        final fetchedNews = await _rssService.fetchErasmusNews(
+          onItemFound: (item) async {
+            // Add item immediately when found
+            if (mounted) {
+              // Check if new/updated asynchronously but add immediately
+              final cachedItem = cachedNews.firstWhere(
+                (cached) => cached.url == item.url,
+                orElse: () => NewsItem(
+                  title: '',
+                  summary: '',
+                  date: '',
+                  url: '',
+                ),
+              );
+              
+              final isNew = cachedItem.url.isEmpty;
+              final isUpdated = cachedItem.url.isNotEmpty && 
+                              item.pubDateTimestamp != null && 
+                              cachedItem.pubDateTimestamp != null &&
+                              item.pubDateTimestamp!.isAfter(cachedItem.pubDateTimestamp!);
+              
+              final processedItem = item.copyWith(
+                isNew: isNew,
+                isUpdated: isUpdated,
+              );
+              
+              setState(() {
+                if (!_newsItems.any((existing) => existing.url == processedItem.url)) {
+                  _newsItems.add(processedItem);
+                  debugPrint('📰 [NEWS_SCREEN] ✅ Added item ${_newsItems.length}: ${processedItem.title}');
+                }
+              });
+            }
+          },
+        );
         debugPrint('📰 [NEWS_SCREEN] Fetched ${fetchedNews.length} news items from RSS');
 
+        // Items were already added via callback, now just finalize
         if (fetchedNews.isEmpty && cachedNews.isNotEmpty) {
           // If fetch failed but we have cache, use cache
           debugPrint('📰 [NEWS_SCREEN] ⚠️ Fetch failed, using cached news');
@@ -70,45 +224,37 @@ class _NewsScreenState extends State<NewsScreen> {
             _isLoading = false;
           });
         } else if (fetchedNews.isNotEmpty) {
-          // Compare with cache to identify new/updated items
-          debugPrint('📰 [NEWS_SCREEN] Comparing with cache to identify new/updated items...');
+          // Final comparison and cache update
+          debugPrint('📰 [NEWS_SCREEN] Finalizing and comparing with cache...');
           final comparison = await _cacheService.compareWithCache(fetchedNews);
           
-          // Mark new and updated items
-          final processedNews = fetchedNews.map((item) {
+          // Update items with final comparison results
+          final finalItems = _newsItems.map((item) {
             final isNew = comparison['new']?.any((n) => n.url == item.url) ?? false;
             final isUpdated = comparison['updated']?.any((n) => n.url == item.url) ?? false;
-            
-            return item.copyWith(
-              isNew: isNew,
-              isUpdated: isUpdated,
-            );
+            return item.copyWith(isNew: isNew, isUpdated: isUpdated);
           }).toList();
 
           // Save to cache
           debugPrint('📰 [NEWS_SCREEN] Saving to cache...');
-          await _cacheService.saveToCache(processedNews);
+          await _cacheService.saveToCache(finalItems);
 
-          debugPrint('📰 [NEWS_SCREEN] ✅ Loaded ${processedNews.length} news items');
+          debugPrint('📰 [NEWS_SCREEN] ✅ Loaded ${finalItems.length} news items');
           debugPrint('📰 [NEWS_SCREEN] ✨ New items: ${comparison['new']?.length ?? 0}');
           debugPrint('📰 [NEWS_SCREEN] 🔄 Updated items: ${comparison['updated']?.length ?? 0}');
           debugPrint('📰 [NEWS_SCREEN] 📋 Existing items: ${comparison['existing']?.length ?? 0}');
-          
-          // Log first few items for debugging
-          for (int i = 0; i < processedNews.length && i < 3; i++) {
-            final item = processedNews[i];
-            debugPrint('📰 [NEWS_SCREEN] Item ${i + 1}: "${item.title}" | NEW: ${item.isNew} | UPDATED: ${item.isUpdated} | URL: ${item.url}');
-          }
 
           setState(() {
-            _newsItems = processedNews;
+            _newsItems = finalItems;
             _isLoading = false;
           });
         } else {
           // No news and no cache
           debugPrint('📰 [NEWS_SCREEN] ⚠️ No news found and no cache available');
           setState(() {
-            _newsItems = [];
+            if (_newsItems.isEmpty) {
+              _newsItems = [];
+            }
             _isLoading = false;
           });
         }
@@ -168,11 +314,7 @@ class _NewsScreenState extends State<NewsScreen> {
     // This Scaffold only provides background color
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : _hasError && _newsItems.isEmpty
+      body: _hasError && _newsItems.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -205,54 +347,76 @@ class _NewsScreenState extends State<NewsScreen> {
                         ],
                         const SizedBox(height: 24),
                         ElevatedButton(
-                          onPressed: () => _loadNews(forceRefresh: true),
+                          onPressed: () => _loadNewsOptimized(),
                           child: const Text('Retry'),
                         ),
                       ],
                     ),
                   ),
                 )
-              : _newsItems.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.newspaper_outlined,
-                              size: 64,
-                              color: Colors.grey[400],
+              : _newsItems.isEmpty && _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : _newsItems.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.newspaper_outlined,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No news available',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No news available',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
+                          ),
+                        )
+                      : Stack(
+                          children: [
+                            RefreshIndicator(
+                              onRefresh: () => _fetchAndUpdateNews(),
+                              child: ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _newsItems.length,
+                                itemBuilder: (context, index) {
+                                  final newsItem = _newsItems[index];
+                                  
+                                  // Mark as seen when scrolled into view
+                                  if (index < 5) {
+                                    _markNewsAsSeen([newsItem]);
+                                  }
+                                  
+                                  return NewsCard(newsItem: newsItem);
+                                },
                               ),
                             ),
+                            // Show loading indicator at top while fetching in background
+                            if (_isLoading && _newsItems.isNotEmpty)
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  height: 3,
+                                  child: LinearProgressIndicator(
+                                    backgroundColor: Colors.transparent,
+                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () => _loadNews(forceRefresh: true),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _newsItems.length,
-                        itemBuilder: (context, index) {
-                          final newsItem = _newsItems[index];
-                          
-                          // Mark as seen when scrolled into view
-                          if (index < 5) {
-                            _markNewsAsSeen([newsItem]);
-                          }
-                          
-                          return NewsCard(newsItem: newsItem);
-                        },
-                      ),
-                    ),
     );
   }
 }

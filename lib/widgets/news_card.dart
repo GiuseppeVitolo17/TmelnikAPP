@@ -18,7 +18,6 @@ class NewsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppShadows.soft,
         border: newsItem.isNew || newsItem.isUpdated
@@ -28,11 +27,44 @@ class NewsCard extends StatelessWidget {
               )
             : null,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
           children: [
+            if (newsItem.imageUrl.isNotEmpty)
+              Positioned.fill(
+                child: Stack(
+                  children: [
+                    Image.network(
+                      newsItem.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.15),
+                              Colors.black.withOpacity(0.35),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Container(
+              color: newsItem.imageUrl.isEmpty ? AppColors.cardBackground : Colors.transparent,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             // Date and status badges row
             Row(
               children: [
@@ -44,7 +76,7 @@ class NewsCard extends StatelessWidget {
                         : newsItem.date,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: newsItem.imageUrl.isNotEmpty ? Colors.white70 : Colors.grey[600],
                     ),
                   ),
                 ),
@@ -104,10 +136,10 @@ class NewsCard extends StatelessWidget {
             // Title
             Text(
               newsItem.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: newsItem.imageUrl.isNotEmpty ? Colors.white : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -118,9 +150,9 @@ class NewsCard extends StatelessWidget {
                 newsItem.summary,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: newsItem.imageUrl.isNotEmpty ? Colors.white70 : AppColors.textSecondary,
                   height: 1.5,
                 ),
               ),
@@ -130,7 +162,7 @@ class NewsCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _openArticle(newsItem.url),
+                onPressed: () => _openArticle(context, newsItem.url),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
@@ -181,11 +213,34 @@ class NewsCard extends StatelessWidget {
     }
   }
 
-  /// Opens the article URL in browser.
-  Future<void> _openArticle(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+  /// Opens the article URL in browser with Android-friendly fallbacks.
+  Future<void> _openArticle(BuildContext context, String url) async {
+    try {
+      final sanitized = url.trim();
+      final normalized = sanitized.startsWith('http') ? sanitized : 'https://$sanitized';
+      final uri = Uri.parse(normalized);
+
+      // Try external browser first
+      if (await canLaunchUrl(uri)) {
+        final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (ok) return;
+      }
+
+      // Fallback to platform default (may open a chooser)
+      final okDefault = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      if (okDefault) return;
+
+      // Last resort: try in-app web view if available
+      final okInApp = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      if (okInApp) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open the link on this device')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error opening link: $e')),
+      );
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,6 +20,21 @@ import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
 import 'services/notification_service.dart';
+
+// Background handler for FCM (must be a top-level function)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Ensure Firebase is initialized in background isolate
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (_) {}
+  // Forward to notification service to build local notification
+  try {
+    NotificationService.notificationsEnabled = true;
+    await NotificationService().initialize();
+    await NotificationService().handleRemoteMessage(message, fromBackground: true);
+  } catch (_) {}
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +56,13 @@ void main() async {
   } catch (e) {
     await debugLogger.error('Error initializing Firebase', e);
     print('❌ Error initializing Firebase: $e');
+  }
+
+  // Register FCM background handler
+  try {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugLogger.error('Error setting FCM background handler', e);
   }
 
   // Initialize notification service for mobile platforms
@@ -720,12 +743,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const double emojiContainerSize = 56.0; // Container size (square)
     const double emojiPadding = (emojiContainerSize - emojiSize) / 2; // Center the emoji
     
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      color: Colors.white,
-      width: double.infinity,
-      height: emojiContainerSize + 24, // Container size + vertical padding
-      child: Row(
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        color: Colors.white,
+        width: double.infinity,
+        height: emojiContainerSize + 24, // Container size + vertical padding
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Emoji container - square with fixed size, properly centered
@@ -782,6 +807,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             tooltip: isGuestMode ? 'Login' : 'Profile',
             ),
         ],
+      ),
       ),
     );
   }

@@ -1,32 +1,32 @@
 Launching lib/main.dart on Chrome in debug mode...
-Waiting for connection from debug service on Chrome...             30,0s
-This app is linked to the debug service: ws://127.0.0.1:33531/ADOP6Wdv6gs=/ws
-Debug service listening on ws://127.0.0.1:33531/ADOP6Wdv6gs=/ws
+Waiting for connection from debug service on Chrome...             25,9s
+This app is linked to the debug service: ws://127.0.0.1:33175/6g2AT_aQAyo=/ws
+Debug service listening on ws://127.0.0.1:33175/6g2AT_aQAyo=/ws
 
 🔥  To hot restart changes while running, press "r" or "R".
 For a more detailed help message, press "h". To quit, press "q".
 
-A Dart VM Service on Chrome is available at: http://127.0.0.1:33531/ADOP6Wdv6gs=
+A Dart VM Service on Chrome is available at: http://127.0.0.1:33175/6g2AT_aQAyo=
 🔧 Loading Screen Configuration:
    • Minimum Duration: 3000ms (3s)
    • Maximum Duration: 8000ms (8s)
    • Fade Out Duration: 800ms (0.8s)
    • Debug Mode: true
 🆕 Log system initialized (Web mode - console only)
-🚀 Tmelnik App started - 2025-10-29 13:41:15.939
+🚀 Tmelnik App started - 2025-10-29 13:54:51.517
 📱 Platform: Web
-📝 [2025-10-29T13:41:15.942] [INFO] App starting...
-📝 [2025-10-29T13:41:15.942] [FIREBASE] 🔥 FIREBASE: Starting Firebase initialization...
-The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:9101?uri=http://127.0.0.1:33531/ADOP6Wdv6gs=
-📝 [2025-10-29T13:41:16.774] [FIREBASE] 🔥 FIREBASE: Firebase initialized successfully
+📝 [2025-10-29T13:54:51.521] [INFO] App starting...
+📝 [2025-10-29T13:54:51.522] [FIREBASE] 🔥 FIREBASE: Starting Firebase initialization...
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:9102?uri=http://127.0.0.1:33175/6g2AT_aQAyo=
+📝 [2025-10-29T13:54:52.384] [FIREBASE] 🔥 FIREBASE: Firebase initialized successfully
 ✅ Firebase initialized successfully
-📝 [2025-10-29T13:41:16.776] [INFO] Starting TmelnikApp...
-📝 [2025-10-29T13:41:16.824] [UI] 🎨 UI: Building TmelnikApp widget
-📝 [2025-10-29T13:41:16.970] [UI] 🎨 UI: Building AuthWrapper widget
-📝 [2025-10-29T13:41:16.980] [AUTH] 🔐 AUTH: Auth state: checking...
-📝 [2025-10-29T13:41:17.058] [AUTH] 🔐 AUTH: User is authenticated: flapore1711@gmail.com
-📝 [2025-10-29T13:41:17.059] [NAV] 🧭 NAV: Navigating to MainNavigationScreen
-📝 [2025-10-29T13:41:17.062] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:54:52.384] [INFO] Starting TmelnikApp...
+📝 [2025-10-29T13:54:52.409] [UI] 🎨 UI: Building TmelnikApp widget
+📝 [2025-10-29T13:54:52.565] [UI] 🎨 UI: Building AuthWrapper widget
+📝 [2025-10-29T13:54:52.576] [AUTH] 🔐 AUTH: Auth state: checking...
+📝 [2025-10-29T13:54:52.663] [AUTH] 🔐 AUTH: User is authenticated: flapore1711@gmail.com
+📝 [2025-10-29T13:54:52.664] [NAV] 🧭 NAV: Navigating to MainNavigationScreen
+📝 [2025-10-29T13:54:52.666] [UI] 🎨 UI: Building MainNavigationScreen widget
 ⏳ StreamBuilder: waiting for data
 ✅ Firestore offers count: 0
 ✅ Is admin: false
@@ -36,16 +36,32 @@ The Flutter DevTools debugger and profiler on Chrome is available at: http://127
 🖼️ [PEXELS] Trying primary query: "Brno city center panorama"
 🖼️ [PEXELS] Searching for images of: Krakow
 🖼️ [PEXELS] Trying primary query: "Krakow main square panorama"
+📰 [NEWS_SCREEN] ========== _loadNews STARTED ==========
+📰 [NEWS_SCREEN] forceRefresh: false
+📰 [NEWS_SCREEN] Checking cache...
+📰 [NEWS_SCREEN] ========== BUILD STARTED ==========
+📰 [NEWS_SCREEN] _isLoading: true, _hasError: false, _newsItems.length: 0
 🎬 Flutter first frame detected (backup method)
+💾 [CACHE] No cache found
+📰 [NEWS_SCREEN] Cache valid: false, Cached items: 0
+📰 [NEWS_SCREEN] 🔄 Fetching fresh news from RSS feed...
+📰 [RSS] Starting to fetch Erasmus+ news from https://erasmus-plus.ec.europa.eu/rss.xml
+📰 [RSS] Making HTTP request...
+📰 [RSS] Using CORS proxy for web: https://api.allorigins.win/raw?url=https%3A%2F%2Ferasmus-plus.ec.europa.eu%2Frss.xml
+📰 [NEWS_SCREEN] ========== BUILD STARTED ==========
+📰 [NEWS_SCREEN] _isLoading: true, _hasError: false, _newsItems.length: 0
 🎯 Flutter is ready! Hiding loading screen...
 🎭 Starting fade out animation...
 🎯 Flutter marked as ready! Loading screen will hide immediately.
-🖼️ [PEXELS] Query "Krakow main square panorama": status 200, found 8000 results
-🖼️ [PEXELS] ✅ Successfully fetched image URL for "Krakow main square panorama" (alt: Eros Bendato sculpture in Krakow's Main Square with historical architecture in the background.)
-🖼️ [PEXELS] ✅ Found image with primary query: "Krakow main square panorama"
 🖼️ [PEXELS] Query "Berlin Brandenburg Gate panorama": status 200, found 8000 results
 🖼️ [PEXELS] ✅ Successfully fetched image URL for "Berlin Brandenburg Gate panorama" (alt: The majestic Brandenburg Gate in Berlin against a bright blue sky.)
 🖼️ [PEXELS] ✅ Found image with primary query: "Berlin Brandenburg Gate panorama"
+🖼️ [PEXELS] Query "Krakow main square panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Krakow main square panorama" (alt: Eros Bendato sculpture in Krakow's Main Square with historical architecture in the background.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Krakow main square panorama"
+🖼️ [PEXELS] Query "Brno city center panorama": status 200, found 8000 results
+🖼️ [PEXELS] ✅ Successfully fetched image URL for "Brno city center panorama" (alt: Stunning aerial view of Dublin cityscape featuring the river, modern architecture, and bridges.)
+🖼️ [PEXELS] ✅ Found image with primary query: "Brno city center panorama"
 ⏳ StreamBuilder: waiting for data
 ✅ Firestore offers count: 1
 ✅ Is admin: true
@@ -59,9 +75,6 @@ The Flutter DevTools debugger and profiler on Chrome is available at: http://127
 🖼️ [PEXELS] Searching for images of: ischia
 🖼️ [PEXELS] Trying primary query: "Ischia Italy island beach panorama"
 🔔 🎉 Fresh project alert! Join test in ischia starting 24 November
-🖼️ [PEXELS] Query "Brno city center panorama": status 200, found 8000 results
-🖼️ [PEXELS] ✅ Successfully fetched image URL for "Brno city center panorama" (alt: Stunning aerial view of Dublin cityscape featuring the river, modern architecture, and bridges.)
-🖼️ [PEXELS] ✅ Found image with primary query: "Brno city center panorama"
 ✅ Loading screen hidden
 ✅ Firestore offers count: 1
 ✅ Is admin: true
@@ -99,16 +112,48 @@ The Flutter DevTools debugger and profiler on Chrome is available at: http://127
 🖼️ [PEXELS] Query "Ischia Italy island beach panorama": status 200, found 8000 results
 🖼️ [PEXELS] ✅ Found Ischia image (Italy): "stunning aerial view of the picturesque port of sant'angelo in ischia, italy."
 🖼️ [PEXELS] ✅ Found image with primary query: "Ischia Italy island beach panorama"
-📝 [2025-10-29T13:41:43.493] [NAV] 🧭 NAV: Navigated to screen: 3
-📝 [2025-10-29T13:41:43.496] [UI] 🎨 UI: Building MainNavigationScreen widget
-📝 [2025-10-29T13:41:44.922] [NAV] 🧭 NAV: Navigated to screen: 2
-📝 [2025-10-29T13:41:44.930] [UI] 🎨 UI: Building MainNavigationScreen widget
-📝 [2025-10-29T13:41:46.189] [NAV] 🧭 NAV: Navigated to screen: 1
-📝 [2025-10-29T13:41:46.196] [UI] 🎨 UI: Building MainNavigationScreen widget
-📝 [2025-10-29T13:41:47.341] [NAV] 🧭 NAV: Navigated to screen: 2
-📝 [2025-10-29T13:41:47.347] [UI] 🎨 UI: Building MainNavigationScreen widget
-📝 [2025-10-29T13:41:47.964] [NAV] 🧭 NAV: Navigated to screen: 3
-📝 [2025-10-29T13:41:47.966] [UI] 🎨 UI: Building MainNavigationScreen widget
-📝 [2025-10-29T13:41:51.033] [NAV] 🧭 NAV: Navigated to screen: 0
-📝 [2025-10-29T13:41:51.035] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:55:00.271] [NAV] 🧭 NAV: Navigated to screen: 3
+📝 [2025-10-29T13:55:00.275] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:55:33.317] [NAV] 🧭 NAV: Navigated to screen: 2
+📝 [2025-10-29T13:55:33.319] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:55:35.742] [NAV] 🧭 NAV: Navigated to screen: 1
+📝 [2025-10-29T13:55:35.751] [UI] 🎨 UI: Building MainNavigationScreen widget
+📰 [RSS] HTTP response status: 200
+📰 [RSS] XML length: 693574 characters
+📰 [RSS] Parsed 10 items from XML
+📰 [RSS] Parsed 10 items from RSS
+📰 [RSS] All URLs found in feed:
+📰 [RSS]   1. ❌ https://erasmus-plus.ec.europa.eu/european-student-card-initiative/help-and-support/service-desk
+📰 [RSS]   2. ❌ https://erasmus-plus.ec.europa.eu/european-student-card-initiative/help-and-support/communication-materials
+📰 [RSS]   3. ❌ https://erasmus-plus.ec.europa.eu/eche/assessment-type-erasmus-coordinators-1137
+📰 [RSS]   4. ❌ https://erasmus-plus.ec.europa.eu/eche/assessment-type-erasmus-coordinators-1136
+📰 [RSS]   5. ❌ https://erasmus-plus.ec.europa.eu/eche/assessment-type-erasmus-coordinators-1135
+📰 [RSS]   6. ❌ https://erasmus-plus.ec.europa.eu/eche/assessment-type-erasmus-coordinators-1134
+📰 [RSS]   7. ❌ https://erasmus-plus.ec.europa.eu/eche/assessment-type-erasmus-coordinators-1133
+📰 [RSS]   8. ❌ https://erasmus-plus.ec.europa.eu/eche/assessment-type-erasmus-coordinators-1132
+📰 [RSS]   9. ❌ https://erasmus-plus.ec.europa.eu/document/ukraine-eu-agrees-fifth-package-of-restrictive-measures-against-russia
+📰 [RSS]   10. ✅ https://erasmus-plus.ec.europa.eu/news/conference-on-the-future-of-europe-the-future-is-in-your-hands
+📰 [RSS] ✅ Found news item 1/50: Conference on the Future of Europe : the future is in your hands
+📰 [NEWS_SCREEN] ✅ Added item 1: Conference on the Future of Europe : the future is in your hands
+📰 [RSS] Filtered to 1 news items (excluding documents)
+📰 [RSS] First item: Conference on the Future of Europe : the future is in your hands
+📰 [RSS] First item URL: https://erasmus-plus.ec.europa.eu/news/conference-on-the-future-of-europe-the-future-is-in-your-hands
+📰 [NEWS_SCREEN] Fetched 1 news items from RSS
+📰 [NEWS_SCREEN] Finalizing and comparing with cache...
+💾 [CACHE] No cache found
+📊 [CACHE] Comparison: 1 new, 0 updated, 0 existing
+📰 [NEWS_SCREEN] Saving to cache...
+💾 [CACHE] Saved 1 news items to cache
+📰 [NEWS_SCREEN] ✅ Loaded 1 news items
+📰 [NEWS_SCREEN] ✨ New items: 1
+📰 [NEWS_SCREEN] 🔄 Updated items: 0
+📰 [NEWS_SCREEN] 📋 Existing items: 0
+📰 [NEWS_SCREEN] ========== _loadNews COMPLETED ==========
+📰 [NEWS_SCREEN] ========== BUILD STARTED ==========
+📰 [NEWS_SCREEN] _isLoading: false, _hasError: false, _newsItems.length: 1
+👁️ [CACHE] Marked 1 news items as seen
+📝 [2025-10-29T13:55:52.566] [NAV] 🧭 NAV: Navigated to screen: 2
+📝 [2025-10-29T13:55:52.572] [UI] 🎨 UI: Building MainNavigationScreen widget
+📝 [2025-10-29T13:55:53.516] [NAV] 🧭 NAV: Navigated to screen: 3
+📝 [2025-10-29T13:55:53.523] [UI] 🎨 UI: Building MainNavigationScreen widget
 Application finished.

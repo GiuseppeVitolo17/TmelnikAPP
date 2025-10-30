@@ -7,6 +7,7 @@ class NewsItem {
   final String summary;
   final String date;
   final String url;
+  final String imageUrl; // Optional preview image
   final DateTime? pubDateTimestamp;
   final bool isNew; // Flag to indicate if this is a new article
   final bool isUpdated; // Flag to indicate if this article was updated
@@ -16,6 +17,7 @@ class NewsItem {
     required this.summary,
     required this.date,
     required this.url,
+    this.imageUrl = '',
     this.pubDateTimestamp,
     this.isNew = false,
     this.isUpdated = false,
@@ -26,6 +28,7 @@ class NewsItem {
     String? summary,
     String? date,
     String? url,
+    String? imageUrl,
     DateTime? pubDateTimestamp,
     bool? isNew,
     bool? isUpdated,
@@ -35,6 +38,7 @@ class NewsItem {
       summary: summary ?? this.summary,
       date: date ?? this.date,
       url: url ?? this.url,
+      imageUrl: imageUrl ?? this.imageUrl,
       pubDateTimestamp: pubDateTimestamp ?? this.pubDateTimestamp,
       isNew: isNew ?? this.isNew,
       isUpdated: isUpdated ?? this.isUpdated,
@@ -96,7 +100,7 @@ class NewsItem {
 
   @override
   String toString() {
-    return 'NewsItem(title: $title, url: $url, pubDate: $pubDateTimestamp)';
+    return 'NewsItem(title: $title, url: $url, imageUrl: $imageUrl, pubDate: $pubDateTimestamp)';
   }
 }
 

@@ -27,6 +27,7 @@ class NewsCacheService {
         'summary': item.summary,
         'date': item.date,
         'url': item.url,
+        'imageUrl': item.imageUrl,
         'pubDateTimestamp': item.pubDateTimestamp?.millisecondsSinceEpoch,
       }).toList();
       
@@ -58,6 +59,7 @@ class NewsCacheService {
           summary: map['summary'] ?? '',
           date: map['date'] ?? '',
           url: map['url'] ?? '',
+          imageUrl: map['imageUrl'] ?? '',
           pubDateTimestamp: map['pubDateTimestamp'] != null
               ? DateTime.fromMillisecondsSinceEpoch(map['pubDateTimestamp'] as int)
               : null,

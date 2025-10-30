@@ -2,6 +2,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/firebase_firestore_service.dart';
+import '../models/project_offer.dart';
 
 /// Service for displaying push notifications when new projects appear
 /// Works on Android and iOS only (not web)
@@ -13,6 +16,9 @@ class NotificationService {
   static final Random _random = Random();
   FlutterLocalNotificationsPlugin? _localNotifications;
   bool _initialized = false;
+  // Global toggle: disable local pop-up notifications by default
+  static bool notificationsEnabled = false;
+  final FirebaseFirestoreService _firestoreService = FirebaseFirestoreService();
 
   /// 5 fun notification messages templates
   static final List<String> _notificationTemplates = [
@@ -25,7 +31,7 @@ class NotificationService {
 
   /// Initialize notification service (call this on app startup)
   Future<void> initialize() async {
-    if (kIsWeb) {
+    if (kIsWeb || !notificationsEnabled) {
       // Web doesn't support push notifications
       return;
     }
@@ -73,6 +79,26 @@ class NotificationService {
         },
       );
 
+      // FCM: obtain token (for direct sends) and subscribe to topic
+      try {
+        final token = await messaging.getToken();
+        debugPrint('🔔 FCM token: $token');
+        await messaging.subscribeToTopic('projects');
+        debugPrint('✅ Subscribed to FCM topic: projects');
+      } catch (e) {
+        debugPrint('❌ Error getting token or subscribing to topic: $e');
+      }
+
+      // Foreground message listener (no intrusive popups)
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('📩 FCM message (foreground): ${message.messageId} | ${message.notification?.title}');
+      });
+
+      // App opened from notification
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('📬 Opened from notification: ${message.messageId}');
+      });
+
       _initialized = true;
       debugPrint('✅ Notification service initialized');
     } catch (e) {
@@ -101,7 +127,7 @@ class NotificationService {
     required String cityName,
     required String departureDate,
   }) async {
-    if (kIsWeb) {
+    if (kIsWeb || !notificationsEnabled) {
       // Web: just log to console
       debugPrint('🔔 ${_getRandomMessage(projectName, cityName, departureDate)}');
       return;
@@ -147,6 +173,41 @@ class NotificationService {
       debugPrint('✅ Push notification sent: $message');
     } catch (e) {
       debugPrint('❌ Error showing notification: $e');
+    }
+  }
+
+  /// Handle remote FCM message: fetch project and show local notification
+  Future<void> handleRemoteMessage(RemoteMessage message, {bool fromBackground = false}) async {
+    try {
+      final data = message.data;
+      if (data['type'] != 'project_created') return;
+      final projectId = data['projectId'];
+      if (projectId == null || projectId.isEmpty) return;
+
+      final offer = await _firestoreService.getProjectOfferById(projectId);
+      if (offer == null) return;
+
+      final departureDate = offer.departureDate != null
+          ? NotificationService.formatDateForNotification(offer.departureDate!)
+          : 'TBD';
+      final messageText = _getRandomMessage(
+        offer.title,
+        offer.location.isNotEmpty ? offer.location : 'Unknown',
+        departureDate,
+      );
+
+      // Only show local notification for background/terminated
+      if (fromBackground && notificationsEnabled) {
+        await showNewProjectNotification(
+          projectName: offer.title,
+          cityName: offer.location,
+          departureDate: departureDate,
+        );
+      } else {
+        debugPrint('📩 FCM (foreground): $messageText');
+      }
+    } catch (e) {
+      debugPrint('❌ Error handling remote message: $e');
     }
   }
 

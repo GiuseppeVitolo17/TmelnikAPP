@@ -1,25 +1,43 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import '../models/news_item.dart';
 
 /// Service for fetching and parsing Erasmus+ RSS feed.
 /// This service is completely stateless and independent from Firebase.
 class ErasmusRssService {
   static const String _rssUrl = 'https://erasmus-plus.ec.europa.eu/rss.xml';
-  static const int _maxArticles = 10;
+  static const int _maxArticles = 50; // Increased to catch more news items
 
-  /// Fetches and parses the Erasmus+ RSS feed.
-  /// Returns a list of NewsItem objects, filtered to only include /news/ articles.
-  /// Returns empty list if request fails or parsing fails.
-  Future<List<NewsItem>> fetchErasmusNews() async {
+  /// Fetches and parses the Erasmus+ RSS feed incrementally.
+  /// Calls onItemFound callback for each valid news item found.
+  /// Returns the complete list of news items when done.
+  Future<List<NewsItem>> fetchErasmusNews({
+    Function(NewsItem)? onItemFound,
+  }) async {
     debugPrint('📰 [RSS] Starting to fetch Erasmus+ news from $_rssUrl');
     
     try {
       // Fetch RSS feed
       debugPrint('📰 [RSS] Making HTTP request...');
-      final response = await http.get(Uri.parse(_rssUrl));
+      
+      // For web, we need to handle CORS issues
+      // Use a CORS proxy or fetch with proper headers
+      Uri requestUri;
+      if (kIsWeb) {
+        // Use a CORS proxy for web (you may need to replace this with your own proxy)
+        // Alternatively, you could set up a backend endpoint
+        final proxyUrl = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(_rssUrl)}';
+        requestUri = Uri.parse(proxyUrl);
+        debugPrint('📰 [RSS] Using CORS proxy for web: $proxyUrl');
+      } else {
+        requestUri = Uri.parse(_rssUrl);
+      }
+      
+      final response = await http.get(requestUri);
       
       debugPrint('📰 [RSS] HTTP response status: ${response.statusCode}');
       
@@ -32,68 +50,75 @@ class ErasmusRssService {
       final xmlString = utf8.decode(response.bodyBytes);
       debugPrint('📰 [RSS] XML length: ${xmlString.length} characters');
       
-      final newsItems = _parseRssXml(xmlString);
-      debugPrint('📰 [RSS] Parsed ${newsItems.length} items from RSS');
+      // Parse and filter incrementally - show items as they are found
+      final List<NewsItem> filteredItems = [];
+      final allItems = _parseRssXml(xmlString);
+      debugPrint('📰 [RSS] Parsed ${allItems.length} items from RSS');
       
-      // Log sample URLs for debugging
-      if (newsItems.isNotEmpty) {
-        debugPrint('📰 [RSS] Sample URLs from feed:');
-        for (int i = 0; i < newsItems.length && i < 5; i++) {
-          debugPrint('📰 [RSS]   ${i + 1}. ${newsItems[i].url}');
+      // Log all URLs found for debugging
+      debugPrint('📰 [RSS] All URLs found in feed:');
+      for (int i = 0; i < allItems.length && i < 20; i++) {
+        final item = allItems[i];
+        final hasNews = item.url.toLowerCase().contains('/news/');
+        final hasDocument = item.url.toLowerCase().contains('/document/');
+        final hasHelp = item.url.toLowerCase().contains('/help');
+        final hasEche = item.url.toLowerCase().contains('/eche/');
+        debugPrint('📰 [RSS]   ${i + 1}. ${hasNews ? "✅NEWS" : hasDocument ? "📄DOC" : hasHelp ? "❓HELP" : hasEche ? "📋ECHE" : "❓OTHER"} ${item.url}');
+      }
+      
+      // Filter and emit items one by one
+      // IMPORTANT: Only filter by /news/ pattern, don't exclude other patterns too aggressively
+      final useFallback = allItems.where((item) {
+        final url = item.url.toLowerCase();
+        return url.contains('/news/') && 
+               !url.contains('/document/');
+      }).isEmpty;
+      
+      final filterCriteria = useFallback ? (NewsItem item) {
+        // Fallback: exclude only documents and eche assessments, but allow help pages if they're news-like
+        final url = item.url.toLowerCase();
+        return !url.contains('/document/') &&
+               !url.contains('/eche/assessment-type');
+      } : (NewsItem item) {
+        // Primary: only /news/ pages, exclude documents
+        final url = item.url.toLowerCase();
+        return url.contains('/news/') && 
+               !url.contains('/document/');
+      };
+      
+      for (final item in allItems) {
+        if (filteredItems.length >= _maxArticles) break;
+        
+        if (filterCriteria(item)) {
+          filteredItems.add(item);
+          debugPrint('📰 [RSS] ✅ Found news item ${filteredItems.length}/${_maxArticles}: ${item.title}');
+          
+          // Emit item immediately if callback provided
+          if (onItemFound != null) {
+            onItemFound(item);
+          }
         }
       }
-
-      // Filter articles: only include /news/ pages, exclude documents, help/support pages
-      var filteredItems = newsItems
-          .where((item) {
-            final url = item.url.toLowerCase();
-            // Only include news pages, exclude documents and other pages
-            final isRelevant = url.contains('/news/') && 
-                            !url.contains('/document/') &&
-                            !url.contains('/help') &&
-                            !url.contains('/support') &&
-                            !url.contains('/eche/');
-            
-            if (isRelevant) {
-              debugPrint('📰 [RSS] ✅ Included news item: ${item.title}');
-            } else {
-              debugPrint('📰 [RSS] ❌ Excluded: ${item.title} (URL: $url)');
-            }
-            
-            return isRelevant;
-          })
-          .take(_maxArticles)
-          .toList();
-
+      
       debugPrint('📰 [RSS] Filtered to ${filteredItems.length} news items (excluding documents)');
       
-      // If no news items found, try to get any relevant items (excluding documents and help pages)
-      if (filteredItems.isEmpty && newsItems.isNotEmpty) {
-        debugPrint('⚠️ [RSS] No /news/ items found. Getting most recent items (excluding documents)...');
-        filteredItems = newsItems
-            .where((item) {
-              final url = item.url.toLowerCase();
-              final include = !url.contains('/document/') &&
-                     !url.contains('/help') && 
-                     !url.contains('/support') &&
-                     !url.contains('/eche/assessment-type');
-              if (include) {
-                debugPrint('📰 [RSS] ✅ Included (fallback): ${item.title}');
-              }
-              return include;
-            })
-            .take(_maxArticles)
-            .toList();
-        debugPrint('📰 [RSS] Using ${filteredItems.length} items without strict /news/ filter');
+      // IMPORTANT: Warn if feed seems incomplete
+      if (filteredItems.length == 1 && allItems.isNotEmpty) {
+        debugPrint('⚠️ [RSS] WARNING: Only 1 news item found in feed. Feed may be incomplete or outdated.');
+        debugPrint('⚠️ [RSS] The RSS feed contains only ${allItems.length} total items.');
+        debugPrint('⚠️ [RSS] Recent news may not be included in the official RSS feed.');
       }
       
       if (filteredItems.isNotEmpty) {
         debugPrint('📰 [RSS] First item: ${filteredItems[0].title}');
         debugPrint('📰 [RSS] First item URL: ${filteredItems[0].url}');
+        if (filteredItems[0].pubDateTimestamp != null) {
+          debugPrint('📰 [RSS] First item date: ${filteredItems[0].pubDateTimestamp}');
+        }
       } else {
-        debugPrint('⚠️ [RSS] No items found after filtering. Total parsed: ${newsItems.length}');
-        if (newsItems.isNotEmpty) {
-          debugPrint('📰 [RSS] Sample URLs: ${newsItems.take(3).map((e) => e.url).join(", ")}');
+        debugPrint('⚠️ [RSS] No items found after filtering. Total parsed: ${allItems.length}');
+        if (allItems.isNotEmpty) {
+          debugPrint('📰 [RSS] Sample URLs: ${allItems.take(3).map((e) => e.url).join(", ")}');
         }
       }
 
@@ -123,11 +148,46 @@ class ErasmusRssService {
         final linkMatch = RegExp(r'<link>(.*?)</link>', dotAll: true).firstMatch(itemXml);
         final pubDateMatch = RegExp(r'<pubDate>(.*?)</pubDate>', dotAll: true).firstMatch(itemXml);
         final descriptionMatch = RegExp(r'<description>(.*?)</description>', dotAll: true).firstMatch(itemXml);
+        // Try to extract preview image from common RSS tags before stripping HTML
+        final mediaMatch = RegExp(r'<media:(?:content|thumbnail)[^>]*url=["\']([^"\']+)["\']', dotAll: true)
+            .firstMatch(itemXml);
+        final enclosureMatch = RegExp(r'<enclosure[^>]*type=["\']image/[^"\']+["\'][^>]*url=["\']([^"\']+)["\']', dotAll: true)
+            .firstMatch(itemXml);
+        String rawDescription = descriptionMatch?.group(1) ?? '';
+        final imgInDescriptionMatch = RegExp(r'<img[^>]*src=["\']([^"\']+)["\']', dotAll: true)
+            .firstMatch(rawDescription);
 
         final title = _cleanXmlText(titleMatch?.group(1) ?? '');
         final url = _cleanXmlText(linkMatch?.group(1) ?? '');
         final pubDateRaw = _cleanXmlText(pubDateMatch?.group(1) ?? '');
-        final description = _cleanXmlText(descriptionMatch?.group(1) ?? '');
+        final description = _cleanXmlText(rawDescription);
+        String imageUrl = (mediaMatch?.group(1) ??
+                         enclosureMatch?.group(1) ??
+                         imgInDescriptionMatch?.group(1) ??
+                         '')
+            .trim();
+
+        // Fallback: try to fetch Open Graph image from the article page
+        if (imageUrl.isEmpty && url.isNotEmpty) {
+          try {
+            final pageResp = await http
+                .get(Uri.parse(url))
+                .timeout(const Duration(seconds: 3));
+            if (pageResp.statusCode == 200) {
+              final html = utf8.decode(pageResp.bodyBytes);
+              final ogImg = RegExp(
+                r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+                caseSensitive: false,
+              ).firstMatch(html);
+              if (ogImg != null) {
+                imageUrl = ogImg.group(1)!.trim();
+                debugPrint('📰 [RSS] Extracted og:image for ${title.substring(0, math.min(20, title.length))}: $imageUrl');
+              }
+            }
+          } catch (_) {
+            // Ignore fallback errors silently
+          }
+        }
 
         // Only add if we have a title and URL
         if (title.isNotEmpty && url.isNotEmpty) {
@@ -144,6 +204,7 @@ class ErasmusRssService {
             summary: description,
             date: formattedDate,
             url: url,
+            imageUrl: imageUrl,
             pubDateTimestamp: pubDateTimestamp,
           ));
         }
@@ -190,19 +251,19 @@ class ErasmusRssService {
   /// Cleans XML/HTML tags and entities from text.
   String _cleanXmlText(String text) {
     // Remove CDATA wrapper if present
-    text = text.replaceAll(RegExp(r'<!\[CDATA\[(.*?)\]\]>', dotAll: true), '$1');
-    
-    // Remove HTML tags
-    text = text.replaceAll(RegExp(r'<[^>]*>'), '');
-    
-    // Decode common HTML entities
+    text = text.replaceAll(RegExp(r'<!\[CDATA\[(.*?)\]\]>', dotAll: true), r'$1');
+
+    // First decode common HTML entities
     text = text.replaceAll('&lt;', '<');
     text = text.replaceAll('&gt;', '>');
     text = text.replaceAll('&amp;', '&');
     text = text.replaceAll('&quot;', '"');
     text = text.replaceAll('&#39;', "'");
     text = text.replaceAll('&nbsp;', ' ');
-    
+
+    // Now strip any HTML tags that may have appeared after decoding
+    text = text.replaceAll(RegExp(r'<[^>]*>'), '');
+
     return text.trim();
   }
 }

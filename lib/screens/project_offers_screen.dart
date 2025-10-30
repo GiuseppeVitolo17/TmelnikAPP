@@ -93,42 +93,8 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
           departureDate: departureDate,
         );
         
-        // Also show in-app SnackBar notification
-        if (mounted) {
-          final message = NotificationService.getRandomMessage(
-            offer.title,
-            offer.location.isNotEmpty ? offer.location : 'Unknown',
-            departureDate,
-          );
-          
-      ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.notifications_active, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      message,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.blue[600],
-              duration: const Duration(seconds: 5),
-              behavior: SnackBarBehavior.floating,
-              action: SnackBarAction(
-                label: 'View',
-                textColor: Colors.white,
-                onPressed: () {
-                  // Scroll to project or highlight it
-                },
-              ),
-        ),
-      );
-    }
-      }
+        // In-app popups disabled by request
+  }
     }
   }
 
@@ -200,7 +166,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
             SnackBar(
               content: Text('Error deleting project: $e'),
               backgroundColor: Colors.red,
-            ),
+                  ),
           );
         }
       }
@@ -212,7 +178,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
       SnackBar(
         content: Text('Apply button tapped for $projectTitle'),
         duration: const Duration(seconds: 2),
-      ),
+                        ),
     );
   }
 
@@ -259,23 +225,23 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
           }
           
           return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
+                    padding: const EdgeInsets.all(16),
+                      children: [
                     // Debug info (rimuovere in produzione)
                     if (snapshot.hasError)
-                      Container(
+                            Container(
                         padding: const EdgeInsets.all(16),
                         margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
+                              decoration: BoxDecoration(
                           color: Colors.red[50],
-                          borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.red),
-                        ),
-                        child: Text(
+                              ),
+                              child: Text(
                           'Error loading projects: ${snapshot.error}',
                           style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
+                              ),
+                            ),
                     
                     // Proxy projects (hardcoded examples)
                     ..._proxyProjects.map((project) {
@@ -353,7 +319,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                   },
                 );
               }),
-            ],
+                                ],
           );
         },
       ),
@@ -374,6 +340,6 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
               child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
-    );
+                );
   }
 }

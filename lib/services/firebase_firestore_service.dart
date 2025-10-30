@@ -20,10 +20,10 @@ class FirebaseFirestoreService {
   // Project Offers
   Stream<List<ProjectOffer>> getProjectOffersStream() {
     try {
-      return _firestore
-          .collection(_offersCollection)
-          .where('isActive', isEqualTo: true)
-          .snapshots()
+    return _firestore
+        .collection(_offersCollection)
+        .where('isActive', isEqualTo: true)
+        .snapshots()
           .map((snapshot) {
             final offers = snapshot.docs
                 .map((doc) {
@@ -49,6 +49,17 @@ class FirebaseFirestoreService {
     } catch (e) {
       debugPrint('Error creating stream: $e');
       return Stream.value(<ProjectOffer>[]);
+    }
+  }
+
+  Future<ProjectOffer?> getProjectOfferById(String id) async {
+    try {
+      final doc = await _firestore.collection(_offersCollection).doc(id).get();
+      if (!doc.exists) return null;
+      return ProjectOffer.fromFirestore(doc);
+    } catch (e) {
+      debugPrint('Error getting project offer by id: $e');
+      return null;
     }
   }
 
