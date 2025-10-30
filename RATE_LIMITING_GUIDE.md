@@ -1,32 +1,32 @@
 # 🚦 Rate Limiting Implementation Guide
 
-## Perché è Importante?
+## Why is it important?
 
-### **Problemi Senza Rate Limiting:**
-- ❌ Un utente può creare migliaia di progetti
-- ❌ Spam di feedback falsi
-- ❌ Costi Firestore impazziti ($180 per 1M letture)
-- ❌ Server sovraccaricato
+### Problems without rate limiting
+- ❌ A user can create thousands of projects
+- ❌ Spam with fake feedback
+- ❌ Firestore costs spike ($180 per 1M reads)
+- ❌ Overloaded server
 
-### **Esempio Concreto:**
+### Concrete example
 ```
-❌ Senza rate limiting:
-- Utente crea 10,000 progetti → Costo: $5
-- Server crolla → Downtime: 2 ore
+❌ Without rate limiting:
+- User creates 10,000 projects → Cost: $5
+- Server crashes → Downtime: 2 hours
 
-✅ Con rate limiting:
-- Utente bloccato dopo 50 progetti/ora
-- Costo controllato: $0.02
-- Server stabile
+✅ With rate limiting:
+- User blocked after 50 projects/hour
+- Controlled cost: $0.02
+- Stable server
 ```
 
 ---
 
-## 🛡️ **Strategie di Rate Limiting**
+## 🛡️ Rate limiting strategies
 
-### **1. Client-Side Rate Limiting (Semplice)**
+### 1) Client-side rate limiting (simple)
 
-Implementiamo un RateLimiter semplice in Dart:
+Implement a simple RateLimiter in Dart:
 
 ```dart
 // lib/utils/rate_limiter.dart
@@ -45,11 +45,11 @@ class RateLimiter {
     final now = DateTime.now();
     final attempts = _attempts.putIfAbsent(operation, () => <DateTime>[]);
     
-    // Rimuovi tentativi vecchi
+    // Remove old attempts
     attempts.removeWhere((time) => now.difference(time) > _timeWindow);
     
     if (attempts.length >= _maxAttempts) {
-      return false; // Troppi tentativi
+      return false; // Too many attempts
     }
     
     attempts.add(now);
@@ -71,13 +71,13 @@ class RateLimiter {
 // USAGE
 final _rateLimiter = RateLimiter(
   timeWindow: Duration(minutes: 1),
-  maxAttempts: 5, // Max 5 progetti al minuto
+  maxAttempts: 5, // Max 5 projects per minute
 );
 
 if (!_rateLimiter.canAttempt('addProject')) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text('⏰ Troppi tentativi! Aspetta un momento...'),
+      content: Text('⏰ Too many attempts! Please wait...'),
       backgroundColor: Colors.orange,
     ),
   );
@@ -87,16 +87,16 @@ if (!_rateLimiter.canAttempt('addProject')) {
 
 ---
 
-### **2. Server-Side Rate Limiting con Cloud Functions**
+### **2. Server-Side Rate Limiting with Cloud Functions**
 
-Per una protezione reale, serve limitare lato server:
+For real protection, enforce limits on the server:
 
 ```javascript
 // functions/index.js
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
 
-// Rate limiting con Firebase Firestore
+// Rate limiting using Firebase Firestore
 async function checkRateLimit(uid, operation, limit = 10, windowMinutes = 60) {
   const collection = admin.firestore().collection('rate_limits');
   const docId = `${uid}_${operation}`;
@@ -107,7 +107,7 @@ async function checkRateLimit(uid, operation, limit = 10, windowMinutes = 60) {
     const windowStart = now - (windowMinutes * 60 * 1000);
     
     if (!doc.exists) {
-      // Prima volta
+      // First time
       await collection.doc(docId).set({
         count: 1,
         resetAt: now + (windowMinutes * 60 * 1000),
@@ -118,7 +118,7 @@ async function checkRateLimit(uid, operation, limit = 10, windowMinutes = 60) {
     const data = doc.data();
     
     if (data.resetAt < now) {
-      // Finito il time window, reset
+      // Window ended, reset
       await collection.doc(docId).set({
         count: 1,
         resetAt: now + (windowMinutes * 60 * 1000),
@@ -134,7 +134,7 @@ async function checkRateLimit(uid, operation, limit = 10, windowMinutes = 60) {
       };
     }
     
-    // Incrementa counter
+    // Increment counter
     await collection.doc(docId).update({
       count: admin.firestore.FieldValue.increment(1),
     });
@@ -149,39 +149,39 @@ async function checkRateLimit(uid, operation, limit = 10, windowMinutes = 60) {
   }
 }
 
-// Cloud Function per creare progetti con rate limiting
+// Cloud Function to create projects with rate limiting
 exports.createProject = functions.https.onCall(async (data, context) => {
-  // Verifica autenticazione
+  // Auth check
   if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Devi essere autenticato');
+    throw new functions.https.HttpsError('unauthenticated', 'Must be authenticated');
   }
   
-  // Verifica che sia admin
+  // Admin check
   const userDoc = await admin.firestore()
     .collection('users')
     .doc(context.auth.uid)
     .get();
   
   if (!userDoc.data()?.isAdmin) {
-    throw new functions.https.HttpsError('permission-denied', 'Solo admin');
+    throw new functions.https.HttpsError('permission-denied', 'Admins only');
   }
   
   // CHECK RATE LIMIT
   const rateLimit = await checkRateLimit(
     context.auth.uid, 
     'createProject',
-    10, // Max 10 progetti/ora
-    60  // Window: 1 ora
+    10, // Max 10 projects/hour
+    60  // Window: 1 hour
   );
   
   if (!rateLimit.allowed) {
     throw new functions.https.HttpsError(
       'resource-exhausted', 
-      `Troppi progetti! Riprova tra ${Math.ceil((rateLimit.resetAt - Date.now()) / 60000)} minuti`
+      `Too many projects! Try again in ${Math.ceil((rateLimit.resetAt - Date.now()) / 60000)} minutes`
     );
   }
   
-  // OK, crea il progetto
+  // OK, create project
   const projectData = data.project;
   
   await admin.firestore()
@@ -203,21 +203,21 @@ exports.createProject = functions.https.onCall(async (data, context) => {
 
 ---
 
-## 📊 **Limiti Raccomandati per Tmelnik**
+## 📊 **Recommended Limits for Tmelnik**
 
 | Operazione | Client (min) | Server (ora) | Motivazione |
 |------------|-------------|--------------|--------------|
-| **Creare Progetto** | 5/min | 50/ora | Solo admin, prevent spam |
-| **Feedback** | 10/min | 20/ora | Prevent spam feedback |
-| **News** | 5/min | 30/ora | Solo admin, prevent spam |
-| **Diario** | 20/min | 100/ora | Uso personale normale |
-| **Share Instagram** | 20/min | 50/ora | Uso normale condivisione |
+| **Create Project** | 5/min | 50/hour | Admins only, prevent spam |
+| **Feedback** | 10/min | 20/hour | Prevent spam feedback |
+| **News** | 5/min | 30/hour | Admins only, prevent spam |
+| **Diary** | 20/min | 100/hour | Normal personal usage |
+| **Share Instagram** | 20/min | 50/hour | Normal sharing usage |
 
 ---
 
-## 🎯 **Implementazione Pratica**
+## 🎯 **Practical Implementation**
 
-### **Step 1: Aggiungi Rate Limiter al Servizio**
+### **Step 1: Add Rate Limiter to the Service**
 
 Modifica `lib/services/project_service.dart`:
 
@@ -236,7 +236,7 @@ class ProjectService {
       throw Exception('Rate limit exceeded');
     }
     
-    // Continua con la creazione...
+    // Continue with creation...
     try {
       await FirebaseFirestore.instance
           .collection('project_offers')
@@ -249,7 +249,7 @@ class ProjectService {
 }
 ```
 
-### **Step 2: Mostra Messaggi Utente-Friendly**
+### **Step 2: Show User-Friendly Messages**
 
 ```dart
 Future<void> _saveProject() async {
@@ -262,7 +262,7 @@ Future<void> _saveProject() async {
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('⏰ Aspetta ${minutes}m ${seconds}s prima di aggiungere un nuovo progetto'),
+          content: Text('⏰ Please wait ${minutes}m ${seconds}s before adding a new project'),
           backgroundColor: Colors.orange,
           duration: Duration(seconds: 5),
         ),
@@ -277,53 +277,53 @@ Future<void> _saveProject() async {
 
 ---
 
-## 💰 **Impatto sui Costi**
+## 💰 **Cost Impact**
 
-### **Prima (Senza Rate Limiting):**
+### **Before (No Rate Limiting):**
 ```
-Scenario: Attacco spam
-- 1000 progetti creati da utente malintenzionato
+Scenario: Spam attack
+- 1000 projects created by malicious user
 - Costo Firestore: $5
 - Costo Cloud Functions: $10
-- Downtime: 2 ore
-- TOTALE: $15 + downtime
+- Downtime: 2 hours
+- TOTAL: $15 + downtime
 ```
 
-### **Dopo (Con Rate Limiting):**
+### **After (With Rate Limiting):**
 ```
-Scenario: Stesso attacco
-- Bloccato dopo 50 tentativi
-- Costo Firestore: $0.25
-- Costo Cloud Functions: $0.50
-- Nessun downtime
-- TOTALE: $0.75
+Scenario: Same attack
+- Blocked after 50 attempts
+- Firestore cost: $0.25
+- Cloud Functions cost: $0.50
+- No downtime
+- TOTAL: $0.75
 ```
 
-**RISPARMIO: $14.25 per attacco!**
+**SAVINGS: $14.25 per attack!**
 
 ---
 
-## ✅ **Checklist Implementazione**
+## ✅ **Implementation Checklist**
 
-- [ ] Aggiungi RateLimiter client-side
-- [ ] Implementa Cloud Functions con rate limiting
-- [ ] Configura limiti appropriati per ogni operazione
-- [ ] Aggiungi messaggi utente-friendly
-- [ ] Monitora con Firebase Analytics
-- [ ] Testa con utenti reali
-- [ ] Documenta i limiti per gli utenti
+- [ ] Add client-side RateLimiter
+- [ ] Implement Cloud Functions with rate limiting
+- [ ] Configure appropriate limits per operation
+- [ ] Add user-friendly messages
+- [ ] Monitor with Firebase Analytics
+- [ ] Test with real users
+- [ ] Document limits for users
 
 ---
 
 ## 🎓 **Best Practices**
 
-1. **Fail Open**: Se il rate limiting fallisce, permetti l'operazione (meglio un accesso extra che il blocco completo)
-2. **Messaggi Chiari**: Spiega all'utente perché è bloccato e quando può riprovare
-3. **Monitoring**: Monitora i tentativi di rate limiting per rilevare attacchi
-4. **Adattamento**: Aumenta i limiti se i legittimi rimangono ostacolati
-5. **Admin Bypass**: Gli admin dovrebbero avere limiti più alti
+1. **Fail Open**: If rate limiting fails, allow the operation (better one extra access than a full block)
+2. **Clear Messages**: Explain why the user is blocked and when to retry
+3. **Monitoring**: Track attempts to detect abuse
+4. **Adaptation**: Raise limits if legitimate users are blocked
+5. **Admin Bypass**: Admins should have higher limits
 
 ---
 
-**Risultato**: Protezione reale, costi controllati, esperienza utente migliore! 🚀
+**Result**: Real protection, controlled costs, better UX! 🚀
 
