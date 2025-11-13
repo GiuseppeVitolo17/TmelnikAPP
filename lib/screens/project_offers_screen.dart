@@ -27,30 +27,6 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   
   // Track previously seen project IDs to detect new ones
   final Set<String> _seenProjectIds = {};
-  String _proxyApplyLink() =>
-      'https://l.instagram.com/?u=https%3A%2F%2Fbit.ly%2Ftmelnik_vezme_kazdeho%3Ffbclid%3DPAZXh0bgNhZW0CMTEAAadnclU8-_2q2iAqCMR4F6eBeIKgNkuY00kh1UFPc5k52Ejbs_xsDE_eU_82nw_aem_eP2-QlnNysyygCRnhPl8Qw&e=AT2hS0xWHHd7X8Vtat-oagGFzkIvdZ9QK1aNN6QvDWZyfu-xHTJsUvwGE8oiD93Tl5jwvukG63ypXygxRLRqnl8kh-Zdvsu5ng6gm0h6mQ';
-  
-  // Proxy projects (hardcoded examples)
-  final List<Map<String, String>> _proxyProjects = [
-    {
-      'title': 'Project Berlin',
-      'dates': '14 July / 19 July',
-      'city': 'Berlin',
-      'deadline': '10 July', // Application deadline
-    },
-    {
-      'title': 'Project Brno',
-      'dates': '17 July / 25 July',
-      'city': 'Brno',
-      'deadline': '12 July', // Application deadline
-    },
-    {
-      'title': 'Project Krakow',
-      'dates': '27 July / 3 August',
-      'city': 'Krakow',
-      'deadline': '20 July', // Application deadline
-    },
-  ];
 
   @override
   void initState() {
@@ -124,10 +100,6 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
     return null;
   }
 
-  String? _formatDeadlineFromString(String? deadlineStr) {
-    // For proxy projects, deadline is already formatted
-    return deadlineStr;
-  }
 
   String _getMonthName(int month) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
@@ -250,38 +222,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                               ),
                             ),
                     
-                    // Proxy projects (hardcoded examples)
-                    ..._proxyProjects.map((project) {
-                final city = project['city']!;
-                final title = project['title']!;
-                final dates = project['dates']!;
-
-                return FutureBuilder<String>(
-                  future: PexelsService.fetchCityImageUrl(city),
-                  builder: (context, snapshot) {
-                    String imagePath;
-                    
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      imagePath = '';
-                    } else if (snapshot.hasData) {
-                      imagePath = snapshot.data!;
-                    } else {
-                      imagePath = '';
-                    }
-
-                    return ProjectCard(
-                      imagePathOrUrl: imagePath,
-                      title: title,
-                      dates: dates,
-                      deadline: _formatDeadlineFromString(project['deadline']),
-                      onApply: () => _openUrl(_proxyApplyLink()),
-                      onInfo: () {},
-                    );
-                  },
-                );
-              }),
-              
-              // Firestore projects (created by admins)
+                    // Firestore projects (created by admins)
               ...firestoreOffers.map((offer) {
                 // Get image - use offer.imageUrl if available, otherwise fetch from Pexels by location
                 final hasImageUrl = offer.imageUrl.isNotEmpty;

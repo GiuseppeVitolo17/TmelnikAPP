@@ -329,7 +329,6 @@ Screen displaying list of project offers.
 - `_isAdmin` (bool): Admin status flag
 - `_isLoadingAdmin` (bool): Admin check loading state
 - `_seenProjectIds` (Set<String>): Tracks previously seen project IDs
-- `_proxyProjects` (List<Map<String, String>>): Hardcoded example projects
 
 **Methods**:
 - `_checkAdminStatus()`: Checks if current user is admin
