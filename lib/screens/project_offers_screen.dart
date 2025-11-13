@@ -9,6 +9,7 @@ import '../services/notification_service.dart';
 import '../models/project_offer.dart';
 import '../theme/app_theme.dart';
 import 'add_project_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'edit_project_offer_screen.dart';
 
 class ProjectOffersScreen extends StatefulWidget {
@@ -26,6 +27,8 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   
   // Track previously seen project IDs to detect new ones
   final Set<String> _seenProjectIds = {};
+  String _proxyApplyLink() =>
+      'https://l.instagram.com/?u=https%3A%2F%2Fbit.ly%2Ftmelnik_vezme_kazdeho%3Ffbclid%3DPAZXh0bgNhZW0CMTEAAadnclU8-_2q2iAqCMR4F6eBeIKgNkuY00kh1UFPc5k52Ejbs_xsDE_eU_82nw_aem_eP2-QlnNysyygCRnhPl8Qw&e=AT2hS0xWHHd7X8Vtat-oagGFzkIvdZ9QK1aNN6QvDWZyfu-xHTJsUvwGE8oiD93Tl5jwvukG63ypXygxRLRqnl8kh-Zdvsu5ng6gm0h6mQ';
   
   // Proxy projects (hardcoded examples)
   final List<Map<String, String>> _proxyProjects = [
@@ -173,22 +176,26 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
     }
   }
 
-  void _handleApply(String projectTitle, {String? projectId}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Apply button tapped for $projectTitle'),
-        duration: const Duration(seconds: 2),
-                        ),
-    );
-  }
-
-  void _handleInfo(String projectTitle, {String? projectId}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Infopack button tapped for $projectTitle'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  Future<void> _openUrl(String url) async {
+    final normalized = url.trim().isEmpty
+        ? ''
+        : (url.startsWith('http') ? url : 'https://$url');
+    if (normalized.isEmpty) return;
+    final uri = Uri.parse(normalized);
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        // Fallback using string API
+        // ignore: deprecated_member_use
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open link')),
+        );
+      }
+    }
   }
 
 
@@ -267,8 +274,8 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                       title: title,
                       dates: dates,
                       deadline: _formatDeadlineFromString(project['deadline']),
-                      onApply: () => _handleApply(title),
-                      onInfo: () => _handleInfo(title),
+                      onApply: () => _openUrl(_proxyApplyLink()),
+                      onInfo: () {},
                     );
                   },
                 );
@@ -301,8 +308,8 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                       title: offer.title,
                       dates: _formatDates(offer),
                       deadline: _formatDeadline(offer),
-                      onApply: () => _handleApply(offer.title, projectId: offer.id),
-                      onInfo: () => _handleInfo(offer.title, projectId: offer.id),
+                      onApply: () => _openUrl(offer.applyLink.isNotEmpty ? offer.applyLink : offer.contactInfo),
+                      onInfo: () => _openUrl(offer.infoPackUrl),
                       showAdminActions: _isAdmin,
                       onEdit: _isAdmin ? () {
                         Navigator.push(

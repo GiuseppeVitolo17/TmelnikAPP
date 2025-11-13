@@ -20,6 +20,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   final _targetingController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instagramController = TextEditingController();
+  final _applyLinkController = TextEditingController();
+  final _infoPackController = TextEditingController();
   final _expiresController = TextEditingController();
   DateTime? _selectedDate;
   
@@ -31,7 +33,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   @override
   void initState() {
     super.initState();
-    // Instagram starts empty, will be filled with saved value from Firebase
+    // Prefill defaults
+    _instagramController.text = 'tmelnik_cz';
+    _applyLinkController.text =
+        'https://l.instagram.com/?u=https%3A%2F%2Fbit.ly%2Ftmelnik_vezme_kazdeho%3Ffbclid%3DPAZXh0bgNhZW0CMTEAAadnclU8-_2q2iAqCMR4F6eBeIKgNkuY00kh1UFPc5k52Ejbs_xsDE_eU_82nw_aem_eP2-QlnNysyygCRnhPl8Qw&e=AT2hS0xWHHd7X8Vtat-oagGFzkIvdZ9QK1aNN6QvDWZyfu-xHTJsUvwGE8oiD93Tl5jwvukG63ypXygxRLRqnl8kh-Zdvsu5ng6gm0h6mQ';
   }
 
   @override
@@ -42,6 +47,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     _targetingController.dispose();
     _descriptionController.dispose();
     _instagramController.dispose();
+    _applyLinkController.dispose();
+    _infoPackController.dispose();
     _expiresController.dispose();
     for (var controller in _benefitControllers) {
       controller.dispose();
@@ -127,6 +134,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         benefits: benefits,
         contactInfo: _instagramController.text.trim(), // Use Instagram as contact
         instagramAccount: _instagramController.text.trim(),
+        applyLink: _applyLinkController.text.trim(),
+        infoPackUrl: _infoPackController.text.trim(),
         createdAt: DateTime.now(),
         expiresAt: _selectedDate,
         departureDate: _departureDate,
@@ -191,6 +200,26 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                       ),
                       validator: (value) =>
                           value?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _applyLinkController,
+                      decoration: const InputDecoration(
+                        labelText: 'Apply Link *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.link),
+                      ),
+                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _infoPackController,
+                      decoration: const InputDecoration(
+                        labelText: 'Infopack Link',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.description_outlined),
+                        hintText: 'https://... (optional)',
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

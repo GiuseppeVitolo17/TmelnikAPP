@@ -41,8 +41,9 @@ class NotificationService {
     try {
       // Initialize Firebase Messaging
       final messaging = FirebaseMessaging.instance;
+      await messaging.setAutoInitEnabled(true);
 
-      // Request permission (iOS)
+      // Request permission (iOS and Android 13+)
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         final settings = await messaging.requestPermission(
           alert: true,
@@ -51,13 +52,19 @@ class NotificationService {
           provisional: false,
         );
         debugPrint('🔔 Notification permission status: ${settings.authorizationStatus}');
+      } else {
+        try {
+          final androidImpl = _localNotifications
+              ?.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          await androidImpl?.requestNotificationsPermission();
+        } catch (_) {}
       }
 
       // Initialize local notifications
       _localNotifications = FlutterLocalNotificationsPlugin();
 
-      // Android initialization settings
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      // Android initialization settings (use round launcher icon for softer edges)
+      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher_round');
       
       // iOS initialization settings
       const iosSettings = DarwinInitializationSettings(
@@ -90,8 +97,28 @@ class NotificationService {
       }
 
       // Foreground message listener (no intrusive popups)
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         debugPrint('📩 FCM message (foreground): ${message.messageId} | ${message.notification?.title}');
+        // Show a local notification in foreground so the user sees it
+        try {
+          await _localNotifications?.show(
+            _random.nextInt(10000),
+            message.notification?.title ?? 'New Project Available! 🎉',
+            message.notification?.body ?? 'Open the app to view details',
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'new_projects_channel',
+                'New Projects',
+                channelDescription: 'Notifications for new project opportunities',
+                importance: Importance.high,
+                priority: Priority.high,
+                showWhen: true,
+                icon: '@mipmap/ic_launcher_round',
+              ),
+              iOS: DarwinNotificationDetails(),
+            ),
+          );
+        } catch (_) {}
       });
 
       // App opened from notification
@@ -150,6 +177,7 @@ class NotificationService {
         importance: Importance.high,
         priority: Priority.high,
         showWhen: true,
+        icon: '@mipmap/ic_launcher_round',
       );
 
       const iosDetails = DarwinNotificationDetails(

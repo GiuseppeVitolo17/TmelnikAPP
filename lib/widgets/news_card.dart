@@ -18,6 +18,7 @@ class NewsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppShadows.soft,
         border: newsItem.isNew || newsItem.isUpdated
@@ -27,44 +28,11 @@ class NewsCard extends StatelessWidget {
               )
             : null,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (newsItem.imageUrl.isNotEmpty)
-              Positioned.fill(
-                child: Stack(
-                  children: [
-                    Image.network(
-                      newsItem.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                    ),
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.15),
-                              Colors.black.withOpacity(0.35),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Container(
-              color: newsItem.imageUrl.isEmpty ? AppColors.cardBackground : Colors.transparent,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
             // Date and status badges row
             Row(
               children: [

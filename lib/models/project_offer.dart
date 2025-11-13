@@ -11,6 +11,8 @@ class ProjectOffer {
   final List<String> benefits;
   final String contactInfo;
   final String instagramAccount;
+  final String applyLink;
+  final String infoPackUrl;
   final DateTime createdAt;
   final DateTime? expiresAt;
   final DateTime? departureDate;
@@ -30,6 +32,8 @@ class ProjectOffer {
     required this.benefits,
     required this.contactInfo,
     required this.instagramAccount,
+    this.applyLink = '',
+    this.infoPackUrl = '',
     required this.createdAt,
     this.expiresAt,
     this.departureDate,
@@ -50,6 +54,8 @@ class ProjectOffer {
     List<String>? benefits,
     String? contactInfo,
     String? instagramAccount,
+    String? applyLink,
+    String? infoPackUrl,
     DateTime? createdAt,
     DateTime? expiresAt,
     DateTime? departureDate,
@@ -69,6 +75,8 @@ class ProjectOffer {
       benefits: benefits ?? this.benefits,
       contactInfo: contactInfo ?? this.contactInfo,
       instagramAccount: instagramAccount ?? this.instagramAccount,
+      applyLink: applyLink ?? this.applyLink,
+      infoPackUrl: infoPackUrl ?? this.infoPackUrl,
       createdAt: createdAt ?? this.createdAt,
       expiresAt: expiresAt ?? this.expiresAt,
       departureDate: departureDate ?? this.departureDate,
@@ -91,6 +99,8 @@ class ProjectOffer {
       'benefits': benefits,
       'contactInfo': contactInfo,
       'instagramAccount': instagramAccount,
+      'applyLink': applyLink,
+      'infoPackUrl': infoPackUrl,
       'createdAt': createdAt.toIso8601String(),
       'expiresAt': expiresAt?.toIso8601String(),
       'departureDate': departureDate?.toIso8601String(),
@@ -113,6 +123,8 @@ class ProjectOffer {
       benefits: List<String>.from(json['benefits'] ?? []),
       contactInfo: json['contactInfo'],
       instagramAccount: json['instagramAccount'] ?? '',
+      applyLink: json['applyLink'] ?? '',
+      infoPackUrl: json['infoPackUrl'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       expiresAt: json['expiresAt'] != null ? DateTime.parse(json['expiresAt']) : null,
       departureDate: json['departureDate'] != null ? DateTime.parse(json['departureDate']) : null,
@@ -139,6 +151,8 @@ class ProjectOffer {
       'benefits': benefits,
       'contactInfo': contactInfo,
       'instagramAccount': instagramAccount,
+      'applyLink': applyLink,
+      'infoPackUrl': infoPackUrl,
       'createdAt': Timestamp.fromDate(createdAt),
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'departureDate': departureDate != null ? Timestamp.fromDate(departureDate!) : null,
@@ -169,6 +183,8 @@ class ProjectOffer {
       benefits: List<String>.from(data['benefits'] ?? []),
       contactInfo: data['contactInfo'] ?? '',
       instagramAccount: data['instagramAccount'] ?? '',
+      applyLink: data['applyLink'] ?? '',
+      infoPackUrl: data['infoPackUrl'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
       departureDate: (data['departureDate'] as Timestamp?)?.toDate(),

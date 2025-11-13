@@ -25,6 +25,8 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
   final _targetingController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _instagramController = TextEditingController();
+  final _applyLinkController = TextEditingController();
+  final _infoPackController = TextEditingController();
   
   DateTime? _selectedDate;
   DateTime? _departureDate;
@@ -83,6 +85,8 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
           _targetingController.text = offer.targeting;
           _descriptionController.text = offer.description;
           _instagramController.text = offer.instagramAccount;
+          _applyLinkController.text = offer.applyLink;
+          _infoPackController.text = offer.infoPackUrl;
           _selectedDate = offer.expiresAt;
           _departureDate = offer.departureDate;
           _returnDate = offer.returnDate;
@@ -131,6 +135,8 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
     _targetingController.dispose();
     _descriptionController.dispose();
     _instagramController.dispose();
+    _applyLinkController.dispose();
+    _infoPackController.dispose();
     for (var controller in _benefitControllers) {
       controller.dispose();
     }
@@ -209,6 +215,8 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
         benefits: benefits,
         contactInfo: _instagramController.text.trim(), // Use Instagram as contact
         instagramAccount: _instagramController.text.trim(),
+        applyLink: _applyLinkController.text.trim(),
+        infoPackUrl: _infoPackController.text.trim(),
         expiresAt: _selectedDate,
         departureDate: _departureDate,
         returnDate: _returnDate,
@@ -267,6 +275,26 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                       ),
                       validator: (value) =>
                           value?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _applyLinkController,
+                      decoration: const InputDecoration(
+                        labelText: 'Apply Link *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.link),
+                      ),
+                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _infoPackController,
+                      decoration: const InputDecoration(
+                        labelText: 'Infopack Link',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.description_outlined),
+                        hintText: 'https://... (optional)',
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

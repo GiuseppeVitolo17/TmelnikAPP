@@ -58,6 +58,27 @@ void main() async {
     print('❌ Error initializing Firebase: $e');
   }
 
+  // Attempt to restore session if Firebase user is null but Google session exists
+  try {
+    if (FirebaseAuth.instance.currentUser == null) {
+      final google = GoogleSignIn();
+      final silent = await google.signInSilently();
+      if (silent != null) {
+        final ga = await silent.authentication;
+        if (ga.idToken != null) {
+          final credential = GoogleAuthProvider.credential(
+            accessToken: ga.accessToken,
+            idToken: ga.idToken,
+          );
+          await FirebaseAuth.instance.signInWithCredential(credential);
+          await debugLogger.auth('Restored Firebase session from Google silent sign-in');
+        }
+      }
+    }
+  } catch (e) {
+    await debugLogger.error('Session restore failed', e);
+  }
+
   // Register FCM background handler
   try {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -67,6 +88,8 @@ void main() async {
 
   // Initialize notification service for mobile platforms
   try {
+    // Enable push notifications (no intrusive in-app popups)
+    NotificationService.notificationsEnabled = true;
     await NotificationService().initialize();
   } catch (e) {
     debugLogger.error('Error initializing notifications', e);
@@ -261,11 +284,7 @@ class _AuthScreenState extends State<AuthScreen> {
     await debugLogger.auth('Starting Google Sign-In');
 
     try {
-      // Try to sign out first to clear any cached credentials
-      await debugLogger.auth('Signing out from any cached Google session');
-      await _googleSignIn.signOut();
-      
-      // Try silent sign-in first
+      // Try silent sign-in first (do not force sign-out to preserve persistence)
       await debugLogger.auth('Attempting silent Google Sign-In');
       GoogleSignInAccount? googleUser = await _googleSignIn.signInSilently();
       
@@ -682,6 +701,12 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // FCM token is now handled silently by NotificationService
+  }
+
   List<Widget> get _screens {
     if (widget.isGuestMode) {
       return [
@@ -739,17 +764,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
     
     // Emoji container size (square)
-    const double emojiSize = 40.0;
-    const double emojiContainerSize = 56.0; // Container size (square)
+    const double emojiSize = 32.0;
+    const double emojiContainerSize = 44.0; // Smaller square for mobile header
     const double emojiPadding = (emojiContainerSize - emojiSize) / 2; // Center the emoji
     
     return SafeArea(
       bottom: false,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         color: Colors.white,
         width: double.infinity,
-        height: emojiContainerSize + 24, // Container size + vertical padding
+      height: emojiContainerSize + 18, // Container size + vertical padding
         child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -779,12 +804,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               child: Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                   letterSpacing: -0.5,
                   height: 1.2, // Better line height
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),

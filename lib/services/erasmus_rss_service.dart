@@ -149,12 +149,12 @@ class ErasmusRssService {
         final pubDateMatch = RegExp(r'<pubDate>(.*?)</pubDate>', dotAll: true).firstMatch(itemXml);
         final descriptionMatch = RegExp(r'<description>(.*?)</description>', dotAll: true).firstMatch(itemXml);
         // Try to extract preview image from common RSS tags before stripping HTML
-        final mediaMatch = RegExp(r'<media:(?:content|thumbnail)[^>]*url=["\']([^"\']+)["\']', dotAll: true)
+        final mediaMatch = RegExp('<media:(?:content|thumbnail)[^>]*url=["\\\']([^"\\\']+)["\\\']', dotAll: true)
             .firstMatch(itemXml);
-        final enclosureMatch = RegExp(r'<enclosure[^>]*type=["\']image/[^"\']+["\'][^>]*url=["\']([^"\']+)["\']', dotAll: true)
+        final enclosureMatch = RegExp('<enclosure[^>]*type=["\\\']image/[^"\\\']+["\\\'][^>]*url=["\\\']([^"\\\']+)["\\\']', dotAll: true)
             .firstMatch(itemXml);
         String rawDescription = descriptionMatch?.group(1) ?? '';
-        final imgInDescriptionMatch = RegExp(r'<img[^>]*src=["\']([^"\']+)["\']', dotAll: true)
+        final imgInDescriptionMatch = RegExp('<img[^>]*src=["\\\']([^"\\\']+)["\\\']', dotAll: true)
             .firstMatch(rawDescription);
 
         final title = _cleanXmlText(titleMatch?.group(1) ?? '');
@@ -167,27 +167,7 @@ class ErasmusRssService {
                          '')
             .trim();
 
-        // Fallback: try to fetch Open Graph image from the article page
-        if (imageUrl.isEmpty && url.isNotEmpty) {
-          try {
-            final pageResp = await http
-                .get(Uri.parse(url))
-                .timeout(const Duration(seconds: 3));
-            if (pageResp.statusCode == 200) {
-              final html = utf8.decode(pageResp.bodyBytes);
-              final ogImg = RegExp(
-                r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
-                caseSensitive: false,
-              ).firstMatch(html);
-              if (ogImg != null) {
-                imageUrl = ogImg.group(1)!.trim();
-                debugPrint('📰 [RSS] Extracted og:image for ${title.substring(0, math.min(20, title.length))}: $imageUrl');
-              }
-            }
-          } catch (_) {
-            // Ignore fallback errors silently
-          }
-        }
+        // Fallback disabled in parser to keep it synchronous and fast
 
         // Only add if we have a title and URL
         if (title.isNotEmpty && url.isNotEmpty) {
