@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/project_card.dart';
-import '../services/pexels_service.dart';
+import '../services/image_cache_service.dart';
 import '../services/firebase_firestore_service.dart';
 import '../services/user_role_service.dart';
 import '../services/notification_service.dart';
@@ -22,6 +22,7 @@ class ProjectOffersScreen extends StatefulWidget {
 class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   final FirebaseFirestoreService _firestoreService = FirebaseFirestoreService();
   final NotificationService _notificationService = NotificationService();
+  final ImageCacheService _imageCacheService = ImageCacheService();
   bool _isAdmin = false;
   bool _isLoadingAdmin = true;
   
@@ -224,13 +225,13 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                     
                     // Firestore projects (created by admins)
               ...firestoreOffers.map((offer) {
-                // Get image - use offer.imageUrl if available, otherwise fetch from Pexels by location
+                // Get image - use offer.imageUrl if available, otherwise use cached image
                 final hasImageUrl = offer.imageUrl.isNotEmpty;
                 
-                return FutureBuilder<String>(
+                return FutureBuilder<String?>(
                   future: hasImageUrl 
                       ? Future.value(offer.imageUrl)
-                      : PexelsService.fetchCityImageUrl(offer.location),
+                      : _imageCacheService.getCachedImage(offer.location),
                   builder: (context, snapshot) {
                     String imagePath = '';
                     
@@ -238,7 +239,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                       imagePath = offer.imageUrl;
                     } else if (snapshot.connectionState == ConnectionState.waiting) {
                       imagePath = '';
-                    } else if (snapshot.hasData) {
+                    } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       imagePath = snapshot.data!;
                     } else {
                       imagePath = '';
@@ -263,6 +264,13 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                         ).then((_) => setState(() {}));
                       } : null,
                       onDelete: _isAdmin ? () => _handleDelete(offer) : null,
+                      onImageTap: hasImageUrl ? null : () async {
+                        // Refresh image when user taps on it
+                        final newImagePath = await _imageCacheService.fetchAndCacheImage(offer.location);
+                        if (mounted && newImagePath != null) {
+                          setState(() {});
+                        }
+                      },
                     );
                   },
                 );

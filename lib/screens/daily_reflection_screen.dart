@@ -20,16 +20,14 @@ class _DailyReflectionScreenState extends State<DailyReflectionScreen> {
   DailyReflection? _currentReflection;
   bool _isLoading = true;
   
-  // Predefined activity list
-  final List<String> _predefinedActivities = [
-    'Namegame',
-    'Energizer',
-    'Activity',
-    'Workshop',
-    'Team Building',
-    'Cultural Exchange',
-    'Free Time',
-    'Group Discussion',
+  // Predefined activity categories with emojis
+  final List<Map<String, String>> _predefinedActivityCategories = [
+    {'name': 'Food', 'emoji': '🍽️'},
+    {'name': 'Group atmosphere', 'emoji': '👥'},
+    {'name': 'Morning activities', 'emoji': '🌅'},
+    {'name': 'Afternoon activities', 'emoji': '☀️'},
+    {'name': 'Coffee breaks', 'emoji': '☕'},
+    {'name': 'Energy level', 'emoji': '⚡'},
   ];
 
   @override
@@ -183,6 +181,153 @@ class _DailyReflectionScreenState extends State<DailyReflectionScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.medium,
         ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+            maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Add Activity',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Scrollable content
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Predefined categories
+                        ..._predefinedActivityCategories.map((category) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: InkWell(
+                              onTap: () {
+                                _addActivity(category['name']!);
+                                Navigator.pop(context);
+                              },
+                              borderRadius: AppRadius.medium,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundGrey,
+                                  borderRadius: AppRadius.medium,
+                                  border: Border.all(
+                                    color: Colors.grey[300]!,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      category['emoji']!,
+                                      style: const TextStyle(fontSize: 22),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        category['name']!,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey[600],
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 10),
+                        // Custom activity button
+                        InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showCustomActivityDialog();
+                          },
+                          borderRadius: AppRadius.medium,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryBlue.withOpacity(0.1),
+                              borderRadius: AppRadius.medium,
+                              border: Border.all(
+                                color: AppColors.primaryBlue,
+                                width: 2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.add,
+                                  color: AppColors.primaryBlue,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Add custom activity',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Cancel button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCustomActivityDialog() {
+    final textController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.medium,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -190,7 +335,7 @@ class _DailyReflectionScreenState extends State<DailyReflectionScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Add Activity',
+                'Add Custom Activity',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -198,9 +343,11 @@ class _DailyReflectionScreenState extends State<DailyReflectionScreen> {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: textController,
                 autofocus: true,
                 decoration: InputDecoration(
                   labelText: 'Activity name',
+                  hintText: 'Enter activity name',
                   border: OutlineInputBorder(
                     borderRadius: AppRadius.medium,
                   ),
@@ -214,37 +361,27 @@ class _DailyReflectionScreenState extends State<DailyReflectionScreen> {
                   }
                 },
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Or select from predefined:',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _predefinedActivities.map((activity) {
-                  return FilterChip(
-                    label: Text(activity),
-                    onSelected: (selected) {
-                      if (selected) {
-                        _addActivity(activity);
-                        Navigator.pop(context);
-                      }
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (textController.text.trim().isNotEmpty) {
+                        _addActivity(textController.text.trim());
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Add'),
                   ),
                 ],
               ),

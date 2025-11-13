@@ -91,6 +91,22 @@ The main entry point of the application. Handles Firebase initialization, authen
   - `_currentIndex` (int): Current selected tab index (0-3)
 - **Methods**:
   - `_screens` (getter): Returns list of screens based on guest mode
+  - `_currentScreenTitle` (getter): Returns title for current screen
+  - `_buildHeader(String title)`: 
+    - Builds custom header with emoji, title, and profile/logout button
+    - Profile button shows confirmation dialog before logout
+    - Dialog asks "Are you sure you want to log out?" with Cancel and Log Out options
+  - `build(BuildContext context)`: Builds Scaffold with custom header, IndexedStack for screens, and BottomNavigationBar
+
+**`MainNavigationScreen` (StatefulWidget)**
+- **Purpose**: Main navigation container with bottom navigation bar
+- **Properties**:
+  - `isGuestMode` (bool): Whether user is in guest mode
+  - `onLoginRequested` (VoidCallback?): Callback when guest requests login
+- **State Variables**:
+  - `_currentIndex` (int): Current selected tab index (0-3)
+- **Methods**:
+  - `_screens` (getter): Returns list of screens based on guest mode
     - Guest mode: ProjectOffersScreen, GuestLoginScreen (reflection), GuestLoginScreen (diary), NewsScreen
     - Authenticated: ProjectOffersScreen, DailyReflectionScreen, DiaryCalendarScreen, NewsScreen
   - `_currentScreenTitle` (getter): Returns title for current screen
@@ -315,6 +331,41 @@ Service for caching news items locally using SharedPreferences.
 
 ---
 
+### `lib/services/image_cache_service.dart`
+
+Service for caching project images locally to avoid API calls on every app launch.
+
+#### Class: `ImageCacheService`
+
+**Purpose**: Caches project images on disk (mobile) or in SharedPreferences (web) to prevent unnecessary API calls. Images are only refreshed when user taps on them.
+
+**Static Properties**:
+- `_instance` (ImageCacheService): Singleton instance
+- `_cacheKeyPrefix` (String): "project_image_url_" - prefix for SharedPreferences keys
+- `_cacheTimestampPrefix` (String): "project_image_timestamp_" - prefix for timestamp keys
+
+**Methods**:
+- `getCachedImagePath(String city)`: Returns cached image file path for mobile (null if not cached)
+- `getCachedImage(String city)`: Returns cached image URL (web) or file path (mobile)
+- `cacheImage(String city, String imageUrl)`: 
+  - Downloads and saves image locally (mobile) or stores URL (web)
+  - Returns file path (mobile) or URL (web)
+- `fetchAndCacheImage(String city)`: 
+  - Fetches new image from Pexels API
+  - Caches it locally
+  - Called only when user taps on image to refresh
+- `clearCache(String city)`: Removes cached image for a specific city
+- `_getCacheDirectory()`: Gets or creates cache directory for mobile
+- `_getFileName(String city)`: Generates safe filename from city name using MD5 hash
+
+**Behavior**:
+- **Mobile**: Images are saved as files in app cache directory
+- **Web**: Image URLs are stored in SharedPreferences
+- **No automatic refresh**: Images are loaded from cache on app startup
+- **Manual refresh**: User taps on image to fetch and cache new image
+
+---
+
 ## Screens
 
 ### `lib/screens/project_offers_screen.dart`
@@ -326,6 +377,7 @@ Screen displaying list of project offers.
 **State Variables**:
 - `_firestoreService` (FirebaseFirestoreService): Firestore service
 - `_notificationService` (NotificationService): Notification service
+- `_imageCacheService` (ImageCacheService): Image cache service for local image storage
 - `_isAdmin` (bool): Admin status flag
 - `_isLoadingAdmin` (bool): Admin check loading state
 - `_seenProjectIds` (Set<String>): Tracks previously seen project IDs
@@ -338,7 +390,17 @@ Screen displaying list of project offers.
 - `_openUrl(BuildContext, String, String)`: Generic URL launcher with error handling
 - `_handleEdit(String)`: Navigates to edit project screen
 - `_handleDelete(String)`: Deletes project with confirmation dialog
-- `build(BuildContext context)`: Builds screen with StreamBuilder for project list, admin FAB, and project cards
+- `build(BuildContext context)`: 
+  - Builds screen with StreamBuilder for project list
+  - Loads images from cache (no API calls on startup)
+  - Shows admin FAB if user is admin
+  - Project cards support image tap to refresh cached images
+
+**Image Loading Behavior**:
+- Images are loaded from local cache on app startup (no API calls)
+- If project has `imageUrl` field, it's used directly
+- Otherwise, cached image for city location is loaded
+- User can tap on image to fetch and cache a new image from Pexels API
 
 ---
 
@@ -417,14 +479,35 @@ Screen for daily reflection/journaling feature.
 #### Class: `DailyReflectionScreen` (StatefulWidget)
 
 **State Variables**:
-- `_reflection` (DailyReflection?): Current reflection
-- `_textController` (TextEditingController): Reflection text input
-- `_isLoading` (bool): Loading/saving state
+- `_selectedDate` (DateTime): Currently selected date
+- `_currentReflection` (DailyReflection?): Current reflection data
+- `_isLoading` (bool): Loading state
+- `_predefinedActivityCategories` (List<Map<String, String>>): Predefined activity categories with emojis:
+  - Food 🍽️
+  - Group atmosphere 👥
+  - Morning activities 🌅
+  - Afternoon activities ☀️
+  - Coffee breaks ☕
+  - Energy level ⚡
 
 **Methods**:
-- `_loadReflection()`: Loads today's reflection from Firestore
+- `_loadReflection()`: Loads reflection for selected date from Firestore
 - `_saveReflection()`: Saves reflection to Firestore
-- `build(BuildContext context)`: Builds reflection editor UI
+- `_selectMood(MoodType)`: Sets mood for current reflection
+- `_addActivity(String)`: Adds activity to reflection
+- `_rateActivity(String, MoodType)`: Rates an activity with mood
+- `_removeActivity(String)`: Removes activity from reflection
+- `_showAddActivityDialog()`: 
+  - Shows dialog with predefined activity categories
+  - Each category is selectable with emoji
+  - Includes "+" button to add custom activity
+  - Dialog is scrollable and responsive for mobile
+- `_showCustomActivityDialog()`: Shows dialog for entering custom activity name
+- `_buildMoodButton(String, String, MoodType)`: Builds mood selection button
+- `_buildDateCard()`: Builds date display card with month and day
+- `_buildActivityItem(Activity)`: Builds activity list item with rating buttons
+- `_buildRatingButton(String, MoodType, Activity)`: Builds rating button for activity
+- `build(BuildContext context)`: Builds screen with mood buttons, date card, and activities list
 
 ---
 
@@ -453,15 +536,30 @@ Reusable widget for displaying project offer cards.
 #### Class: `ProjectCard` (StatelessWidget)
 
 **Properties**:
-- `project` (ProjectOffer): Project data to display
-- `onApply` (Function(String)?): Callback when Apply button clicked
-- `onInfo` (Function(String)?): Callback when Info button clicked
-- `onEdit` (Function(String)?): Callback when Edit button clicked (admin)
-- `onDelete` (Function(String)?): Callback when Delete button clicked (admin)
-- `isAdmin` (bool): Whether to show admin actions
+- `imagePathOrUrl` (String): Image path (local file) or URL (network/web)
+- `title` (String): Project title
+- `dates` (String): Formatted date range
+- `deadline` (String?): Optional application deadline
+- `onApply` (VoidCallback): Callback when Apply button clicked
+- `onInfo` (VoidCallback): Callback when Info button clicked
+- `onEdit` (VoidCallback?): Callback when Edit button clicked (admin only)
+- `onDelete` (VoidCallback?): Callback when Delete button clicked (admin only)
+- `showAdminActions` (bool): Whether to show admin action buttons
+- `onImageTap` (VoidCallback?): Callback when image is tapped (for refreshing cached images)
 
 **Methods**:
-- `build(BuildContext context)`: Builds card with project details, action buttons, and admin actions
+- `build(BuildContext context)`: 
+  - Builds card with project details, action buttons, and admin actions
+  - Handles network images, local files, and asset images
+  - Image is tappable if `onImageTap` is provided (for cache refresh)
+- `_buildCardContent()`: Builds card content section with title, dates, deadline, and buttons
+- `_buildPlaceholderImage()`: Builds placeholder when no image is available
+
+**Image Handling**:
+- Network images: Loaded via `Image.network`
+- Local files: Loaded via `Image.file` (for cached images on mobile)
+- Asset images: Loaded via `Image.asset` (fallback)
+- All images are wrapped in `GestureDetector` to support tap for refresh
 
 ---
 
@@ -598,8 +696,10 @@ Firebase Cloud Functions for push notifications.
 - `google_sign_in`: Google Sign-In
 - `flutter_local_notifications`: Local notifications
 - `url_launcher`: Opening external URLs
-- `shared_preferences`: Local caching
-- `http`: HTTP requests for RSS feed
+- `shared_preferences`: Local caching (news, image URLs)
+- `path_provider`: File system access for image cache (mobile)
+- `http`: HTTP requests for RSS feed and image downloads
+- `crypto`: MD5 hashing for cache file names
 - `intl`: Date formatting
 
 ---

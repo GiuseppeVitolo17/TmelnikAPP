@@ -821,10 +821,34 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               if (isGuestMode) {
                 widget.onLoginRequested?.call();
               } else {
-                await debugLogger.auth('User initiated logout');
-                await FirebaseAuth.instance.signOut();
-                await GoogleSignIn().signOut();
-                await debugLogger.success('User logged out successfully');
+                // Show confirmation dialog before logout
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Log Out'),
+                    content: const Text('Are you sure you want to log out?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Log Out'),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (confirmed == true && mounted) {
+                  await debugLogger.auth('User confirmed logout');
+                  await FirebaseAuth.instance.signOut();
+                  await GoogleSignIn().signOut();
+                  await debugLogger.success('User logged out successfully');
+                }
               }
             },
             icon: Icon(
