@@ -1,6 +1,6 @@
-# TmelnikAPP - Complete Project Documentation
+# Tmelnik Youth Exchange Management App - Complete Project Documentation
 
-This document provides a comprehensive overview of all functions, variables, and components in the TmelnikAPP Flutter project.
+This document provides a comprehensive overview of all functions, variables, and components in the Tmelnik Youth Exchange Management Flutter application.
 
 ## Table of Contents
 
