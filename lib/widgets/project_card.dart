@@ -160,8 +160,8 @@ class ProjectCard extends StatelessWidget {
                               ),
                             ),
                 ],
+                ),
               ),
-            ),
           
           // Content section
           _buildCardContent(),
@@ -368,7 +368,6 @@ class ProjectCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
       ),
     );
   }
