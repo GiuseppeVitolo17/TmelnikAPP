@@ -150,15 +150,22 @@ class AggregatedRssService {
 
   /// Parses RSS XML string and extracts news items.
   /// Supports both Erasmus+ and Instagram RSS formats.
+  /// Optimized: stops parsing when enough recent items are found.
   List<NewsItem> _parseRssXml(String xml, {required String source}) {
     final List<NewsItem> items = [];
+    final now = DateTime.now();
+    final cutoffDate = now.subtract(_maxAge);
     
     try {
-      // Find all <item> tags
+      // Find all <item> tags - limit to first N items for performance
       final itemRegex = RegExp(r'<item>(.*?)</item>', dotAll: true);
-      final matches = itemRegex.allMatches(xml);
+      final matches = itemRegex.allMatches(xml).take(_maxItemsToParse);
 
       for (final match in matches) {
+        // Stop if we already have enough recent items
+        if (items.length >= _maxArticles) {
+          break;
+        }
         final itemXml = match.group(1) ?? '';
         
         // Extract fields using regex
