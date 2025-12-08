@@ -216,7 +216,7 @@ class NewsDetailScreen extends StatelessWidget {
                   // Description
                   if (newsItem.summary.isNotEmpty) ...[
                     const Text(
-                      'Descrizione',
+                      'Description',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -249,7 +249,7 @@ class NewsDetailScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () => _openArticle(context, newsItem.url),
                       icon: const Icon(Icons.open_in_new),
-                      label: const Text('Apri articolo completo'),
+                      label: const Text('Open full article'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,

@@ -697,7 +697,7 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
             child: ElevatedButton.icon(
               onPressed: () => _openUrl(widget.projectOffer.infoPackUrl),
               icon: const Icon(Icons.description),
-              label: const Text('Apri Infopack'),
+              label: const Text('Open Infopack'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondaryYellow,
                 foregroundColor: AppColors.textPrimary,

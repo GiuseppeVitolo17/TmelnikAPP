@@ -317,11 +317,11 @@ class _AuthScreenState extends State<AuthScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('⚠️ Email non verificata. Controlla la tua email o re-invia il link di verifica.'),
+                  content: const Text('⚠️ Email not verified. Check your email or resend the verification link.'),
                   backgroundColor: Colors.orange,
                   duration: const Duration(seconds: 5),
                   action: SnackBarAction(
-                    label: 'Re-invia',
+                    label: 'Resend',
                     textColor: Colors.white,
                     onPressed: () async {
                       try {
@@ -329,7 +329,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('📧 Email di verifica inviata!'),
+                              content: Text('📧 Verification email sent!'),
                               backgroundColor: Colors.blue,
                             ),
                           );
@@ -340,7 +340,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Errore: $e'),
+                              content: Text('Error: $e'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -381,11 +381,11 @@ class _AuthScreenState extends State<AuthScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('✅ Account creato! Controlla la tua email per verificare l\'account.'),
+                content: const Text('✅ Account created! Check your email to verify your account.'),
                 backgroundColor: Colors.green,
                 duration: const Duration(seconds: 5),
                 action: SnackBarAction(
-                  label: 'Re-invia email',
+                  label: 'Resend email',
                   textColor: Colors.white,
                   onPressed: () async {
                     try {
@@ -393,7 +393,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('📧 Email di verifica inviata!'),
+                            content: Text('📧 Verification email sent!'),
                             backgroundColor: Colors.blue,
                           ),
                         );
@@ -1002,8 +1002,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               _buildMenuTile(
                 context: context,
                 icon: Icons.person,
-                title: 'Profilo',
-                subtitle: 'Visualizza le tue informazioni',
+                title: 'Profile',
+                subtitle: 'View your information',
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -1017,8 +1017,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               _buildMenuTile(
                 context: context,
                 icon: Icons.settings,
-                title: 'Impostazioni',
-                subtitle: 'Gestisci le preferenze dell\'app',
+                title: 'Settings',
+                subtitle: 'Manage app preferences',
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -1034,18 +1034,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 context: context,
                 icon: Icons.logout,
                 title: 'Logout',
-                subtitle: 'Esci dal tuo account',
+                subtitle: 'Sign out of your account',
                 onTap: () async {
                   Navigator.pop(context);
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('Log Out'),
-                      content: const Text('Sei sicuro di voler uscire?'),
+                      content: const Text('Are you sure you want to sign out?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Annulla'),
+                          child: const Text('Cancel'),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
@@ -1269,7 +1269,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Email non verificata',
+                  'Email not verified',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.orange[900],
@@ -1278,7 +1278,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Controlla la tua email e clicca sul link di verifica',
+                  'Check your email and click the verification link',
                   style: TextStyle(
                     color: Colors.orange[800],
                     fontSize: 12,

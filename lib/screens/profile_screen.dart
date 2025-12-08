@@ -14,7 +14,7 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       appBar: AppBar(
-        title: const Text('Profilo'),
+        title: const Text('Profile'),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
@@ -63,7 +63,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   // Name
                   Text(
-                    user?.displayName ?? 'Utente',
+                    user?.displayName ?? 'User',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -73,7 +73,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   // Email
                   Text(
-                    user?.email ?? 'Nessuna email',
+                    user?.email ?? 'No email',
                     style: const TextStyle(
                       fontSize: 16,
                       color: AppColors.textSecondary,
@@ -95,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
                           Icon(Icons.verified, color: Colors.green, size: 16),
                           SizedBox(width: 6),
                           Text(
-                            'Email verificata',
+                            'Email verified',
                             style: TextStyle(
                               color: Colors.green,
                               fontSize: 12,
@@ -119,7 +119,7 @@ class ProfileScreen extends StatelessWidget {
                           Icon(Icons.warning, color: Colors.orange, size: 16),
                           SizedBox(width: 6),
                           Text(
-                            'Email non verificata',
+                            'Email not verified',
                             style: TextStyle(
                               color: Colors.orange,
                               fontSize: 12,
@@ -136,7 +136,7 @@ class ProfileScreen extends StatelessWidget {
             
             // Account Info Section
             const Text(
-              'Informazioni Account',
+              'Account Information',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -155,21 +155,21 @@ class ProfileScreen extends StatelessWidget {
                   _buildInfoTile(
                     icon: Icons.email,
                     label: 'Email',
-                    value: user?.email ?? 'Nessuna email',
+                    value: user?.email ?? 'No email',
                   ),
                   const Divider(height: 1),
                   _buildInfoTile(
                     icon: Icons.person,
-                    label: 'Nome',
-                    value: user?.displayName ?? 'Non impostato',
+                    label: 'Name',
+                    value: user?.displayName ?? 'Not set',
                   ),
                   const Divider(height: 1),
                   _buildInfoTile(
                     icon: Icons.calendar_today,
-                    label: 'Account creato',
+                    label: 'Account created',
                     value: user?.metadata.creationTime != null
                         ? '${user!.metadata.creationTime!.day}/${user.metadata.creationTime!.month}/${user.metadata.creationTime!.year}'
-                        : 'Sconosciuto',
+                        : 'Unknown',
                   ),
                 ],
               ),

@@ -418,7 +418,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                           suffixIcon: _selectedDate != null
                               ? IconButton(
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  tooltip: 'Rimuovi data',
+                                  tooltip: 'Remove date',
                                   onPressed: () {
                                     setState(() => _selectedDate = null);
                                   },
@@ -447,7 +447,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                           suffixIcon: _departureDate != null
                               ? IconButton(
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  tooltip: 'Rimuovi data di partenza',
+                                  tooltip: 'Remove departure date',
                                   onPressed: () {
                                     setState(() => _departureDate = null);
                                   },
@@ -476,7 +476,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                           suffixIcon: _returnDate != null
                               ? IconButton(
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  tooltip: 'Rimuovi data di ritorno',
+                                  tooltip: 'Remove return date',
                                   onPressed: () {
                                     setState(() => _returnDate = null);
                                   },

@@ -52,8 +52,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SnackBar(
             content: Text(
               value 
-                ? 'Notifiche attivate' 
-                : 'Notifiche disattivate',
+                ? 'Notifications enabled' 
+                : 'Notifications disabled',
             ),
             backgroundColor: value ? Colors.green : Colors.orange,
             duration: const Duration(seconds: 2),
@@ -64,7 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Errore nel salvare le impostazioni: $e'),
+            content: Text('Error saving settings: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -81,7 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       appBar: AppBar(
-        title: const Text('Impostazioni'),
+        title: const Text('Settings'),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   // Notifications Section
                   const Text(
-                    'Notifiche',
+                    'Notifications',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -113,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       value: _notificationsEnabled,
                       onChanged: _toggleNotifications,
                       title: const Text(
-                        'Notifiche Push',
+                        'Push Notifications',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -122,8 +122,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       subtitle: Text(
                         _notificationsEnabled
-                            ? 'Riceverai notifiche per nuovi progetti'
-                            : 'Le notifiche sono disattivate',
+                            ? 'You will receive notifications for new projects'
+                            : 'Notifications are disabled',
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -148,7 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   
                   // App Info Section
                   const Text(
-                    'Informazioni App',
+                    'App Information',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -166,14 +166,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         _buildInfoTile(
                           icon: Icons.info,
-                          label: 'Versione',
+                          label: 'Version',
                           value: '1.0.0',
                         ),
                         const Divider(height: 1),
                         _buildInfoTile(
                           icon: Icons.bug_report,
                           label: 'Debug Mode',
-                          value: 'Attivo',
+                          value: 'Active',
                         ),
                       ],
                     ),
