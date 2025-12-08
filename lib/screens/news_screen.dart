@@ -50,14 +50,16 @@ class _NewsScreenState extends State<NewsScreen> {
     _fetchAndUpdateNews();
   }
 
-  /// Fetches fresh news and updates UI incrementally
+  /// Fetches fresh news and updates UI in batches for better performance
   Future<void> _fetchAndUpdateNews() async {
     try {
       final cachedNews = await _cacheService.getFromCache();
+      final List<NewsItem> batchItems = [];
+      const int batchSize = 5; // Update UI every 5 items
       
         await _rssService.fetchAggregatedNews(
         onItemFound: (item) async {
-          // Add item immediately when found
+          // Collect items in batch instead of updating UI for each
           if (mounted) {
             // Quick check for new/updated status
             final cachedItem = cachedNews.firstWhere(
@@ -81,14 +83,31 @@ class _NewsScreenState extends State<NewsScreen> {
               isUpdated: isUpdated,
             );
             
-            setState(() {
-              // Remove old item if exists, then add new one at the top
-              _newsItems.removeWhere((existing) => existing.url == processedItem.url);
-              _newsItems.insert(0, processedItem); // Insert at top for newest first
-            });
+            batchItems.add(processedItem);
+            
+            // Update UI in batches for better performance
+            if (batchItems.length >= batchSize) {
+              setState(() {
+                for (final item in batchItems) {
+                  _newsItems.removeWhere((existing) => existing.url == item.url);
+                  _newsItems.insert(0, item);
+                }
+                batchItems.clear();
+              });
+            }
           }
         },
       ).then((fetchedNews) async {
+        // Add remaining items in batch
+        if (batchItems.isNotEmpty && mounted) {
+          setState(() {
+            for (final item in batchItems) {
+              _newsItems.removeWhere((existing) => existing.url == item.url);
+              _newsItems.insert(0, item);
+            }
+            batchItems.clear();
+          });
+        }
         if (fetchedNews.isEmpty) {
           return;
         }

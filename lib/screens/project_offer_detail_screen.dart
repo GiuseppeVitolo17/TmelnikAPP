@@ -106,17 +106,17 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
           ),
         ),
       ),
-      body: ScaleTransition(
-        scale: _scaleAnimation,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Hero Image - same style as card
-              _buildHeroImage(isNetworkImage, isLocalFile),
-              
-              // Content Card - same style as project card
-              Container(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero Image - same style as card (no animation wrapper to allow smooth Hero transition)
+            _buildHeroImage(isNetworkImage, isLocalFile),
+            
+            // Content Card - same style as project card with scale animation
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
                 margin: const EdgeInsets.all(20),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -240,8 +240,8 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -250,89 +250,92 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
   Widget _buildHeroImage(bool isNetworkImage, bool isLocalFile) {
     return Hero(
       tag: widget.heroTag,
-      child: widget.imagePathOrUrl.isEmpty
-          ? Container(
-              width: double.infinity,
-              height: 180,
-              color: Colors.grey[300],
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.image_outlined,
-                      size: 48,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'No image',
-                      style: TextStyle(
+      child: Material(
+        color: Colors.transparent,
+        child: widget.imagePathOrUrl.isEmpty
+            ? Container(
+                width: double.infinity,
+                height: 180,
+                color: Colors.grey[300],
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.image_outlined,
+                        size: 48,
                         color: Colors.grey[600],
-                        fontSize: 14,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'No image',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          : isNetworkImage
-              ? Image.network(
-                  widget.imagePathOrUrl,
-                  width: double.infinity,
-                  height: 180,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: double.infinity,
-                      height: 180,
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: Icon(Icons.broken_image, size: 64),
-                      ),
-                    );
-                  },
-                )
-              : isLocalFile
-                  ? FutureBuilder<bool>(
-                      future: File(widget.imagePathOrUrl).exists(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data == true) {
-                          return Image.file(
-                            File(widget.imagePathOrUrl),
+              )
+            : isNetworkImage
+                ? Image.network(
+                    widget.imagePathOrUrl,
+                    width: double.infinity,
+                    height: 180,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: double.infinity,
+                        height: 180,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Icon(Icons.broken_image, size: 64),
+                        ),
+                      );
+                    },
+                  )
+                : isLocalFile
+                    ? FutureBuilder<bool>(
+                        future: File(widget.imagePathOrUrl).exists(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData && snapshot.data == true) {
+                            return Image.file(
+                              File(widget.imagePathOrUrl),
+                              width: double.infinity,
+                              height: 180,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 180,
+                                  color: Colors.grey[300],
+                                  child: const Center(
+                                    child: Icon(Icons.broken_image, size: 64),
+                                  ),
+                                );
+                              },
+                            );
+                          }
+                          return Container(
                             width: double.infinity,
                             height: 180,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: double.infinity,
-                                height: 180,
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: Icon(Icons.broken_image, size: 64),
-                                ),
-                              );
-                            },
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Icon(Icons.image_outlined, size: 64),
+                            ),
                           );
-                        }
-                        return Container(
-                          width: double.infinity,
-                          height: 180,
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Icon(Icons.image_outlined, size: 64),
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      width: double.infinity,
-                      height: 180,
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: Icon(Icons.image_outlined, size: 64),
+                        },
+                      )
+                    : Container(
+                        width: double.infinity,
+                        height: 180,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Icon(Icons.image_outlined, size: 64),
+                        ),
                       ),
-                    ),
+      ),
     );
   }
 

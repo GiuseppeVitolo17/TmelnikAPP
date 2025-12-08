@@ -84,6 +84,7 @@ class ProjectCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image banner with rounded top corners only
+              // Note: ClipRRect is needed for rounded corners but Hero needs consistent shape
               ClipRRect(
                 borderRadius: BorderRadius.vertical(
                   top: AppRadius.large.topLeft,
