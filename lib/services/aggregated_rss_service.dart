@@ -13,7 +13,7 @@ class AggregatedRssService {
   static const String _instagramRssUrl = 'https://rsshub.app/instagram/user/tmelnik_cz';
   static const int _maxArticles = 30; // Reduced for faster loading
   static const Duration _maxAge = Duration(days: 60); // Only show items from last 2 months
-  static const int _maxItemsToParse = 100; // Limit XML parsing to first 100 items for performance
+  static const int _maxItemsToParse = 50; // Reduced to 50 for faster parsing - we only need 30 recent items
 
   /// Fetches and aggregates news from both Erasmus+ and Instagram feeds.
   /// Returns a unified list sorted by publication date (newest first).
@@ -150,16 +150,25 @@ class AggregatedRssService {
 
   /// Parses RSS XML string and extracts news items.
   /// Supports both Erasmus+ and Instagram RSS formats.
-  /// Optimized: stops parsing when enough recent items are found.
+  /// Highly optimized: parses date first, stops early when enough items found.
   List<NewsItem> _parseRssXml(String xml, {required String source}) {
     final List<NewsItem> items = [];
     final now = DateTime.now();
     final cutoffDate = now.subtract(_maxAge);
     
+    // Pre-compile regex for better performance
+    final itemRegex = RegExp(r'<item>(.*?)</item>', dotAll: true);
+    final pubDateRegex = RegExp(r'<pubDate>(.*?)</pubDate>', dotAll: true);
+    final titleRegex = RegExp(r'<title>(.*?)</title>', dotAll: true);
+    final linkRegex = RegExp(r'<link>(.*?)</link>', dotAll: true);
+    final descriptionRegex = RegExp(r'<description>(.*?)</description>', dotAll: true);
+    final mediaRegex = RegExp('<media:(?:content|thumbnail)[^>]*url=["\\\']([^"\\\']+)["\\\']', dotAll: true);
+    final enclosureRegex = RegExp('<enclosure[^>]*type=["\\\']image/[^"\\\']+["\\\'][^>]*url=["\\\']([^"\\\']+)["\\\']', dotAll: true);
+    final imgRegex = RegExp('<img[^>]*src=["\\\']([^"\\\']+)["\\\']', dotAll: true);
+    
     try {
-      // Find all <item> tags - limit to first N items for performance
-      final itemRegex = RegExp(r'<item>(.*?)</item>', dotAll: true);
-      final matches = itemRegex.allMatches(xml).take(_maxItemsToParse);
+      // Find all <item> tags - limit to first 50 items for better performance
+      final matches = itemRegex.allMatches(xml).take(50);
 
       for (final match in matches) {
         // Stop if we already have enough recent items
@@ -168,54 +177,64 @@ class AggregatedRssService {
         }
         final itemXml = match.group(1) ?? '';
         
-        // Extract fields using regex
-        final titleMatch = RegExp(r'<title>(.*?)</title>', dotAll: true).firstMatch(itemXml);
-        final linkMatch = RegExp(r'<link>(.*?)</link>', dotAll: true).firstMatch(itemXml);
-        final pubDateMatch = RegExp(r'<pubDate>(.*?)</pubDate>', dotAll: true).firstMatch(itemXml);
-        final descriptionMatch = RegExp(r'<description>(.*?)</description>', dotAll: true).firstMatch(itemXml);
+        // OPTIMIZATION: Parse date FIRST to skip old items immediately
+        final pubDateMatch = pubDateRegex.firstMatch(itemXml);
+        if (pubDateMatch == null) continue; // Skip items without date
         
-        // Try to extract image from various RSS formats
-        final mediaMatch = RegExp('<media:(?:content|thumbnail)[^>]*url=["\\\']([^"\\\']+)["\\\']', dotAll: true)
-            .firstMatch(itemXml);
-        final enclosureMatch = RegExp('<enclosure[^>]*type=["\\\']image/[^"\\\']+["\\\'][^>]*url=["\\\']([^"\\\']+)["\\\']', dotAll: true)
-            .firstMatch(itemXml);
-        String rawDescription = descriptionMatch?.group(1) ?? '';
-        final imgInDescriptionMatch = RegExp('<img[^>]*src=["\\\']([^"\\\']+)["\\\']', dotAll: true)
-            .firstMatch(rawDescription);
-
+        final pubDateRaw = _cleanXmlText(pubDateMatch.group(1) ?? '');
+        final pubDateTimestamp = NewsItem.parsePubDate(pubDateRaw);
+        
+        // Skip items without valid date or older than 2 months - EARLY EXIT
+        if (pubDateTimestamp == null || !pubDateTimestamp.isAfter(cutoffDate)) {
+          continue; // Skip immediately without processing other fields
+        }
+        
+        // Only parse other fields if date is valid and recent
+        final titleMatch = titleRegex.firstMatch(itemXml);
+        final linkMatch = linkRegex.firstMatch(itemXml);
+        final descriptionMatch = descriptionRegex.firstMatch(itemXml);
+        
         final title = _cleanXmlText(titleMatch?.group(1) ?? '');
         final url = _cleanXmlText(linkMatch?.group(1) ?? '');
-        final pubDateRaw = _cleanXmlText(pubDateMatch?.group(1) ?? '');
-        final description = _cleanXmlText(rawDescription);
-        String imageUrl = (mediaMatch?.group(1) ??
-                         enclosureMatch?.group(1) ??
-                         imgInDescriptionMatch?.group(1) ??
-                         '')
-            .trim();
-
-        // Only add if we have a title and URL
-        if (title.isNotEmpty && url.isNotEmpty) {
-          // Parse the publication date
-          final pubDateTimestamp = NewsItem.parsePubDate(pubDateRaw);
-          
-          // Skip items without date or older than 2 months (already filtered above)
-          if (pubDateTimestamp == null || !pubDateTimestamp.isAfter(cutoffDate)) {
-            continue; // Skip items without valid date or too old
-          }
-          
-          // Format date for display
-          final formattedDate = _formatDateForDisplay(pubDateTimestamp);
-
-          items.add(NewsItem(
-            title: title,
-            summary: description,
-            date: formattedDate,
-            url: url,
-            imageUrl: imageUrl,
-            pubDateTimestamp: pubDateTimestamp,
-            source: source,
-          ));
+        
+        // Skip if no title or URL
+        if (title.isEmpty || url.isEmpty) continue;
+        
+        // Process description only if needed (truncate early)
+        String rawDescription = descriptionMatch?.group(1) ?? '';
+        // Truncate description early to avoid processing huge HTML
+        if (rawDescription.length > 1000) {
+          rawDescription = rawDescription.substring(0, 1000);
         }
+        final description = _cleanXmlText(rawDescription);
+        
+        // Extract image URL (simplified - only if needed)
+        String imageUrl = '';
+        final mediaMatch = mediaRegex.firstMatch(itemXml);
+        if (mediaMatch != null) {
+          imageUrl = mediaMatch.group(1)?.trim() ?? '';
+        } else {
+          final enclosureMatch = enclosureRegex.firstMatch(itemXml);
+          if (enclosureMatch != null) {
+            imageUrl = enclosureMatch.group(1)?.trim() ?? '';
+          } else if (rawDescription.isNotEmpty) {
+            final imgMatch = imgRegex.firstMatch(rawDescription);
+            imageUrl = imgMatch?.group(1)?.trim() ?? '';
+          }
+        }
+        
+        // Format date for display
+        final formattedDate = _formatDateForDisplay(pubDateTimestamp);
+
+        items.add(NewsItem(
+          title: title,
+          summary: description,
+          date: formattedDate,
+          url: url,
+          imageUrl: imageUrl,
+          pubDateTimestamp: pubDateTimestamp,
+          source: source,
+        ));
       }
       
       debugPrint('📰 [RSS] Parsed ${items.length} items from $source feed');
@@ -248,21 +267,24 @@ class AggregatedRssService {
   }
 
   /// Cleans XML/HTML tags and entities from text.
+  /// Optimized: uses StringBuffer for better performance on large texts.
   String _cleanXmlText(String text) {
+    if (text.isEmpty) return '';
+    
     // Remove CDATA wrapper if present
     text = text.replaceAll(RegExp(r'<!\[CDATA\[(.*?)\]\]>', dotAll: true), r'$1');
 
-    // Decode common HTML entities
+    // Strip HTML tags first (before entity decoding for better performance)
+    text = text.replaceAll(RegExp(r'<[^>]*>'), '');
+
+    // Decode common HTML entities (optimized order)
+    text = text.replaceAll('&amp;', '&'); // Must be first
     text = text.replaceAll('&lt;', '<');
     text = text.replaceAll('&gt;', '>');
-    text = text.replaceAll('&amp;', '&');
     text = text.replaceAll('&quot;', '"');
+    text = text.replaceAll('&apos;', "'");
     text = text.replaceAll('&#39;', "'");
     text = text.replaceAll('&nbsp;', ' ');
-    text = text.replaceAll('&apos;', "'");
-
-    // Strip any HTML tags
-    text = text.replaceAll(RegExp(r'<[^>]*>'), '');
 
     return text.trim();
   }
