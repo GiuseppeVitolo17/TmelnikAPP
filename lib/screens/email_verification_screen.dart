@@ -32,20 +32,16 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         await user.reload();
         final updatedUser = _auth.currentUser;
         if (updatedUser?.emailVerified == true) {
-          setState(() {
-            _emailVerified = true;
-          });
+          if (mounted) {
+            setState(() {
+              _emailVerified = true;
+            });
+          }
         }
       } catch (e) {
         // Silent fail
       }
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _startPeriodicCheck();
   }
 
   @override

@@ -4,9 +4,14 @@ import '../theme/app_theme.dart';
 import 'settings_screen.dart';
 
 /// Profile screen showing user information
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _updateDisplayName(String newName) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
