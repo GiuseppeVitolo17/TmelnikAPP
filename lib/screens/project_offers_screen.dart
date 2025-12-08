@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import 'add_project_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'edit_project_offer_screen.dart';
+import 'project_offer_detail_screen.dart';
 
 class ProjectOffersScreen extends StatefulWidget {
   const ProjectOffersScreen({super.key});
@@ -36,20 +37,37 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAdminStatus();
+    // Check admin status in background (non-blocking)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAdminStatus();
+    });
   }
 
   Future<void> _checkAdminStatus() async {
+    // Don't block UI - check in background
     if (FirebaseAuth.instance.currentUser != null) {
-      final isAdmin = await userRoleService.isCurrentUserAdmin();
-      if (mounted) {
-        setState(() {
-          _isAdmin = isAdmin;
-          _isLoadingAdmin = false;
-        });
+      try {
+        final isAdmin = await userRoleService.isCurrentUserAdmin().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => false,
+        );
+        if (mounted) {
+          setState(() {
+            _isAdmin = isAdmin;
+            _isLoadingAdmin = false;
+          });
+        }
+      } catch (e) {
+        // Silent fail - default to non-admin
+        if (mounted) {
+          setState(() {
+            _isAdmin = false;
+            _isLoadingAdmin = false;
+          });
+        }
       }
     } else {
-    if (mounted) {
+      if (mounted) {
         setState(() {
           _isAdmin = false;
           _isLoadingAdmin = false;
@@ -185,21 +203,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
       body: StreamBuilder<List<ProjectOffer>>(
         stream: _firestoreService.getProjectOffersStream(),
         builder: (context, snapshot) {
-          // Debug logging
-          if (snapshot.hasError) {
-            debugPrint('❌ StreamBuilder error: ${snapshot.error}');
-            debugPrint('❌ Error stack: ${snapshot.error.toString()}');
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            debugPrint('⏳ StreamBuilder: waiting for data');
-          }
-          
           final firestoreOffers = snapshot.data ?? [];
-          debugPrint('✅ Firestore offers count: ${firestoreOffers.length}');
-          debugPrint('✅ Is admin: $_isAdmin');
-          if (firestoreOffers.isNotEmpty) {
-            debugPrint('✅ First offer: ${firestoreOffers[0].title} (ID: ${firestoreOffers[0].id})');
-          }
 
           // Detect new projects and show notifications
           if (snapshot.hasData && firestoreOffers.isNotEmpty) {
@@ -251,11 +255,45 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                       imagePath = '';
                     }
 
+                    final heroTag = 'project_${offer.id}_${offer.location}';
+                    
                     return ProjectCard(
                       imagePathOrUrl: imagePath,
                       title: offer.title,
                       dates: _formatDates(offer),
                       deadline: _formatDeadline(offer),
+                      heroTag: heroTag,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation, secondaryAnimation) =>
+                                ProjectOfferDetailScreen(
+                              projectOffer: offer,
+                              imagePathOrUrl: imagePath,
+                              heroTag: heroTag,
+                            ),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              const begin = Offset(0.0, 0.1);
+                              const end = Offset.zero;
+                              const curve = Curves.easeOutCubic;
+
+                              var tween = Tween(begin: begin, end: end).chain(
+                                CurveTween(curve: curve),
+                              );
+
+                              return SlideTransition(
+                                position: animation.drive(tween),
+                                child: FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            transitionDuration: const Duration(milliseconds: 300),
+                          ),
+                        );
+                      },
                       onApply: () => _openUrl(offer.applyLink.isNotEmpty ? offer.applyLink : offer.contactInfo),
                       onInfo: () => _openUrl(offer.infoPackUrl),
                       showAdminActions: _isAdmin,

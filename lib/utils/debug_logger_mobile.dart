@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 class DebugLogger {
@@ -8,38 +9,35 @@ class DebugLogger {
   
   DebugLogger._();
 
-  /// Clear and recreate log file on app startup
+  /// Clear and recreate log file on app startup (optimized - non-blocking)
   Future<void> initializeLog() async {
     try {
+      // Use unawaited to avoid blocking
       final directory = await getApplicationDocumentsDirectory();
       final logFile = File('${directory.path}/$_logFileName');
       
-      // Delete existing log file
+      // Delete existing log file (async, non-blocking)
       if (await logFile.exists()) {
         await logFile.delete();
-        await _writeLog('🔄 Log file cleared and recreated');
-      } else {
-        await _writeLog('🆕 New log file created');
       }
       
-      await _writeLog('🚀 Tmelnik App started - ${DateTime.now()}');
-      await _writeLog('📱 Platform: ${Platform.operatingSystem}');
+      // Write initial log (async, non-blocking)
+      _writeLog('🚀 Tmelnik App started - ${DateTime.now()}').catchError((_) {});
+      _writeLog('📱 Platform: ${Platform.operatingSystem}').catchError((_) {});
     } catch (e) {
-      print('❌ Error initializing log: $e');
+      // Silent fail - logging shouldn't block app
+      if (kDebugMode) {
+        print('Log init error: $e');
+      }
     }
   }
 
   /// Write a log message with timestamp
   Future<void> log(String message, {String level = 'INFO'}) async {
-    try {
-      final timestamp = DateTime.now().toIso8601String();
-      final logMessage = '[$timestamp] [$level] $message';
-      
-      await _writeLog(logMessage);
-      print('📝 $logMessage'); // Also print to console
-    } catch (e) {
-      print('❌ Error writing log: $e');
-    }
+    // Don't block UI - write logs asynchronously
+    _writeLog('${DateTime.now().toIso8601String()} [$level] $message').catchError((_) {
+      // Silent fail for logging
+    });
   }
 
   /// Write error message

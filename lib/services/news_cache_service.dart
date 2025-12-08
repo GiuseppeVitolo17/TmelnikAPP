@@ -11,46 +11,79 @@ import '../models/news_item.dart';
 /// - Identifies new and updated articles by comparing pubDates
 /// - Provides efficient cache management with expiration
 class NewsCacheService {
-  static const String _cacheKey = 'erasmus_news_cache';
-  static const String _seenNewsKey = 'erasmus_seen_news';
-  static const String _lastFetchKey = 'erasmus_last_fetch';
-  static const Duration _cacheExpiration = Duration(hours: 1);
+  static const String _cacheKey = 'aggregated_news_cache';
+  static const String _seenNewsKey = 'aggregated_seen_news';
+  static const String _lastFetchKey = 'aggregated_last_fetch';
+  static const String _cacheCreationKey = 'aggregated_cache_creation';
+  static const Duration _cacheExpiration = Duration(hours: 1); // For refresh check
+  static const Duration _cacheMaxAge = Duration(days: 60); // 2 months - auto cleanup
 
   /// Saves news items to cache with timestamps
+  /// Automatically cleans old items (> 2 months) before saving
   Future<void> saveToCache(List<NewsItem> newsItems) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      
+      // Filter out items older than 2 months
+      final validItems = newsItems.where((item) {
+        if (item.pubDateTimestamp == null) return true; // Keep items without date
+        final age = now.difference(item.pubDateTimestamp!);
+        return age < _cacheMaxAge;
+      }).toList();
+      
+      // Check if this is first cache creation
+      final cacheCreation = prefs.getInt(_cacheCreationKey);
+      if (cacheCreation == null) {
+        await prefs.setInt(_cacheCreationKey, now.millisecondsSinceEpoch);
+      } else {
+        // Check if cache is older than 2 months - reset it
+        final cacheAge = now.difference(
+          DateTime.fromMillisecondsSinceEpoch(cacheCreation)
+        );
+        if (cacheAge >= _cacheMaxAge) {
+          // Reset cache - clear everything
+          await clearCache();
+          await prefs.setInt(_cacheCreationKey, now.millisecondsSinceEpoch);
+          debugPrint('🔄 [CACHE] Cache reset after 2 months');
+        }
+      }
       
       // Convert news items to JSON
-      final newsJson = newsItems.map((item) => {
+      final newsJson = validItems.map((item) => {
         'title': item.title,
         'summary': item.summary,
         'date': item.date,
         'url': item.url,
         'imageUrl': item.imageUrl,
         'pubDateTimestamp': item.pubDateTimestamp?.millisecondsSinceEpoch,
+        'source': item.source,
       }).toList();
       
       await prefs.setString(_cacheKey, jsonEncode(newsJson));
-      await prefs.setInt(_lastFetchKey, DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(_lastFetchKey, now.millisecondsSinceEpoch);
       
-      debugPrint('💾 [CACHE] Saved ${newsItems.length} news items to cache');
+      if (validItems.length < newsItems.length) {
+        debugPrint('💾 [CACHE] Saved ${validItems.length} news items (removed ${newsItems.length - validItems.length} items older than 2 months)');
+      } else {
+        debugPrint('💾 [CACHE] Saved ${validItems.length} news items to cache');
+      }
     } catch (e) {
       debugPrint('❌ [CACHE] Error saving to cache: $e');
     }
   }
 
-  /// Retrieves cached news items
+  /// Retrieves cached news items, filtering out items older than 2 months
   Future<List<NewsItem>> getFromCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cacheString = prefs.getString(_cacheKey);
       
       if (cacheString == null) {
-        debugPrint('💾 [CACHE] No cache found');
         return [];
       }
 
+      final now = DateTime.now();
       final newsJson = jsonDecode(cacheString) as List<dynamic>;
       final newsItems = newsJson.map((json) {
         final map = json as Map<String, dynamic>;
@@ -63,13 +96,22 @@ class NewsCacheService {
           pubDateTimestamp: map['pubDateTimestamp'] != null
               ? DateTime.fromMillisecondsSinceEpoch(map['pubDateTimestamp'] as int)
               : null,
+          source: map['source'] ?? 'EU',
         );
+      }).where((item) {
+        // Filter out items older than 2 months
+        if (item.pubDateTimestamp == null) return true;
+        final age = now.difference(item.pubDateTimestamp!);
+        return age < _cacheMaxAge;
       }).toList();
       
-      debugPrint('💾 [CACHE] Retrieved ${newsItems.length} news items from cache');
+      // If we filtered items, save the cleaned cache
+      if (newsItems.length < newsJson.length) {
+        saveToCache(newsItems).catchError((_) {});
+      }
+      
       return newsItems;
     } catch (e) {
-      debugPrint('❌ [CACHE] Error retrieving from cache: $e');
       return [];
     }
   }

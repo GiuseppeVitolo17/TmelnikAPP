@@ -252,18 +252,23 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Project'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: _isLoading && _projectOffer == null
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
+    return GestureDetector(
+      onTap: () {
+        // Close keyboard when tapping outside
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Project'),
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        ),
+        body: _isLoading && _projectOffer == null
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     TextFormField(
@@ -337,6 +342,11 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                         prefixIcon: Icon(Icons.description),
                       ),
                       maxLines: 4,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) {
+                        // Close keyboard when done
+                        FocusScope.of(context).unfocus();
+                      },
                       validator: (value) =>
                           value?.isEmpty ?? true ? 'Required' : null,
                     ),
@@ -407,7 +417,8 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                           prefixIcon: const Icon(Icons.calendar_today),
                           suffixIcon: _selectedDate != null
                               ? IconButton(
-                                  icon: const Icon(Icons.clear),
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  tooltip: 'Rimuovi data',
                                   onPressed: () {
                                     setState(() => _selectedDate = null);
                                   },
@@ -435,7 +446,8 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                           prefixIcon: const Icon(Icons.flight_takeoff),
                           suffixIcon: _departureDate != null
                               ? IconButton(
-                                  icon: const Icon(Icons.clear),
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  tooltip: 'Rimuovi data di partenza',
                                   onPressed: () {
                                     setState(() => _departureDate = null);
                                   },
@@ -463,7 +475,8 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                           prefixIcon: const Icon(Icons.flight_land),
                           suffixIcon: _returnDate != null
                               ? IconButton(
-                                  icon: const Icon(Icons.clear),
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  tooltip: 'Rimuovi data di ritorno',
                                   onPressed: () {
                                     setState(() => _returnDate = null);
                                   },
@@ -500,6 +513,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 }

@@ -186,6 +186,7 @@ class ErasmusRssService {
             url: url,
             imageUrl: imageUrl,
             pubDateTimestamp: pubDateTimestamp,
+            source: 'EU',
           ));
         }
       }

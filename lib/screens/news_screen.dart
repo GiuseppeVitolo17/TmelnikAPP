@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../services/erasmus_rss_service.dart';
+import '../services/aggregated_rss_service.dart';
 import '../services/news_cache_service.dart';
 import '../models/news_item.dart';
 import '../widgets/news_card.dart';
@@ -16,7 +17,7 @@ class NewsScreen extends StatefulWidget {
 }
 
 class _NewsScreenState extends State<NewsScreen> {
-  final ErasmusRssService _rssService = ErasmusRssService();
+  final AggregatedRssService _rssService = AggregatedRssService();
   final NewsCacheService _cacheService = NewsCacheService();
   List<NewsItem> _newsItems = [];
   bool _isLoading = true;
@@ -31,14 +32,10 @@ class _NewsScreenState extends State<NewsScreen> {
 
   /// Optimized loading: Shows cache immediately, then fetches fresh data in background
   Future<void> _loadNewsOptimized() async {
-    debugPrint('📰 [NEWS_SCREEN] ========== _loadNewsOptimized STARTED ==========');
-    
     // STEP 1: Show cache immediately (even if expired) - INSTANT UI
-    debugPrint('📰 [NEWS_SCREEN] Loading cache for instant display...');
     final cachedNews = await _cacheService.getFromCache();
     
     if (cachedNews.isNotEmpty) {
-      debugPrint('📰 [NEWS_SCREEN] ⚡ Showing cached news immediately (${cachedNews.length} items)');
       setState(() {
         _newsItems = cachedNews;
         _isLoading = false; // UI ready immediately!
@@ -50,7 +47,6 @@ class _NewsScreenState extends State<NewsScreen> {
     }
 
     // STEP 2: Fetch fresh data in background (non-blocking)
-    debugPrint('📰 [NEWS_SCREEN] 🔄 Fetching fresh news in background...');
     _fetchAndUpdateNews();
   }
 
@@ -59,7 +55,7 @@ class _NewsScreenState extends State<NewsScreen> {
     try {
       final cachedNews = await _cacheService.getFromCache();
       
-      await _rssService.fetchErasmusNews(
+        await _rssService.fetchAggregatedNews(
         onItemFound: (item) async {
           // Add item immediately when found
           if (mounted) {
@@ -89,18 +85,15 @@ class _NewsScreenState extends State<NewsScreen> {
               // Remove old item if exists, then add new one at the top
               _newsItems.removeWhere((existing) => existing.url == processedItem.url);
               _newsItems.insert(0, processedItem); // Insert at top for newest first
-              debugPrint('📰 [NEWS_SCREEN] ⚡ Added item ${_newsItems.length}: ${processedItem.title}');
             });
           }
         },
       ).then((fetchedNews) async {
         if (fetchedNews.isEmpty) {
-          debugPrint('📰 [NEWS_SCREEN] ⚠️ No fresh news fetched');
           return;
         }
 
         // Final comparison and cache update (non-blocking)
-        debugPrint('📰 [NEWS_SCREEN] Finalizing cache update...');
         final comparison = await _cacheService.compareWithCache(fetchedNews);
         
         // Update items with final comparison results
@@ -112,19 +105,16 @@ class _NewsScreenState extends State<NewsScreen> {
           }).toList();
 
           // Save to cache (async, non-blocking)
-          _cacheService.saveToCache(finalItems).then((_) {
-            debugPrint('📰 [NEWS_SCREEN] ✅ Cache updated in background');
+          _cacheService.saveToCache(finalItems).catchError((_) {
+            // Silent fail
           });
 
           setState(() {
             _newsItems = finalItems;
             _isLoading = false;
           });
-
-          debugPrint('📰 [NEWS_SCREEN] ✅ Updated ${finalItems.length} news items');
         }
       }).catchError((e) {
-        debugPrint('📰 [NEWS_SCREEN] ❌ Background fetch error: $e');
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -132,7 +122,6 @@ class _NewsScreenState extends State<NewsScreen> {
         }
       });
     } catch (e) {
-      debugPrint('❌ [NEWS_SCREEN] Error in _fetchAndUpdateNews: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -143,9 +132,6 @@ class _NewsScreenState extends State<NewsScreen> {
 
   /// Loads news from cache first, then fetches fresh data if cache is expired
   Future<void> _loadNews({bool forceRefresh = false}) async {
-    debugPrint('📰 [NEWS_SCREEN] ========== _loadNews STARTED ==========');
-    debugPrint('📰 [NEWS_SCREEN] forceRefresh: $forceRefresh');
-    
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -153,15 +139,11 @@ class _NewsScreenState extends State<NewsScreen> {
 
     try {
       // Check cache first
-      debugPrint('📰 [NEWS_SCREEN] Checking cache...');
       final cachedNews = await _cacheService.getFromCache();
       final isCacheValid = await _cacheService.isCacheValid();
 
-      debugPrint('📰 [NEWS_SCREEN] Cache valid: $isCacheValid, Cached items: ${cachedNews.length}');
-
       // If cache is valid and not forcing refresh, show cached data immediately
       if (isCacheValid && !forceRefresh && cachedNews.isNotEmpty) {
-        debugPrint('📰 [NEWS_SCREEN] ✅ Using cached news (${cachedNews.length} items)');
         setState(() {
           _newsItems = cachedNews;
           _isLoading = false;
@@ -170,15 +152,13 @@ class _NewsScreenState extends State<NewsScreen> {
 
       // Fetch fresh data (unless cache is valid and not forcing refresh)
       if (!isCacheValid || forceRefresh) {
-        debugPrint('📰 [NEWS_SCREEN] 🔄 Fetching fresh news from RSS feed...');
-        
         // Clear current items when starting fresh (but keep loading state)
         setState(() {
           _newsItems = [];
           _isLoading = true;
         });
         
-        final fetchedNews = await _rssService.fetchErasmusNews(
+        final fetchedNews = await _rssService.fetchAggregatedNews(
           onItemFound: (item) async {
             // Add item immediately when found
             if (mounted) {
@@ -207,25 +187,21 @@ class _NewsScreenState extends State<NewsScreen> {
               setState(() {
                 if (!_newsItems.any((existing) => existing.url == processedItem.url)) {
                   _newsItems.add(processedItem);
-                  debugPrint('📰 [NEWS_SCREEN] ✅ Added item ${_newsItems.length}: ${processedItem.title}');
                 }
               });
             }
           },
         );
-        debugPrint('📰 [NEWS_SCREEN] Fetched ${fetchedNews.length} news items from RSS');
 
         // Items were already added via callback, now just finalize
         if (fetchedNews.isEmpty && cachedNews.isNotEmpty) {
           // If fetch failed but we have cache, use cache
-          debugPrint('📰 [NEWS_SCREEN] ⚠️ Fetch failed, using cached news');
           setState(() {
             _newsItems = cachedNews;
             _isLoading = false;
           });
         } else if (fetchedNews.isNotEmpty) {
           // Final comparison and cache update
-          debugPrint('📰 [NEWS_SCREEN] Finalizing and comparing with cache...');
           final comparison = await _cacheService.compareWithCache(fetchedNews);
           
           // Update items with final comparison results
@@ -235,14 +211,10 @@ class _NewsScreenState extends State<NewsScreen> {
             return item.copyWith(isNew: isNew, isUpdated: isUpdated);
           }).toList();
 
-          // Save to cache
-          debugPrint('📰 [NEWS_SCREEN] Saving to cache...');
-          await _cacheService.saveToCache(finalItems);
-
-          debugPrint('📰 [NEWS_SCREEN] ✅ Loaded ${finalItems.length} news items');
-          debugPrint('📰 [NEWS_SCREEN] ✨ New items: ${comparison['new']?.length ?? 0}');
-          debugPrint('📰 [NEWS_SCREEN] 🔄 Updated items: ${comparison['updated']?.length ?? 0}');
-          debugPrint('📰 [NEWS_SCREEN] 📋 Existing items: ${comparison['existing']?.length ?? 0}');
+          // Save to cache (async, non-blocking)
+          _cacheService.saveToCache(finalItems).catchError((_) {
+            // Silent fail
+          });
 
           setState(() {
             _newsItems = finalItems;
@@ -260,32 +232,24 @@ class _NewsScreenState extends State<NewsScreen> {
         }
       } else {
         // Cache is valid, but fetch in background for next time
-        debugPrint('📰 [NEWS_SCREEN] 🔄 Cache valid, fetching in background for next time...');
-        _rssService.fetchErasmusNews().then((fetchedNews) async {
+        _rssService.fetchAggregatedNews().then((fetchedNews) async {
           if (fetchedNews.isNotEmpty) {
-            debugPrint('📰 [NEWS_SCREEN] Background fetch completed: ${fetchedNews.length} items');
             final comparison = await _cacheService.compareWithCache(fetchedNews);
             final processedNews = fetchedNews.map((item) {
               final isNew = comparison['new']?.any((n) => n.url == item.url) ?? false;
               final isUpdated = comparison['updated']?.any((n) => n.url == item.url) ?? false;
               return item.copyWith(isNew: isNew, isUpdated: isUpdated);
             }).toList();
-            await _cacheService.saveToCache(processedNews);
-            debugPrint('📰 [NEWS_SCREEN] Background cache updated');
+            _cacheService.saveToCache(processedNews).catchError((_) {
+              // Silent fail
+            });
           }
-        }).catchError((e) {
-          debugPrint('📰 [NEWS_SCREEN] ❌ Background fetch error: $e');
+        }).catchError((_) {
+          // Silent fail
         });
       }
-      
-      debugPrint('📰 [NEWS_SCREEN] ========== _loadNews COMPLETED ==========');
     } catch (e, stackTrace) {
-      debugPrint('❌ [NEWS_SCREEN] ========== ERROR in _loadNews ==========');
-      debugPrint('❌ [NEWS_SCREEN] Error: $e');
-      debugPrint('❌ [NEWS_SCREEN] Stack trace: $stackTrace');
-      
       // Try to load from cache as fallback
-      debugPrint('📰 [NEWS_SCREEN] Trying to load from cache as fallback...');
       final cachedNews = await _cacheService.getFromCache();
       
       setState(() {
@@ -294,8 +258,6 @@ class _NewsScreenState extends State<NewsScreen> {
         _newsItems = cachedNews;
         _isLoading = false;
       });
-      
-      debugPrint('📰 [NEWS_SCREEN] Fallback: ${cachedNews.length} cached items loaded');
     }
   }
 
@@ -307,9 +269,6 @@ class _NewsScreenState extends State<NewsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('📰 [NEWS_SCREEN] ========== BUILD STARTED ==========');
-    debugPrint('📰 [NEWS_SCREEN] _isLoading: $_isLoading, _hasError: $_hasError, _newsItems.length: ${_newsItems.length}');
-    
     // Header is managed by MainNavigationScreen
     // This Scaffold only provides background color
     return Scaffold(
@@ -397,7 +356,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                     _markNewsAsSeen([newsItem]);
                                   }
                                   
-                                  return NewsCard(newsItem: newsItem);
+                                  return NewsCard(newsItem: newsItem, index: index);
                                 },
                         ),
                       ),

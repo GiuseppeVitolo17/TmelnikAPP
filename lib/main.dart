@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,10 +19,13 @@ import 'screens/edit_project_offer_screen.dart';
 import 'screens/project_offers_screen.dart';
 import 'screens/daily_reflection_screen.dart';
 import 'screens/news_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/settings_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
 import 'services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Background handler for FCM (must be a top-level function)
 @pragma('vm:entry-point')
@@ -39,30 +45,74 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Log loading configuration
-  LoadingConfig.logConfig();
+  // Set preferred orientations (non-blocking)
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   
-  // Initialize debug logging
-  await debugLogger.initializeLog();
-  await debugLogger.log('App starting...');
-  
+  // Initialize Firebase (critical - must be done before runApp)
   try {
-    await debugLogger.firebase('Starting Firebase initialization...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await debugLogger.firebase('Firebase initialized successfully');
-    print('✅ Firebase initialized successfully');
+    if (kDebugMode) {
+      print('✅ Firebase initialized');
+    }
   } catch (e) {
-    await debugLogger.error('Error initializing Firebase', e);
-    print('❌ Error initializing Firebase: $e');
+    if (kDebugMode) {
+      print('❌ Error initializing Firebase: $e');
+    }
   }
 
-  // Attempt to restore session if Firebase user is null but Google session exists
+  // Register FCM background handler (non-blocking)
+  try {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error setting FCM background handler: $e');
+    }
+  }
+  
+  // Run app immediately - don't block UI
+  runApp(const TmelnikApp());
+  
+  // Initialize non-critical services in background after UI is ready
+  _initializeBackgroundServices();
+}
+
+/// Initialize non-critical services in background to avoid blocking app startup
+void _initializeBackgroundServices() {
+  // Use microtask to run after current frame
+  Future.microtask(() async {
+    try {
+      // Initialize debug logging in background (non-blocking)
+      debugLogger.initializeLog().then((_) {
+        debugLogger.log('App started');
+      }).catchError((e) {
+        if (kDebugMode) print('Log init error: $e');
+      });
+      
+      // Restore Google session in background (non-blocking)
+      _restoreGoogleSession();
+      
+      // Initialize notifications in background (non-blocking)
+      _initializeNotifications();
+    } catch (e) {
+      if (kDebugMode) print('Background init error: $e');
+    }
+  });
+}
+
+/// Restore Google Sign-In session in background
+Future<void> _restoreGoogleSession() async {
   try {
     if (FirebaseAuth.instance.currentUser == null) {
       final google = GoogleSignIn();
-      final silent = await google.signInSilently();
+      final silent = await google.signInSilently().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => null,
+      );
       if (silent != null) {
         final ga = await silent.authentication;
         if (ga.idToken != null) {
@@ -71,44 +121,43 @@ void main() async {
             idToken: ga.idToken,
           );
           await FirebaseAuth.instance.signInWithCredential(credential);
-          await debugLogger.auth('Restored Firebase session from Google silent sign-in');
+          if (kDebugMode) {
+            print('✅ Google session restored');
+          }
         }
       }
     }
   } catch (e) {
-    await debugLogger.error('Session restore failed', e);
+    // Silent fail - not critical for app startup
+    if (kDebugMode) {
+      print('Session restore failed (non-critical): $e');
+    }
   }
+}
 
-  // Register FCM background handler
+/// Initialize notification service in background
+Future<void> _initializeNotifications() async {
   try {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // Load preference first (fast)
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool('notifications_enabled') ?? true;
+    NotificationService.notificationsEnabled = enabled;
+    
+    // Only initialize if enabled
+    if (enabled) {
+      // Initialize in background without blocking
+      NotificationService().initialize().catchError((e) {
+        if (kDebugMode) {
+          print('Notification init error (non-critical): $e');
+        }
+      });
+    }
   } catch (e) {
-    debugLogger.error('Error setting FCM background handler', e);
+    // Silent fail - not critical
+    if (kDebugMode) {
+      print('Notification preference load error: $e');
+    }
   }
-
-  // Initialize notification service for mobile platforms
-  try {
-    // Enable push notifications (no intrusive in-app popups)
-    NotificationService.notificationsEnabled = true;
-    await NotificationService().initialize();
-  } catch (e) {
-    debugLogger.error('Error initializing notifications', e);
-  }
-  
-  await debugLogger.log('Starting TmelnikApp...');
-  
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  
-  // Signal that Flutter is ready after app starts
-  Future.delayed(const Duration(milliseconds: 100), () {
-    loadingController.markAsReady();
-  });
-  
-  runApp(const TmelnikApp());
 }
 
 class TmelnikApp extends StatelessWidget {
@@ -125,6 +174,15 @@ class TmelnikApp extends StatelessWidget {
       title: 'Tmelnik - Youth Exchange Management',
       debugShowCheckedModeBanner: false,
       theme: baseTheme.copyWith(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          },
+        ),
         cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -140,6 +198,7 @@ class TmelnikApp extends StatelessWidget {
               horizontal: 24,
               vertical: 12,
             ),
+            animationDuration: const Duration(milliseconds: 200),
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -245,8 +304,60 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _email,
           password: _password,
         );
-        // Initialize user role in Firestore
+        
+        // Check if email is verified
         if (userCredential.user != null) {
+          // Reload user to get latest email verification status
+          await userCredential.user!.reload();
+          final currentUser = FirebaseAuth.instance.currentUser;
+          
+          if (currentUser != null && !currentUser.emailVerified) {
+            // Email not verified - show warning and option to resend
+            await debugLogger.auth('User email not verified: $_email');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('⚠️ Email non verificata. Controlla la tua email o re-invia il link di verifica.'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 5),
+                  action: SnackBarAction(
+                    label: 'Re-invia',
+                    textColor: Colors.white,
+                    onPressed: () async {
+                      try {
+                        await currentUser.sendEmailVerification();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('📧 Email di verifica inviata!'),
+                              backgroundColor: Colors.blue,
+                            ),
+                          );
+                        }
+                        await debugLogger.auth('Verification email resent to: $_email');
+                      } catch (e) {
+                        await debugLogger.error('Failed to resend verification email', e);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Errore: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+              );
+            }
+            // Note: We still allow login even if email is not verified
+            // If you want to block login, uncomment the following lines:
+            // await FirebaseAuth.instance.signOut();
+            // return;
+          }
+          
+          // Initialize user role in Firestore
           await userRoleService.initializeUserRole(userCredential.user!);
         }
         await debugLogger.auth('Email/password sign in successful');
@@ -256,18 +367,107 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _email,
           password: _password,
         );
+        
         // Initialize user role in Firestore
         if (userCredential.user != null) {
           await userRoleService.initializeUserRole(userCredential.user!);
+          
+          // Send email verification
+          await debugLogger.auth('Sending email verification to: $_email');
+          await userCredential.user!.sendEmailVerification();
+          await debugLogger.auth('Email verification sent successfully');
+          
+          // Show success message with email verification info
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('✅ Account creato! Controlla la tua email per verificare l\'account.'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Re-invia email',
+                  textColor: Colors.white,
+                  onPressed: () async {
+                    try {
+                      await userCredential.user!.sendEmailVerification();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('📧 Email di verifica inviata!'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Errore: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ),
+            );
+            
+            // Sign out user until email is verified (optional - you can remove this if you want users to access the app)
+            await FirebaseAuth.instance.signOut();
+            await debugLogger.auth('User signed out until email is verified');
+          }
         }
         await debugLogger.auth('Email/password registration successful');
       }
-    } catch (e) {
+    } on FirebaseAuthException catch (e) {
       await debugLogger.error('Email/password authentication failed', e);
+      String errorMessage = 'Si è verificato un errore';
+      
+      switch (e.code) {
+        case 'weak-password':
+          errorMessage = 'La password è troppo debole. Usa almeno 6 caratteri.';
+          break;
+        case 'email-already-in-use':
+          errorMessage = 'Questa email è già registrata. Prova ad accedere.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'L\'indirizzo email non è valido.';
+          break;
+        case 'user-not-found':
+          errorMessage = 'Nessun account trovato con questa email.';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Password errata. Riprova.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'Questo account è stato disabilitato.';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Troppi tentativi. Riprova più tardi.';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'Operazione non consentita.';
+          break;
+        default:
+          errorMessage = e.message ?? 'Errore di autenticazione: ${e.code}';
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      await debugLogger.error('Unexpected error in authentication', e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore imprevisto: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -700,11 +900,225 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  bool _emailVerified = true;
+  bool _checkingEmailStatus = true;
 
   @override
   void initState() {
     super.initState();
     // FCM token is now handled silently by NotificationService
+    _checkEmailVerificationStatus();
+  }
+
+  Future<void> _checkEmailVerificationStatus() async {
+    // Check in background - don't block UI
+    Future.microtask(() async {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        try {
+          // Reload user to get latest email verification status (with timeout)
+          await user.reload().timeout(
+            const Duration(seconds: 3),
+            onTimeout: () {},
+          );
+          final currentUser = FirebaseAuth.instance.currentUser;
+          if (mounted) {
+            setState(() {
+              _emailVerified = currentUser?.emailVerified ?? true;
+              _checkingEmailStatus = false;
+            });
+          }
+        } catch (e) {
+          // Silent fail - default to verified
+          if (mounted) {
+            setState(() {
+              _emailVerified = true;
+              _checkingEmailStatus = false;
+            });
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _checkingEmailStatus = false;
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _resendVerificationEmail() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && !user.emailVerified) {
+      try {
+        await user.sendEmailVerification();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('📧 Email di verifica inviata! Controlla la tua casella di posta.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        await debugLogger.auth('Verification email resent to: ${user.email}');
+      } catch (e) {
+        await debugLogger.error('Failed to resend verification email', e);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Errore nell\'invio: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Menu items
+              _buildMenuTile(
+                context: context,
+                icon: Icons.person,
+                title: 'Profilo',
+                subtitle: 'Visualizza le tue informazioni',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildMenuTile(
+                context: context,
+                icon: Icons.settings,
+                title: 'Impostazioni',
+                subtitle: 'Gestisci le preferenze dell\'app',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              _buildMenuTile(
+                context: context,
+                icon: Icons.logout,
+                title: 'Logout',
+                subtitle: 'Esci dal tuo account',
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Log Out'),
+                      content: const Text('Sei sicuro di voler uscire?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Annulla'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true && mounted) {
+                    await debugLogger.auth('User confirmed logout');
+                    await FirebaseAuth.instance.signOut();
+                    await GoogleSignIn().signOut();
+                    await debugLogger.success('User logged out successfully');
+                  }
+                },
+                isDestructive: true,
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isDestructive
+              ? Colors.red.withOpacity(0.1)
+              : AppColors.primaryBlue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          color: isDestructive ? Colors.red : AppColors.primaryBlue,
+          size: 24,
+        ),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: isDestructive ? Colors.red : AppColors.textPrimary,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(
+          fontSize: 14,
+          color: AppColors.textSecondary,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: Colors.grey[400],
+      ),
+      onTap: onTap,
+    );
   }
 
   List<Widget> get _screens {
@@ -821,34 +1235,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               if (isGuestMode) {
                 widget.onLoginRequested?.call();
               } else {
-                // Show confirmation dialog before logout
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-                    title: const Text('Log Out'),
-                    content: const Text('Are you sure you want to log out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
-                        ),
-                        child: const Text('Log Out'),
-          ),
-        ],
-      ),
-    );
-
-                if (confirmed == true && mounted) {
-                  await debugLogger.auth('User confirmed logout');
-                  await FirebaseAuth.instance.signOut();
-                  await GoogleSignIn().signOut();
-                  await debugLogger.success('User logged out successfully');
-                }
+                _showProfileMenu(context);
               }
             },
             icon: Icon(
@@ -863,6 +1250,75 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         );
   }
 
+  Widget _buildEmailVerificationBanner() {
+    if (_checkingEmailStatus || _emailVerified || widget.isGuestMode) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: Colors.orange[50],
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: Colors.orange[700], size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Email non verificata',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange[900],
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Controlla la tua email e clicca sul link di verifica',
+                  style: TextStyle(
+                    color: Colors.orange[800],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: _resendVerificationEmail,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              minimumSize: const Size(0, 32),
+            ),
+            child: Text(
+              'Re-invia',
+              style: TextStyle(
+                color: Colors.orange[900],
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18),
+            color: Colors.orange[700],
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              setState(() {
+                _emailVerified = true; // Hide banner for this session
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     debugLogger.ui('Building MainNavigationScreen widget');
@@ -872,9 +1328,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         preferredSize: const Size.fromHeight(80), // Increased to match new header height
         child: _buildHeader(_currentScreenTitle),
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: Column(
+        children: [
+          _buildEmailVerificationBanner(),
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -895,6 +1358,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             _currentIndex = index;
           });
           debugLogger.navigation('Navigated to screen: $index');
+          // Check email verification status when switching screens
+          _checkEmailVerificationStatus();
         },
           selectedItemColor: AppColors.primaryBlue,
         unselectedItemColor: Colors.grey[600],

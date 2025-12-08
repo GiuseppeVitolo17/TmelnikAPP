@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-/// Model for RSS news items from Erasmus+ feed.
+/// Model for RSS news items from aggregated feeds (Erasmus+ and Instagram).
 /// This is separate from the Firestore News model.
 class NewsItem {
   final String title;
@@ -11,6 +11,7 @@ class NewsItem {
   final DateTime? pubDateTimestamp;
   final bool isNew; // Flag to indicate if this is a new article
   final bool isUpdated; // Flag to indicate if this article was updated
+  final String source; // Source identifier: "EU" or "Instagram"
 
   NewsItem({
     required this.title,
@@ -21,6 +22,7 @@ class NewsItem {
     this.pubDateTimestamp,
     this.isNew = false,
     this.isUpdated = false,
+    this.source = 'EU', // Default to EU for backward compatibility
   });
 
   NewsItem copyWith({
@@ -32,6 +34,7 @@ class NewsItem {
     DateTime? pubDateTimestamp,
     bool? isNew,
     bool? isUpdated,
+    String? source,
   }) {
     return NewsItem(
       title: title ?? this.title,
@@ -42,6 +45,7 @@ class NewsItem {
       pubDateTimestamp: pubDateTimestamp ?? this.pubDateTimestamp,
       isNew: isNew ?? this.isNew,
       isUpdated: isUpdated ?? this.isUpdated,
+      source: source ?? this.source,
     );
   }
 

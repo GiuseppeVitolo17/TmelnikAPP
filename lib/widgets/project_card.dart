@@ -22,6 +22,10 @@ class ProjectCard extends StatelessWidget {
   final VoidCallback? onImageTap;
   // Loading state for image refresh
   final bool isLoadingImage;
+  // Card tap callback (for navigation to detail screen)
+  final VoidCallback? onTap;
+  // Hero tag for image animation
+  final String? heroTag;
 
   const ProjectCard({
     super.key,
@@ -36,6 +40,8 @@ class ProjectCard extends StatelessWidget {
     this.showAdminActions = false,
     this.onImageTap,
     this.isLoadingImage = false,
+    this.onTap,
+    this.heroTag,
   });
 
   @override
@@ -62,24 +68,29 @@ class ProjectCard extends StatelessWidget {
     final isNetworkImage = imagePathOrUrl.startsWith('http');
     final isLocalFile = !kIsWeb && !isNetworkImage && imagePathOrUrl.isNotEmpty;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: AppRadius.large,
-        boxShadow: AppShadows.soft,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image banner with rounded top corners only
-          ClipRRect(
-            borderRadius: BorderRadius.vertical(
-              top: AppRadius.large.topLeft,
-            ),
-            child: GestureDetector(
-              onTap: onImageTap,
-              child: Stack(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: AppRadius.large,
+            boxShadow: AppShadows.soft,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image banner with rounded top corners only
+              ClipRRect(
+                borderRadius: BorderRadius.vertical(
+                  top: AppRadius.large.topLeft,
+                ),
+                child: GestureDetector(
+                  onTap: onImageTap ?? onTap,
+                  child: Stack(
                 children: [
                   // Loading overlay
                   if (isLoadingImage)
@@ -94,52 +105,61 @@ class ProjectCard extends StatelessWidget {
                       ),
                     ),
                   isNetworkImage
-                      ? Image.network(
-                          imagePathOrUrl,
-                          width: double.infinity,
-                          height: 180,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              width: double.infinity,
-                              height: 180,
-                              color: Colors.grey[300],
-                              child: const Center(
-                                child: Text('Loading...'),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholderImage();
-                          },
+                      ? Hero(
+                          tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                          child: Image.network(
+                            imagePathOrUrl,
+                            width: double.infinity,
+                            height: 180,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                width: double.infinity,
+                                height: 180,
+                                color: Colors.grey[300],
+                                child: const Center(
+                                  child: Text('Loading...'),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildPlaceholderImage();
+                            },
+                          ),
                         )
                       : isLocalFile
                           ? FutureBuilder<bool>(
                               future: File(imagePathOrUrl).exists(),
                               builder: (context, snapshot) {
                                 if (snapshot.hasData && snapshot.data == true) {
-                                  return Image.file(
-                                    File(imagePathOrUrl),
-                                    width: double.infinity,
-                                    height: 180,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return _buildPlaceholderImage();
-                                    },
+                                  return Hero(
+                                    tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                                    child: Image.file(
+                                      File(imagePathOrUrl),
+                                      width: double.infinity,
+                                      height: 180,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return _buildPlaceholderImage();
+                                      },
+                                    ),
                                   );
                                 }
                                 return _buildPlaceholderImage();
                               },
                             )
-                          : Image.asset(
-                              imagePathOrUrl,
-                              width: double.infinity,
-                              height: 180,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return _buildPlaceholderImage();
-                              },
+                          : Hero(
+                              tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                              child: Image.asset(
+                                imagePathOrUrl,
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return _buildPlaceholderImage();
+                                },
+                              ),
                             ),
                 ],
               ),
@@ -149,6 +169,8 @@ class ProjectCard extends StatelessWidget {
           // Content section
           _buildCardContent(),
         ],
+      ),
+        ),
       ),
     );
   }
@@ -303,13 +325,15 @@ class ProjectCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholderImage() {
-    return ClipRRect(
-      borderRadius: BorderRadius.vertical(
-        top: AppRadius.large.topLeft,
-      ),
-      child: GestureDetector(
-        onTap: onImageTap,
-        child: Container(
+    return Hero(
+      tag: heroTag ?? 'project_placeholder_${title}',
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(
+          top: AppRadius.large.topLeft,
+        ),
+        child: GestureDetector(
+          onTap: onImageTap,
+          child: Container(
           width: double.infinity,
           height: 180,
           color: Colors.grey[300],
@@ -349,6 +373,7 @@ class ProjectCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

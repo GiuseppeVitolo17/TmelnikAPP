@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firebase_firestore_service.dart';
 import '../models/project_offer.dart';
 
@@ -31,8 +32,21 @@ class NotificationService {
 
   /// Initialize notification service (call this on app startup)
   Future<void> initialize() async {
-    if (kIsWeb || !notificationsEnabled) {
+    if (kIsWeb) {
       // Web doesn't support push notifications
+      return;
+    }
+
+    // Load notification preference from SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+    } catch (e) {
+      // Default to enabled if error loading
+      notificationsEnabled = true;
+    }
+
+    if (!notificationsEnabled || _initialized) {
       return;
     }
 
