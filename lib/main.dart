@@ -21,6 +21,7 @@ import 'screens/daily_reflection_screen.dart';
 import 'screens/news_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/email_verification_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -317,9 +318,20 @@ class _AuthScreenState extends State<AuthScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('⚠️ Email not verified. Check your email or resend the verification link.'),
+                  content: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('⚠️ Email not verified. Check your email or resend the verification link.'),
+                      SizedBox(height: 4),
+                      Text(
+                        '💡 Tip: Check your spam folder if you don\'t see the email!',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
                   backgroundColor: Colors.orange,
-                  duration: const Duration(seconds: 5),
+                  duration: const Duration(seconds: 8),
                   action: SnackBarAction(
                     label: 'Resend',
                     textColor: Colors.white,
@@ -329,8 +341,20 @@ class _AuthScreenState extends State<AuthScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('📧 Verification email sent!'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('📧 Verification email sent!'),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    '⚠️ Check your spam folder if not in inbox',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
                               backgroundColor: Colors.blue,
+                              duration: Duration(seconds: 5),
                             ),
                           );
                         }
@@ -381,9 +405,20 @@ class _AuthScreenState extends State<AuthScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('✅ Account created! Check your email to verify your account.'),
+                content: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('✅ Account created! Check your email to verify your account.'),
+                    SizedBox(height: 4),
+                    Text(
+                      '⚠️ If you don\'t see it, check your spam folder!',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
                 backgroundColor: Colors.green,
-                duration: const Duration(seconds: 5),
+                duration: const Duration(seconds: 8),
                 action: SnackBarAction(
                   label: 'Resend email',
                   textColor: Colors.white,
@@ -393,8 +428,20 @@ class _AuthScreenState extends State<AuthScreen> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('📧 Verification email sent!'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('📧 Verification email sent!'),
+                                SizedBox(height: 4),
+                                Text(
+                                  '⚠️ Check your spam folder if not in inbox',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
                             backgroundColor: Colors.blue,
+                            duration: Duration(seconds: 5),
                           ),
                         );
                       }
@@ -402,7 +449,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Errore: $e'),
+                            content: Text('Error: $e'),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -413,9 +460,9 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             );
             
-            // Sign out user until email is verified (optional - you can remove this if you want users to access the app)
-            await FirebaseAuth.instance.signOut();
-            await debugLogger.auth('User signed out until email is verified');
+            // Don't sign out - let EmailVerificationScreen handle the blocking
+            // User will be redirected to verification screen automatically
+            await debugLogger.auth('User registered, will be shown verification screen');
           }
         }
         await debugLogger.auth('Email/password registration successful');
@@ -1278,7 +1325,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Check your email and click the verification link',
+                  'Check your email (including spam folder) and click the verification link',
                   style: TextStyle(
                     color: Colors.orange[800],
                     fontSize: 12,
@@ -1295,7 +1342,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               minimumSize: const Size(0, 32),
             ),
             child: Text(
-              'Re-invia',
+              'Resend',
               style: TextStyle(
                 color: Colors.orange[900],
                 fontWeight: FontWeight.bold,

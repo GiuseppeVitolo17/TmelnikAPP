@@ -84,83 +84,95 @@ class ProjectCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image banner with rounded top corners only
-              // Note: ClipRRect is needed for rounded corners but Hero needs consistent shape
+              // ClipRRect wraps the entire Stack to maintain rounded corners
               ClipRRect(
                 borderRadius: BorderRadius.vertical(
                   top: AppRadius.large.topLeft,
                 ),
                 child: Stack(
-                children: [
-                  // Loading overlay
-                  if (isLoadingImage)
-                    Positioned.fill(
-                      child: Container(
-                        color: Colors.black.withOpacity(0.3),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  children: [
+                    // Loading overlay
+                    if (isLoadingImage)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.3),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  isNetworkImage
-                      ? Hero(
-                          tag: heroTag ?? 'project_image_${imagePathOrUrl}',
-                          child: Image.network(
-                            imagePathOrUrl,
-                            width: double.infinity,
-                            height: 180,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                width: double.infinity,
-                                height: 180,
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: Text('Loading...'),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return _buildPlaceholderImage();
-                            },
-                          ),
-                        )
-                      : isLocalFile
-                          ? FutureBuilder<bool>(
-                              future: File(imagePathOrUrl).exists(),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData && snapshot.data == true) {
-                                  return Hero(
-                                    tag: heroTag ?? 'project_image_${imagePathOrUrl}',
-                                    child: Image.file(
-                                      File(imagePathOrUrl),
-                                      width: double.infinity,
-                                      height: 180,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return _buildPlaceholderImage();
-                                      },
-                                    ),
-                                  );
-                                }
-                                return _buildPlaceholderImage();
-                              },
-                            )
-                          : Hero(
-                              tag: heroTag ?? 'project_image_${imagePathOrUrl}',
-                              child: Image.asset(
+                    // Hero image - Material wrapper for consistent structure
+                    isNetworkImage
+                        ? Hero(
+                            tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: Image.network(
                                 imagePathOrUrl,
                                 width: double.infinity,
                                 height: 180,
                                 fit: BoxFit.cover,
+                                cacheWidth: 800, // Cache to prevent reloading during Hero transition
+                                cacheHeight: 450,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    width: double.infinity,
+                                    height: 180,
+                                    color: Colors.grey[300],
+                                    child: const Center(
+                                      child: Text('Loading...'),
+                                    ),
+                                  );
+                                },
                                 errorBuilder: (context, error, stackTrace) {
                                   return _buildPlaceholderImage();
                                 },
                               ),
                             ),
-                ],
+                          )
+                        : isLocalFile
+                            ? FutureBuilder<bool>(
+                                future: File(imagePathOrUrl).exists(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasData && snapshot.data == true) {
+                                    return Hero(
+                                      tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: Image.file(
+                                          File(imagePathOrUrl),
+                                          width: double.infinity,
+                                          height: 180,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return _buildPlaceholderImage();
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return _buildPlaceholderImage();
+                                },
+                              )
+                            : Hero(
+                                tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: Image.asset(
+                                    imagePathOrUrl,
+                                    width: double.infinity,
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _buildPlaceholderImage();
+                                    },
+                                  ),
+                                ),
+                              ),
+                  ],
                 ),
               ),
           
@@ -325,11 +337,13 @@ class ProjectCard extends StatelessWidget {
   Widget _buildPlaceholderImage() {
     return Hero(
       tag: heroTag ?? 'project_placeholder_${title}',
-      child: ClipRRect(
-        borderRadius: BorderRadius.vertical(
-          top: AppRadius.large.topLeft,
-        ),
-        child: Container(
+      child: Material(
+        color: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.vertical(
+            top: AppRadius.large.topLeft,
+          ),
+          child: Container(
           width: double.infinity,
           height: 180,
           color: Colors.grey[300],
@@ -368,6 +382,7 @@ class ProjectCard extends StatelessWidget {
                 ),
             ],
           ),
+        ),
         ),
       ),
     );

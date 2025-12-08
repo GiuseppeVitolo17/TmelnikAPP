@@ -252,6 +252,7 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
       tag: widget.heroTag,
       child: Material(
         color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
         child: widget.imagePathOrUrl.isEmpty
             ? Container(
                 width: double.infinity,
@@ -284,6 +285,8 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                     width: double.infinity,
                     height: 180,
                     fit: BoxFit.cover,
+                    cacheWidth: 800, // Same cache size as card to prevent reloading
+                    cacheHeight: 450,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         width: double.infinity,
@@ -305,6 +308,8 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                               width: double.infinity,
                               height: 180,
                               fit: BoxFit.cover,
+                              cacheWidth: 800, // Cache to prevent reloading
+                              cacheHeight: 450,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   width: double.infinity,
