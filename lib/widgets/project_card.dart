@@ -88,9 +88,7 @@ class ProjectCard extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(
                   top: AppRadius.large.topLeft,
                 ),
-                child: GestureDetector(
-                  onTap: onImageTap ?? onTap,
-                  child: Stack(
+                child: Stack(
                 children: [
                   // Loading overlay
                   if (isLoadingImage)
@@ -164,7 +162,6 @@ class ProjectCard extends StatelessWidget {
                 ],
               ),
             ),
-          ),
           
           // Content section
           _buildCardContent(),
@@ -331,9 +328,7 @@ class ProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(
           top: AppRadius.large.topLeft,
         ),
-        child: GestureDetector(
-          onTap: onImageTap,
-          child: Container(
+        child: Container(
           width: double.infinity,
           height: 180,
           color: Colors.grey[300],
@@ -350,7 +345,7 @@ class ProjectCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      onImageTap != null ? 'Tap to load image' : 'No image',
+                      'No image',
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 14,

@@ -11,7 +11,8 @@ class AggregatedRssService {
   // Feed URLs
   static const String _erasmusRssUrl = 'https://erasmus-plus.ec.europa.eu/rss.xml';
   static const String _instagramRssUrl = 'https://rsshub.app/instagram/user/tmelnik_cz';
-  static const int _maxArticles = 50;
+  static const int _maxArticles = 30; // Reduced for faster loading
+  static const Duration _maxAge = Duration(days: 60); // Only show items from last 2 months
 
   /// Fetches and aggregates news from both Erasmus+ and Instagram feeds.
   /// Returns a unified list sorted by publication date (newest first).
@@ -45,8 +46,16 @@ class AggregatedRssService {
       }
     }
 
+    // Filter items from last 2 months only
+    final now = DateTime.now();
+    final cutoffDate = now.subtract(_maxAge);
+    final recentNews = allNews.where((item) {
+      if (item.pubDateTimestamp == null) return false; // Exclude items without date
+      return item.pubDateTimestamp!.isAfter(cutoffDate);
+    }).toList();
+
     // Sort by publication date (newest first)
-    allNews.sort((a, b) {
+    recentNews.sort((a, b) {
       if (a.pubDateTimestamp == null && b.pubDateTimestamp == null) return 0;
       if (a.pubDateTimestamp == null) return 1; // Items without date go to end
       if (b.pubDateTimestamp == null) return -1;
@@ -54,7 +63,7 @@ class AggregatedRssService {
     });
 
     // Limit to max articles
-    final limitedNews = allNews.take(_maxArticles).toList();
+    final limitedNews = recentNews.take(_maxArticles).toList();
 
     debugPrint('📰 [RSS] Aggregated ${limitedNews.length} news items (Erasmus: ${results[0].length}, Instagram: ${results[1].length})');
     
@@ -87,10 +96,15 @@ class AggregatedRssService {
       final xmlString = utf8.decode(response.bodyBytes);
       final items = _parseRssXml(xmlString, source: 'EU');
       
-      // Filter Erasmus feed (only /news/ items, exclude documents)
+      // Filter Erasmus feed (only /news/ items, exclude documents, only last 2 months)
+      final now = DateTime.now();
+      final cutoffDate = now.subtract(_maxAge);
       final filteredItems = items.where((item) {
         final url = item.url.toLowerCase();
-        return url.contains('/news/') && !url.contains('/document/');
+        final isNews = url.contains('/news/') && !url.contains('/document/');
+        final isRecent = item.pubDateTimestamp != null && 
+                        item.pubDateTimestamp!.isAfter(cutoffDate);
+        return isNews && isRecent;
       }).take(_maxArticles).toList();
 
       debugPrint('✅ [RSS] Fetched ${filteredItems.length} items from Erasmus feed');
@@ -128,8 +142,13 @@ class AggregatedRssService {
       final xmlString = utf8.decode(response.bodyBytes);
       final items = _parseRssXml(xmlString, source: 'Instagram');
       
-      // Limit Instagram items
-      final limitedItems = items.take(_maxArticles).toList();
+      // Filter Instagram items (only last 2 months)
+      final now = DateTime.now();
+      final cutoffDate = now.subtract(_maxAge);
+      final limitedItems = items.where((item) {
+        return item.pubDateTimestamp != null && 
+               item.pubDateTimestamp!.isAfter(cutoffDate);
+      }).take(_maxArticles).toList();
 
       debugPrint('✅ [RSS] Fetched ${limitedItems.length} items from Instagram feed');
       return limitedItems;
@@ -183,10 +202,19 @@ class AggregatedRssService {
           // Parse the publication date
           final pubDateTimestamp = NewsItem.parsePubDate(pubDateRaw);
           
+          // Skip items without date or older than 2 months
+          if (pubDateTimestamp == null) {
+            continue; // Skip items without valid date
+          }
+          
+          final now = DateTime.now();
+          final cutoffDate = now.subtract(_maxAge);
+          if (!pubDateTimestamp.isAfter(cutoffDate)) {
+            continue; // Skip items older than 2 months
+          }
+          
           // Format date for display
-          final formattedDate = pubDateTimestamp != null
-              ? _formatDateForDisplay(pubDateTimestamp)
-              : pubDateRaw;
+          final formattedDate = _formatDateForDisplay(pubDateTimestamp);
 
           items.add(NewsItem(
             title: title,
