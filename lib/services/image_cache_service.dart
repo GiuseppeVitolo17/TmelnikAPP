@@ -33,13 +33,11 @@ class ImageCacheService {
       final file = File('${cacheDir.path}/$fileName');
       
       if (await file.exists()) {
-        debugPrint('🖼️ [CACHE] Found cached image for $city');
         return file.path;
       }
       
       return null;
     } catch (e) {
-      debugPrint('🖼️ [CACHE] Error getting cached image: $e');
       return null;
     }
   }
@@ -65,35 +63,36 @@ class ImageCacheService {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('$_cacheKeyPrefix$city', imageUrl);
         await prefs.setInt('$_cacheTimestampPrefix$city', DateTime.now().millisecondsSinceEpoch);
-        debugPrint('🖼️ [CACHE] Cached URL for $city (web)');
         return imageUrl;
       }
 
       // Mobile: download and save file
-      final cacheDir = await _getCacheDirectory();
-      final fileName = _getFileName(city);
-      final file = File('${cacheDir.path}/$fileName');
+      try {
+        final cacheDir = await _getCacheDirectory();
+        final fileName = _getFileName(city);
+        final file = File('${cacheDir.path}/$fileName');
 
-      // Download image
-      final response = await http.get(Uri.parse(imageUrl)).timeout(
-        const Duration(seconds: 10),
-      );
+        // Download image
+        final response = await http.get(Uri.parse(imageUrl)).timeout(
+          const Duration(seconds: 10),
+        );
 
-      if (response.statusCode == 200) {
-        await file.writeAsBytes(response.bodyBytes);
-        
-        // Store URL in SharedPreferences for reference
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('$_cacheKeyPrefix$city', imageUrl);
-        await prefs.setInt('$_cacheTimestampPrefix$city', DateTime.now().millisecondsSinceEpoch);
-        
-        debugPrint('🖼️ [CACHE] Cached image for $city: ${file.path}');
-        return file.path;
+        if (response.statusCode == 200) {
+          await file.writeAsBytes(response.bodyBytes);
+          
+          // Store URL in SharedPreferences for reference
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('$_cacheKeyPrefix$city', imageUrl);
+          await prefs.setInt('$_cacheTimestampPrefix$city', DateTime.now().millisecondsSinceEpoch);
+          
+          return file.path;
+        }
+      } catch (e) {
+        // Silent error handling
       }
 
       return null;
     } catch (e) {
-      debugPrint('🖼️ [CACHE] Error caching image: $e');
       return null;
     }
   }
@@ -101,7 +100,6 @@ class ImageCacheService {
   /// Fetch and cache image for a city (only called when user clicks to refresh)
   Future<String?> fetchAndCacheImage(String city) async {
     try {
-      debugPrint('🖼️ [CACHE] Fetching new image for $city');
       final imageUrl = await PexelsService.fetchCityImageUrl(city);
       
       if (imageUrl.isNotEmpty) {
@@ -110,7 +108,6 @@ class ImageCacheService {
       
       return null;
     } catch (e) {
-      debugPrint('🖼️ [CACHE] Error fetching and caching: $e');
       return null;
     }
   }
@@ -133,9 +130,8 @@ class ImageCacheService {
         await prefs.remove('$_cacheKeyPrefix$city');
         await prefs.remove('$_cacheTimestampPrefix$city');
       }
-      debugPrint('🖼️ [CACHE] Cleared cache for $city');
     } catch (e) {
-      debugPrint('🖼️ [CACHE] Error clearing cache: $e');
+      // Silent error handling
     }
   }
 

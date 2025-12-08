@@ -424,9 +424,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
-                    ),
+                        ),
                     textAlign: TextAlign.center,
-                  ),
+                      ),
                   const SizedBox(height: 20),
 
                   // Login Card
@@ -496,8 +496,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                   thickness: 1,
                                 ),
                               ),
-                            ],
-                          ),
+                        ],
+                      ),
                           const SizedBox(height: 20),
 
                       // Email input
@@ -516,7 +516,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: AppRadius.medium,
                                 borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
-                              ),
+                          ),
                               filled: true,
                               fillColor: AppColors.backgroundGrey,
                               prefixIcon: const Icon(Icons.email, color: AppColors.textSecondary, size: 20),
@@ -538,7 +538,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             onFieldSubmitted: (_) {
                               // Focus on password field when Enter is pressed
                               FocusScope.of(context).nextFocus();
-                            },
+                        },
                       ),
                       const SizedBox(height: 16),
 
@@ -558,7 +558,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: AppRadius.medium,
                                 borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
-                              ),
+                          ),
                               filled: true,
                               fillColor: AppColors.backgroundGrey,
                               prefixIcon: const Icon(Icons.lock, color: AppColors.textSecondary, size: 20),
@@ -581,7 +581,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 _submit();
                               }
                             },
-                          ),
+                      ),
                           const SizedBox(height: 20),
 
                       // Submit button
@@ -813,7 +813,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            ),
+        ),
           ),
           // Profile/Logout button
             IconButton(
@@ -822,27 +822,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 widget.onLoginRequested?.call();
               } else {
                 // Show confirmation dialog before logout
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
                     title: const Text('Log Out'),
                     content: const Text('Are you sure you want to log out?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.red,
                         ),
                         child: const Text('Log Out'),
-                      ),
-                    ],
-                  ),
-                );
-                
+          ),
+        ],
+      ),
+    );
+
                 if (confirmed == true && mounted) {
                   await debugLogger.auth('User confirmed logout');
                   await FirebaseAuth.instance.signOut();
@@ -854,13 +854,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(
               isGuestMode ? Icons.login : Icons.person,
               color: Colors.black,
-            ),
+          ),
             tooltip: isGuestMode ? 'Login' : 'Profile',
             ),
         ],
       ),
-      ),
-    );
+          ),
+        );
   }
 
   @override
@@ -884,7 +884,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
-            ),
+                  ),
           ],
         ),
         child: BottomNavigationBar(
@@ -907,7 +907,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.work_outline),
             activeIcon: Icon(Icons.work),
             label: 'Offers',
-          ),
+                          ),
           BottomNavigationBarItem(
               icon: Icon(Icons.edit_note_outlined),
               activeIcon: Icon(Icons.edit_note),
@@ -917,16 +917,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(Icons.calendar_today_outlined),
             activeIcon: Icon(Icons.calendar_today),
             label: 'Diary',
-          ),
+                            ),
           BottomNavigationBarItem(
             icon: Icon(Icons.newspaper_outlined),
             activeIcon: Icon(Icons.newspaper),
             label: 'News',
-          ),
-        ],
-      ),
-          ),
-        );
+                      ),
+                    ],
+                  ),
+                ),
+              );
       }
 }
 

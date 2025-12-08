@@ -316,16 +316,16 @@ class _NewsScreenState extends State<NewsScreen> {
       backgroundColor: AppColors.backgroundGrey,
       body: _hasError && _newsItems.isEmpty
               ? Center(
-                  child: Padding(
+            child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Column(
+              child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                children: [
                         Icon(
                           Icons.error_outline,
                           size: 64,
                           color: Colors.grey[400],
-                        ),
+                      ),
                         const SizedBox(height: 16),
                         Text(
                           'Error loading news',
@@ -350,8 +350,8 @@ class _NewsScreenState extends State<NewsScreen> {
                           onPressed: () => _loadNewsOptimized(),
                           child: const Text('Retry'),
                         ),
-                      ],
-                    ),
+                    ],
+                  ),
                   ),
                 )
               : _newsItems.isEmpty && _isLoading
@@ -364,20 +364,20 @@ class _NewsScreenState extends State<NewsScreen> {
                             padding: const EdgeInsets.all(24),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
+                    children: [
                                 Icon(
                                   Icons.newspaper_outlined,
                                   size: 64,
                                   color: Colors.grey[400],
                                 ),
                                 const SizedBox(height: 16),
-                                Text(
+                      Text(
                                   'No news available',
-                                  style: TextStyle(
+                        style: TextStyle(
                                     fontSize: 16,
-                                    color: Colors.grey[600],
+                          color: Colors.grey[600],
                                   ),
-                                ),
+                        ),
                               ],
                             ),
                           ),
@@ -399,8 +399,8 @@ class _NewsScreenState extends State<NewsScreen> {
                                   
                                   return NewsCard(newsItem: newsItem);
                                 },
-                              ),
-                            ),
+                        ),
+                      ),
                             // Show loading indicator at top while fetching in background
                             if (_isLoading && _newsItems.isNotEmpty)
                               Positioned(
@@ -413,10 +413,10 @@ class _NewsScreenState extends State<NewsScreen> {
                                     backgroundColor: Colors.transparent,
                                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
                                   ),
-                                ),
-                              ),
-                          ],
                         ),
+                      ),
+                    ],
+      ),
     );
   }
 }

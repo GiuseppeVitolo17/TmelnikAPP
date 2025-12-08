@@ -46,3 +46,18 @@ app.*.map.json
 
 # Environment variables (not needed for this simple setup)
 # .env files are not used since Firebase keys are safe to include
+
+# Log files (temporary debug logs)
+flutter_logs*.txt
+*.log
+
+# Compiled binaries (should not be in repository)
+*.apk
+*.app
+*.ipa
+
+# Temporary scripts
+monitor_news_logs.sh
+
+# Development documentation (optional - uncomment if you want to ignore)
+# future_development.*

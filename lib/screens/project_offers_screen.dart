@@ -28,6 +28,10 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   
   // Track previously seen project IDs to detect new ones
   final Set<String> _seenProjectIds = {};
+  // Track image cache refresh timestamps per city to force FutureBuilder rebuild
+  final Map<String, int> _imageCacheTimestamps = {};
+  // Track loading state per city
+  final Map<String, bool> _imageLoadingStates = {};
 
   @override
   void initState() {
@@ -227,8 +231,10 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
               ...firestoreOffers.map((offer) {
                 // Get image - use offer.imageUrl if available, otherwise use cached image
                 final hasImageUrl = offer.imageUrl.isNotEmpty;
+                final cacheKey = '${offer.location}_${_imageCacheTimestamps[offer.location] ?? 0}';
                 
                 return FutureBuilder<String?>(
+                  key: ValueKey(cacheKey), // Force rebuild when timestamp changes
                   future: hasImageUrl 
                       ? Future.value(offer.imageUrl)
                       : _imageCacheService.getCachedImage(offer.location),
@@ -259,18 +265,38 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                           MaterialPageRoute(
                             builder: (context) => EditProjectOfferScreen(
                               projectId: offer.id,
-                            ),
-                          ),
+                              ),
+                        ),
                         ).then((_) => setState(() {}));
                       } : null,
                       onDelete: _isAdmin ? () => _handleDelete(offer) : null,
                       onImageTap: hasImageUrl ? null : () async {
-                        // Refresh image when user taps on it
-                        final newImagePath = await _imageCacheService.fetchAndCacheImage(offer.location);
-                        if (mounted && newImagePath != null) {
-                          setState(() {});
+                        // Show loading indicator
+                        setState(() {
+                          _imageLoadingStates[offer.location] = true;
+                        });
+                        
+                        try {
+                          // Fetch and cache new image
+                          final newImagePath = await _imageCacheService.fetchAndCacheImage(offer.location);
+                          
+                          if (mounted) {
+                            // Update timestamp to force FutureBuilder rebuild
+                            setState(() {
+                              _imageCacheTimestamps[offer.location] = DateTime.now().millisecondsSinceEpoch;
+                              _imageLoadingStates[offer.location] = false;
+                            });
+                          }
+                        } catch (e) {
+                          debugPrint('Error loading image: $e');
+                          if (mounted) {
+                            setState(() {
+                              _imageLoadingStates[offer.location] = false;
+                            });
+                          }
                         }
                       },
+                      isLoadingImage: _imageLoadingStates[offer.location] ?? false,
                     );
                   },
                 );

@@ -36,7 +36,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     // Prefill defaults
     _instagramController.text = 'tmelnik_cz';
     _applyLinkController.text =
-        'https://l.instagram.com/?u=https%3A%2F%2Fbit.ly%2Ftmelnik_vezme_kazdeho%3Ffbclid%3DPAZXh0bgNhZW0CMTEAAadnclU8-_2q2iAqCMR4F6eBeIKgNkuY00kh1UFPc5k52Ejbs_xsDE_eU_82nw_aem_eP2-QlnNysyygCRnhPl8Qw&e=AT2hS0xWHHd7X8Vtat-oagGFzkIvdZ9QK1aNN6QvDWZyfu-xHTJsUvwGE8oiD93Tl5jwvukG63ypXygxRLRqnl8kh-Zdvsu5ng6gm0h6mQ';
+        'https://docs.google.com/forms/d/e/1FAIpQLScNi27ECIvUlRY6cKdQLUe3TLZ6J2ykh8er6TEFyL3Tpx8ITw/viewform?fbclid=PAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQMMjU2MjgxMDQwNTU4AAGnihTWmbYtm8XfzxXjrGxY0E_K5NsgtmL7-T2gXjY5j2MSLZNPqCQvi0a9_nU_aem_R_PhOicwa1l3F3igHYTxag';
   }
 
   @override

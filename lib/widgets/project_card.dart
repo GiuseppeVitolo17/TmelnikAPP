@@ -20,6 +20,8 @@ class ProjectCard extends StatelessWidget {
   
   // Image tap callback (for refreshing cached images)
   final VoidCallback? onImageTap;
+  // Loading state for image refresh
+  final bool isLoadingImage;
 
   const ProjectCard({
     super.key,
@@ -33,11 +35,12 @@ class ProjectCard extends StatelessWidget {
     this.onDelete,
     this.showAdminActions = false,
     this.onImageTap,
+    this.isLoadingImage = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Handle empty string (fallback) - show placeholder directly
+    // Handle empty string (fallback) - show placeholder directly (always tappable if callback provided)
     if (imagePathOrUrl.isEmpty) {
       return Container(
         margin: const EdgeInsets.only(bottom: 20),
@@ -78,6 +81,18 @@ class ProjectCard extends StatelessWidget {
               onTap: onImageTap,
               child: Stack(
                 children: [
+                  // Loading overlay
+                  if (isLoadingImage)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withOpacity(0.3),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
                   isNetworkImage
                       ? Image.network(
                           imagePathOrUrl,
@@ -292,12 +307,47 @@ class ProjectCard extends StatelessWidget {
       borderRadius: BorderRadius.vertical(
         top: AppRadius.large.topLeft,
       ),
-      child: Container(
-        width: double.infinity,
-        height: 180,
-        color: Colors.grey[300],
-        child: const Center(
-          child: Text('No image'),
+      child: GestureDetector(
+        onTap: onImageTap,
+        child: Container(
+          width: double.infinity,
+          height: 180,
+          color: Colors.grey[300],
+          child: Stack(
+            children: [
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.image_outlined,
+                      size: 48,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      onImageTap != null ? 'Tap to load image' : 'No image',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isLoadingImage)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.3),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
