@@ -357,7 +357,7 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
 
                       // Description
                       if (widget.projectOffer.description.isNotEmpty) ...[
-                        _buildSectionTitle('📝 Descrizione'),
+                        _buildSectionTitle('📝 Description'),
                         const SizedBox(height: 12),
                         _buildDescriptionCard(widget.projectOffer.description),
                         const SizedBox(height: 20),
