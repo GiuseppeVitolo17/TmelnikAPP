@@ -129,6 +129,20 @@ class _NewsScreenState extends State<NewsScreen> {
           });
         }
         if (fetchedNews.isEmpty) {
+          debugPrint('⚠️ [NEWS_SCREEN] Fetched news is empty, but updating state anyway');
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _loadingProgress = 100;
+              // Keep existing items if available, otherwise show empty state
+              if (_newsItems.isEmpty) {
+                _hasError = true;
+                _errorMessage = 'No news available. Please check your internet connection.';
+                _errorCode = 'RSS_ERR_EMPTY';
+              }
+            });
+          }
+          debugPrint('✅ [NEWS_SCREEN] State updated after empty fetch');
           return;
         }
 
@@ -164,8 +178,12 @@ class _NewsScreenState extends State<NewsScreen> {
             _newsItems = finalItems;
             _isLoading = false;
             _loadingProgress = 100;
+            _hasError = false;
+            _errorMessage = null;
+            _errorCode = null;
           });
           debugPrint('✅ [NEWS_SCREEN] News loaded successfully: ${finalItems.length} items, loading complete');
+          debugPrint('✅ [NEWS_SCREEN] Final state: isLoading=$_isLoading, progress=$_loadingProgress, items=${_newsItems.length}');
         } else {
           debugPrint('⚠️ [NEWS_SCREEN] Widget not mounted, skipping state update');
         }

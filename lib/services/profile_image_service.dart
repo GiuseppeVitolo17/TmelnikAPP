@@ -235,16 +235,27 @@ class ProfileImageService {
       }
 
       // Step 3: Delete old image (optional, but good practice)
-      await deleteProfileImage(userId);
+      // Silently handle deletion errors - it's OK if image doesn't exist
+      try {
+        await deleteProfileImage(userId);
+      } catch (e) {
+        debugPrint('ℹ️ [PROFILE_IMAGE] Could not delete old image (non-critical): $e');
+        // Continue with upload even if deletion fails
+      }
 
       // Step 4: Upload to Firebase Storage
       String? downloadUrl;
       try {
         downloadUrl = await uploadProfileImage(compressedBytes, userId);
       } catch (e) {
+        debugPrint('❌ [PROFILE_IMAGE] Upload error caught: $e');
         if (context.mounted) {
           String errorMsg = 'Error uploading image';
-          if (e.toString().contains('permission-denied') || e.toString().contains('Permission denied')) {
+          if (e.toString().contains('object-not-found')) {
+            // This shouldn't happen during upload, but handle gracefully
+            errorMsg = 'Storage error. Please try again.';
+            debugPrint('⚠️ [PROFILE_IMAGE] object-not-found during upload (unexpected)');
+          } else if (e.toString().contains('permission-denied') || e.toString().contains('Permission denied')) {
             errorMsg = 'Permission denied. Please check Firebase Storage rules.';
           } else if (e.toString().contains('timeout')) {
             errorMsg = 'Upload timeout. Please check your internet connection.';

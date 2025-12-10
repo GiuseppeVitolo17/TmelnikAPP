@@ -389,33 +389,55 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                           value?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
-                    // Description field with check button below
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        TextFormField(
-                          controller: _descriptionController,
-                          decoration: const InputDecoration(
-                            labelText: 'Description *',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.description),
+                    // Description field with check button inside (bottom right corner)
+                    Container(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          TextFormField(
+                            controller: _descriptionController,
+                            decoration: const InputDecoration(
+                              labelText: 'Description *',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.description),
+                              contentPadding: EdgeInsets.only(
+                                left: 16,
+                                top: 16,
+                                right: 50, // Space for check button
+                                bottom: 50, // Extra space at bottom for button
+                              ),
+                            ),
+                            maxLines: 4,
+                            textInputAction: TextInputAction.newline,
+                            keyboardType: TextInputType.multiline,
+                            validator: (value) =>
+                                value?.isEmpty ?? true ? 'Required' : null,
                           ),
-                          maxLines: 4,
-                          textInputAction: TextInputAction.newline, // Enable newline on keyboard
-                          keyboardType: TextInputType.multiline, // Enable multiline keyboard
-                          validator: (value) =>
-                              value?.isEmpty ?? true ? 'Required' : null,
-                        ),
-                        const SizedBox(height: 8),
-                        // Round check button to close keyboard
-                        FloatingActionButton.small(
-                          onPressed: () {
-                            FocusScope.of(context).unfocus();
-                          },
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          child: const Icon(Icons.check, color: Colors.white),
-                        ),
-                      ],
+                          // Round check button positioned inside bottom right corner
+                          Positioned(
+                            bottom: 4,
+                            right: 4,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  FocusScope.of(context).unfocus();
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.check, color: Colors.white, size: 20),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
