@@ -158,12 +158,34 @@ class _NewsScreenState extends State<NewsScreen> {
       }).catchError((e, stackTrace) {
         debugPrint('❌ [NEWS_SCREEN] Error fetching news: $e');
         debugPrint('❌ [NEWS_SCREEN] Stack trace: $stackTrace');
+        
+        // Extract error code from exception message if available
+        String errorCode = 'NEWS_001';
+        String errorMessage = 'Error loading news: $e';
+        
+        if (e.toString().contains('RSS_ERR_NO_CACHE')) {
+          errorCode = 'RSS_ERR_NO_CACHE';
+          errorMessage = 'No cached data available. Please check your internet connection and try again.';
+        } else if (e.toString().contains('RSS_ERR_TIMEOUT')) {
+          errorCode = 'RSS_ERR_TIMEOUT';
+          errorMessage = 'Request timeout. Please check your internet connection.';
+        } else if (e.toString().contains('RSS_ERR_NETWORK')) {
+          errorCode = 'RSS_ERR_NETWORK';
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (e.toString().contains('RSS_ERR_')) {
+          // Extract the error code from the exception
+          final match = RegExp(r'RSS_ERR_\w+').firstMatch(e.toString());
+          if (match != null) {
+            errorCode = match.group(0)!;
+          }
+        }
+        
         if (mounted) {
           setState(() {
             _isLoading = false;
             _hasError = true;
-            _errorMessage = 'Error loading news: $e';
-            _errorCode = 'NEWS_001'; // Fetch error
+            _errorMessage = errorMessage;
+            _errorCode = errorCode;
           });
         }
       });

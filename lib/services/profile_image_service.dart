@@ -176,11 +176,30 @@ class ProfileImageService {
   Future<void> deleteProfileImage(String userId) async {
     try {
       final ref = _storage.ref().child('profile_images/$userId.jpg');
-      await ref.delete();
-      debugPrint('✅ [PROFILE_IMAGE] Deleted old image for user: $userId');
+      
+      // Check if file exists before trying to delete
+      try {
+        await ref.getMetadata();
+        // File exists, proceed with deletion
+        await ref.delete();
+        debugPrint('✅ [PROFILE_IMAGE] Deleted old image for user: $userId');
+      } catch (e) {
+        // File doesn't exist or can't access metadata
+        if (e.toString().contains('object-not-found') || 
+            e.toString().contains('not-found')) {
+          debugPrint('ℹ️ [PROFILE_IMAGE] No existing image to delete for user: $userId');
+          return; // Not an error, just no file exists
+        }
+        rethrow; // Re-throw if it's a different error
+      }
     } catch (e) {
-      // Ignore if image doesn't exist
-      debugPrint('⚠️ [PROFILE_IMAGE] Could not delete image (may not exist): $e');
+      // Only log as warning if it's not a "not found" error
+      if (!e.toString().contains('object-not-found') && 
+          !e.toString().contains('not-found')) {
+        debugPrint('⚠️ [PROFILE_IMAGE] Error deleting image for user $userId: $e');
+      } else {
+        debugPrint('ℹ️ [PROFILE_IMAGE] No existing image to delete for user: $userId');
+      }
     }
   }
 

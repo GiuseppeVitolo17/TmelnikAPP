@@ -274,10 +274,11 @@ class AggregatedRssService {
           throw Exception('RSS_ERR_CACHE_FALLBACK: $cacheError');
         }
       } else {
-        // No cache available - report error progress
-        debugPrint('❌ [RSS] No cache available for fallback (RSS_ERR_NO_CACHE)');
+        // No cache available - return empty list instead of throwing error
+        // This allows the app to continue functioning even without RSS data
+        debugPrint('⚠️ [RSS] No cache available for fallback (RSS_ERR_NO_CACHE) - returning empty list');
         onProgress?.call(100, 100);
-        throw Exception('RSS_ERR_NO_CACHE: No cached data available and fetch failed');
+        return []; // Return empty list instead of throwing
       }
     }
   }
