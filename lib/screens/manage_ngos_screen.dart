@@ -385,6 +385,8 @@ class _ManageNGOScreenState extends State<ManageNGOScreen> {
                         backgroundColor: Colors.green,
                       ),
                     );
+                    // Return true to indicate NGO was created
+                    Navigator.pop(context, true);
                   }
                 } else {
                   // Update existing NGO

@@ -4,6 +4,7 @@ import '../models/ngo.dart';
 import '../services/user_role_service.dart';
 import '../services/ngo_service.dart';
 import '../theme/app_theme.dart';
+import 'manage_ngos_screen.dart';
 
 /// Screen for admins to manage users and assign roles (admin, organizer)
 class ManageUsersScreen extends StatefulWidget {
@@ -275,13 +276,47 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     debugPrint('🔍 [MANAGE_USERS] Found ${ngos.length} active NGOs');
     
     if (ngos.isEmpty && !user.isOrganizer) {
-      debugPrint('⚠️ [MANAGE_USERS] No NGOs available, showing error message');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No NGOs available. Please create an NGO first.'),
-          backgroundColor: Colors.orange,
+      debugPrint('⚠️ [MANAGE_USERS] No NGOs available, showing create dialog');
+      // Show dialog with option to create NGO
+      final createNGO = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('No NGOs Available'),
+          content: const Text('No NGOs are currently available. Would you like to create one now?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Create NGO'),
+            ),
+          ],
         ),
       );
+      
+      if (createNGO == true && mounted) {
+        // Navigate to Manage NGOs screen
+        Navigator.pop(context); // Close current dialog if open
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ManageNGOScreen(),
+          ),
+        ).then((_) async {
+          // After returning, reload NGOs and show organizer dialog again
+          final updatedNgos = await _ngoService.getAllNGOs(includeInactive: false);
+          if (updatedNgos.isNotEmpty && mounted) {
+            // Retry showing organizer dialog with new NGOs
+            _showOrganizerDialog(context, user);
+          }
+        });
+      }
       return;
     }
     
@@ -320,6 +355,35 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             selectedNgoId = value;
                           });
                         },
+                      ),
+                      const SizedBox(height: 16),
+                      // Add button to create new NGO
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context); // Close current dialog
+                          // Navigate to Manage NGOs screen
+                          final created = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ManageNGOScreen(),
+                            ),
+                          );
+                          
+                          // If NGO was created, reload and show dialog again
+                          if (created == true && mounted) {
+                            final updatedNgos = await _ngoService.getAllNGOs(includeInactive: false);
+                            if (updatedNgos.isNotEmpty) {
+                              // Show dialog again with updated NGOs
+                              _showOrganizerDialog(context, user);
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Create New NGO'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryBlue,
+                          side: BorderSide(color: AppColors.primaryBlue),
+                        ),
                       ),
                     ],
                   ),
