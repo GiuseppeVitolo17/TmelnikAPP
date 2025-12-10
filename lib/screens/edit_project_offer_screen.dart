@@ -532,94 +532,100 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    InkWell(
+                    GestureDetector(
                       onTap: _selectDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Application Deadline (optional)',
-                          hintText: 'Select deadline date',
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.calendar_today),
-                          suffixIcon: _selectedDate != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  tooltip: 'Remove date',
-                                  onPressed: () {
-                                    _confirmRemoveDate('application deadline', () {
-                                      setState(() => _selectedDate = null);
-                                    });
-                                  },
-                                )
-                              : null,
-                        ),
-                        child: Text(
-                          _selectedDate != null
-                              ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                              : 'Not set',
-                          style: TextStyle(
-                            color: _selectedDate != null ? Colors.black87 : Colors.grey[600],
+                      child: AbsorbPointer(
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Application Deadline (optional)',
+                            hintText: 'Select deadline date',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.calendar_today),
+                            suffixIcon: _selectedDate != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    tooltip: 'Remove date',
+                                    onPressed: () {
+                                      _confirmRemoveDate('application deadline', () {
+                                        setState(() => _selectedDate = null);
+                                      });
+                                    },
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            _selectedDate != null
+                                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                                : 'Not set',
+                            style: TextStyle(
+                              color: _selectedDate != null ? Colors.black87 : Colors.grey[600],
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    InkWell(
+                    GestureDetector(
                       onTap: _selectDepartureDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: '🛫 Departure Date',
-                          hintText: 'Select departure date',
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.flight_takeoff),
-                          suffixIcon: _departureDate != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  tooltip: 'Remove departure date',
-                                  onPressed: () {
-                                    _confirmRemoveDate('departure date', () {
-                                      setState(() => _departureDate = null);
-                                    });
-                                  },
-                                )
-                              : null,
-                        ),
-                        child: Text(
-                          _departureDate != null
-                              ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
-                              : 'Not set',
-                          style: TextStyle(
-                            color: _departureDate != null ? Colors.black87 : Colors.grey[600],
+                      child: AbsorbPointer(
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: '🛫 Departure Date',
+                            hintText: 'Select departure date',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.flight_takeoff),
+                            suffixIcon: _departureDate != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    tooltip: 'Remove departure date',
+                                    onPressed: () {
+                                      _confirmRemoveDate('departure date', () {
+                                        setState(() => _departureDate = null);
+                                      });
+                                    },
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            _departureDate != null
+                                ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
+                                : 'Not set',
+                            style: TextStyle(
+                              color: _departureDate != null ? Colors.black87 : Colors.grey[600],
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    InkWell(
+                    GestureDetector(
                       onTap: _selectReturnDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: '🛬 Return Date',
-                          hintText: 'Select return date',
-                          border: const OutlineInputBorder(),
-                          prefixIcon: const Icon(Icons.flight_land),
-                          suffixIcon: _returnDate != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  tooltip: 'Remove return date',
-                                  onPressed: () {
-                                    _confirmRemoveDate('return date', () {
-                                      setState(() => _returnDate = null);
-                                    });
-                                  },
-                                )
-                              : null,
-                        ),
-                        child: Text(
-                          _returnDate != null
-                              ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
-                              : 'Not set',
-                          style: TextStyle(
-                            color: _returnDate != null ? Colors.black87 : Colors.grey[600],
+                      child: AbsorbPointer(
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: '🛬 Return Date',
+                            hintText: 'Select return date',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.flight_land),
+                            suffixIcon: _returnDate != null
+                                ? IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    tooltip: 'Remove return date',
+                                    onPressed: () {
+                                      _confirmRemoveDate('return date', () {
+                                        setState(() => _returnDate = null);
+                                      });
+                                    },
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            _returnDate != null
+                                ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
+                                : 'Not set',
+                            style: TextStyle(
+                              color: _returnDate != null ? Colors.black87 : Colors.grey[600],
+                            ),
                           ),
                         ),
                       ),

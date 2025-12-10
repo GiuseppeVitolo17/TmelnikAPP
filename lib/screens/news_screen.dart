@@ -204,6 +204,9 @@ class _NewsScreenState extends State<NewsScreen> {
         } else if (e.toString().contains('RSS_ERR_NETWORK')) {
           errorCode = 'RSS_ERR_NETWORK';
           errorMessage = 'Network error. Please check your internet connection.';
+        } else if (e.toString().contains('RSS_ERR_SERVICE_DOWN')) {
+          errorCode = 'RSS_ERR_SERVICE_DOWN';
+          errorMessage = 'RSS service temporarily unavailable. Please try again later.';
         } else if (e.toString().contains('RSS_ERR_')) {
           // Extract the error code from the exception
           final match = RegExp(r'RSS_ERR_\w+').firstMatch(e.toString());

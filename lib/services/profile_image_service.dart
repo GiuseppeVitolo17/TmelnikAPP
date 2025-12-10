@@ -128,6 +128,12 @@ class ProfileImageService {
       final ref = _storage.ref().child('profile_images/$userId.jpg');
 
       debugPrint('📤 [PROFILE_IMAGE] Starting upload for user: $userId (${imageBytes.length} bytes)');
+      debugPrint('📤 [PROFILE_IMAGE] Storage path: profile_images/$userId.jpg');
+      
+      // Verify reference is valid
+      if (userId.isEmpty) {
+        throw Exception('User ID is empty - cannot upload image');
+      }
 
       // Upload with metadata
       final uploadTask = ref.putData(
@@ -242,6 +248,9 @@ class ProfileImageService {
         debugPrint('ℹ️ [PROFILE_IMAGE] Could not delete old image (non-critical): $e');
         // Continue with upload even if deletion fails
       }
+      
+      // Verify user is authenticated before upload
+      debugPrint('🔐 [PROFILE_IMAGE] Verifying authentication before upload...');
 
       // Step 4: Upload to Firebase Storage
       String? downloadUrl;
@@ -257,12 +266,20 @@ class ProfileImageService {
             debugPrint('⚠️ [PROFILE_IMAGE] object-not-found during upload (unexpected)');
           } else if (e.toString().contains('permission-denied') || e.toString().contains('Permission denied')) {
             errorMsg = 'Permission denied. Please check Firebase Storage rules.';
+            debugPrint('🔒 [PROFILE_IMAGE] Permission denied - check Storage rules and user authentication');
+          } else if (e.toString().contains('unauthenticated') || e.toString().contains('Unauthenticated')) {
+            errorMsg = 'Authentication error. Please sign in again.';
+            debugPrint('🔒 [PROFILE_IMAGE] User not authenticated');
           } else if (e.toString().contains('timeout')) {
             errorMsg = 'Upload timeout. Please check your internet connection.';
           } else if (e.toString().contains('network')) {
             errorMsg = 'Network error. Please check your internet connection.';
+          } else if (e.toString().contains('object-not-found')) {
+            errorMsg = 'Storage error. Please try again.';
+            debugPrint('⚠️ [PROFILE_IMAGE] object-not-found during upload (unexpected)');
           } else {
             errorMsg = 'Upload failed: ${e.toString()}';
+            debugPrint('❌ [PROFILE_IMAGE] Unknown upload error: $e');
           }
           
           ScaffoldMessenger.of(context).showSnackBar(

@@ -72,6 +72,8 @@ class AggregatedRssService {
         errorCode = 'RSS_ERR_TIMEOUT';
       } else if (e.toString().contains('network') || e.toString().contains('Network')) {
         errorCode = 'RSS_ERR_NETWORK';
+      } else if (e.toString().contains('RSS_ERR_SERVICE_DOWN') || e.toString().contains('SERVICE_DOWN')) {
+        errorCode = 'RSS_ERR_SERVICE_DOWN';
       } else if (e.toString().contains('status')) {
         errorCode = 'RSS_ERR_HTTP';
       } else if (e.toString().contains('parse') || e.toString().contains('XML')) {
@@ -211,7 +213,11 @@ class AggregatedRssService {
         // Report progress: fetch complete (30%)
         onProgress?.call(30, 100);
 
-        if (response.statusCode != 200) {
+        if (response.statusCode == 522 || response.statusCode == 524) {
+          // RSSHub service timeout/connection error
+          debugPrint('⚠️ [RSS] RSSHub service timeout (${response.statusCode}) - service may be down');
+          throw Exception('RSS_ERR_SERVICE_DOWN: RSSHub service unavailable (${response.statusCode})');
+        } else if (response.statusCode != 200) {
           throw Exception('Instagram feed returned status ${response.statusCode}');
         }
 
