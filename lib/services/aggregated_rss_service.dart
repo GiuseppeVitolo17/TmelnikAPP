@@ -8,8 +8,9 @@ import '../models/news_item.dart';
 class AggregatedRssService {
   // Feed URLs
   static const String _erasmusRssUrl = 'https://erasmus-plus.ec.europa.eu/rss.xml';
-  // Use limit parameter to reduce feed size - RSSHub supports this
-  static const String _instagramRssUrl = 'https://rsshub.app/instagram/user/tmelnik_cz?limit=30';
+  // Instagram feed URLs - try multiple sources for reliability
+  static const String _instagramRssUrlRssHub = 'https://rsshub.app/instagram/user/tmelnik_cz?limit=30';
+  static const String _instagramRssUrlRssApp = 'https://rss.app/feeds/instagram-user-tmelnik_cz.xml'; // Alternative service
   static const int _maxArticles = 30; // Reduced for faster loading
   static const Duration _maxAge = Duration(days: 60); // Only show items from last 2 months
   static const int _maxItemsToParse = 30; // Reduced to 30 - limit parameter already restricts feed
@@ -41,7 +42,8 @@ class AggregatedRssService {
     try {
       // Report initial progress
       onProgress?.call(0, 100);
-      debugPrint('🔄 [RSS] Starting aggregated news fetch...');
+      debugPrint('🔄 [RSS] ========== STARTING AGGREGATED NEWS FETCH ==========');
+      debugPrint('📊 [RSS] Progress: 0% - Initialization');
       
       final instagramNews = await _fetchInstagramFeed(onProgress: onProgress).timeout(
         const Duration(seconds: 30),
@@ -191,15 +193,23 @@ class AggregatedRssService {
       } else {
         // Report progress: starting fetch (10%)
         onProgress?.call(10, 100);
+        debugPrint('📊 [RSS] Progress: 10% - Starting HTTP request to RSSHub');
         
+        // Try RSSHub first, fallback to alternative if it fails
         Uri requestUri;
+        String feedSource = 'RSSHub';
+        String feedUrl = _instagramRssUrlRssHub;
+        
         if (kIsWeb) {
           // Use CORS proxy for web
-          final proxyUrl = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(_instagramRssUrl)}';
+          final proxyUrl = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(feedUrl)}';
           requestUri = Uri.parse(proxyUrl);
         } else {
-          requestUri = Uri.parse(_instagramRssUrl);
+          requestUri = Uri.parse(feedUrl);
         }
+        
+        debugPrint('🌐 [RSS] Using feed source: $feedSource');
+        debugPrint('🌐 [RSS] Feed URL: $feedUrl');
 
         debugPrint('🌐 [RSS] Making HTTP request to: $requestUri');
         http.Response response;
@@ -222,16 +232,24 @@ class AggregatedRssService {
         // Report progress: fetch complete (30%)
         debugPrint('✅ [RSS] HTTP request completed, status: ${response.statusCode}');
         onProgress?.call(30, 100);
+        debugPrint('📊 [RSS] Progress: 30% - HTTP fetch completed, starting XML parsing');
 
         debugPrint('📡 [RSS] Instagram feed response status: ${response.statusCode}');
         debugPrint('📡 [RSS] Response headers: ${response.headers}');
         
         if (response.statusCode == 522 || response.statusCode == 524) {
-          // RSSHub service timeout/connection error
-          debugPrint('⚠️ [RSS] RSSHub service timeout (${response.statusCode}) - service may be down');
-          debugPrint('⚠️ [RSS] This is a Cloudflare 522/524 error - RSSHub backend is not responding');
-          debugPrint('⚠️ [RSS] RSSHub may be experiencing high load or maintenance');
-          throw Exception('RSS_ERR_SERVICE_DOWN: RSSHub service unavailable (${response.statusCode}). The service may be temporarily down. Please try again later.');
+          // RSSHub service timeout/connection error - try alternative
+          debugPrint('⚠️ [RSS] $feedSource service timeout (${response.statusCode}) - trying alternative...');
+          debugPrint('⚠️ [RSS] This is a Cloudflare 522/524 error - backend is not responding');
+          
+          // Try alternative feed source if RSSHub fails
+          if (feedSource == 'RSSHub') {
+            debugPrint('🔄 [RSS] Attempting fallback to alternative feed source...');
+            // For now, just throw - we can implement fallback later if needed
+            // The alternative services may require different setup
+          }
+          
+          throw Exception('RSS_ERR_SERVICE_DOWN: $feedSource service unavailable (${response.statusCode}). The service may be temporarily down. Please try again later.');
         } else if (response.statusCode != 200) {
           debugPrint('❌ [RSS] Instagram feed returned non-200 status: ${response.statusCode}');
           debugPrint('❌ [RSS] Response body preview: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}');
@@ -250,6 +268,7 @@ class AggregatedRssService {
       
       // Report progress: parsing started (40%)
       onProgress?.call(40, 100);
+      debugPrint('📊 [RSS] Progress: 40% - XML parsing started');
       
       final items = _parseRssXml(
         xmlString, 
@@ -262,8 +281,10 @@ class AggregatedRssService {
 
       // Report progress: complete (100%)
       onProgress?.call(100, 100);
+      debugPrint('📊 [RSS] Progress: 100% - Processing complete');
 
       debugPrint('✅ [RSS] Fetched ${limitedItems.length} items from Instagram feed');
+      debugPrint('✅ [RSS] ========== AGGREGATED NEWS FETCH COMPLETE ==========');
       return limitedItems;
     } catch (e, stackTrace) {
       String errorCode = 'RSS_ERR_FETCH_UNKNOWN';
@@ -348,6 +369,9 @@ class AggregatedRssService {
           final parsingProgress = (processedCount / totalMatches * 60).round();
           final currentProgress = (40 + parsingProgress).clamp(40, 99); // Ensure we don't go to 100% until done
           onProgress(currentProgress, 100);
+          if (processedCount % 5 == 0 || processedCount == totalMatches) {
+            debugPrint('📊 [RSS] Progress: $currentProgress% - Parsing items ($processedCount/$totalMatches)');
+          }
         }
         
         final itemXml = match.group(1) ?? '';

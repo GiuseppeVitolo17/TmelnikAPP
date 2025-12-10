@@ -63,6 +63,12 @@ class ProfileImageService {
   Future<File?> cropImageToSquare(File imageFile) async {
     try {
       debugPrint('✂️ [PROFILE_IMAGE] Starting square crop...');
+      debugPrint('✂️ [PROFILE_IMAGE] Source image path: ${imageFile.path}');
+      
+      if (!await imageFile.exists()) {
+        debugPrint('❌ [PROFILE_IMAGE] Source image file does not exist!');
+        throw Exception('Source image file does not exist: ${imageFile.path}');
+      }
       
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: imageFile.path,
@@ -99,12 +105,22 @@ class ProfileImageService {
         return null;
       }
 
-      debugPrint('✅ [PROFILE_IMAGE] Image cropped to square: ${croppedFile.path}');
-      return File(croppedFile.path);
+      final croppedFilePath = croppedFile.path;
+      debugPrint('✅ [PROFILE_IMAGE] Image cropped to square: $croppedFilePath');
+      
+      final croppedFileObj = File(croppedFilePath);
+      if (!await croppedFileObj.exists()) {
+        debugPrint('❌ [PROFILE_IMAGE] Cropped file does not exist at path: $croppedFilePath');
+        throw Exception('Cropped file does not exist: $croppedFilePath');
+      }
+      
+      return croppedFileObj;
     } catch (e, stackTrace) {
       debugPrint('❌ [PROFILE_IMAGE] Error cropping image: $e');
       debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
-      return null;
+      // Return original file if crop fails, so user can still proceed
+      debugPrint('⚠️ [PROFILE_IMAGE] Returning original image due to crop error');
+      return imageFile;
     }
   }
 

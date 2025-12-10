@@ -375,6 +375,16 @@ class _NewsScreenState extends State<NewsScreen> {
     _cacheService.markAsSeen(urls);
   }
 
+  /// Returns a description of what the current progress percentage means
+  String _getProgressDescription(int progress) {
+    if (progress == 0) return 'Initializing...';
+    if (progress < 10) return 'Preparing...';
+    if (progress < 30) return 'Fetching from RSSHub...';
+    if (progress < 40) return 'Downloading feed...';
+    if (progress < 100) return 'Parsing and processing items...';
+    return 'Complete!';
+  }
+
   @override
   Widget build(BuildContext context) {
     // Header is managed by MainNavigationScreen
@@ -451,13 +461,27 @@ class _NewsScreenState extends State<NewsScreen> {
                             value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            'Loading news... $_loadingProgress%',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Loading news... $_loadingProgress%',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _getProgressDescription(_loadingProgress),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[500],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ],
                       ),
