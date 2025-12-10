@@ -86,7 +86,7 @@ class ProfileImageService {
           ),
           IOSUiSettings(
             title: 'Crop Image',
-            aspectRatioPresets: [CropAspectRatioPreset.square],
+            aspectRatioLockEnabled: true,
             resetAspectRatioEnabled: false,
           ),
         ],
