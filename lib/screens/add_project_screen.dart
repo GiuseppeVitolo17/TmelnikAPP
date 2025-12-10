@@ -260,21 +260,33 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                           value?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description *',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.description),
-                      ),
-                      maxLines: 4,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) {
-                        // Close keyboard when done
-                        FocusScope.of(context).unfocus();
-                      },
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Required' : null,
+                    // Description field with check button below
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        TextFormField(
+                          controller: _descriptionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Description *',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.description),
+                          ),
+                          maxLines: 4,
+                          textInputAction: TextInputAction.newline, // Enable newline on keyboard
+                          keyboardType: TextInputType.multiline, // Enable multiline keyboard
+                          validator: (value) =>
+                              value?.isEmpty ?? true ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 8),
+                        // Round check button to close keyboard
+                        FloatingActionButton.small(
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
+                          },
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          child: const Icon(Icons.check, color: Colors.white),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     const Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
+import '../services/profile_image_service.dart';
 
 /// Profile screen showing user information
 class ProfileScreen extends StatefulWidget {
@@ -11,6 +12,64 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final ProfileImageService _profileImageService = ProfileImageService();
+  bool _isUploadingImage = false;
+
+  Future<void> _updateProfileImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _isUploadingImage = true;
+    });
+
+    try {
+      // Pick, resize, and upload image (320x320 for profile)
+      final downloadUrl = await _profileImageService.pickResizeAndUploadProfileImage(
+        context,
+        user.uid,
+        maxWidth: 320,
+        maxHeight: 320,
+      );
+
+      if (downloadUrl != null) {
+        // Update Firebase Auth profile photo
+        await user.updatePhotoURL(downloadUrl);
+        await user.reload();
+
+        if (mounted) {
+          setState(() {
+            _isUploadingImage = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile image updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isUploadingImage = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating profile image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _updateDisplayName(String newName) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -181,31 +240,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Column(
                 children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: AppColors.primaryBlue.withOpacity(0.1),
-                    child: user?.photoURL != null
-                        ? ClipOval(
-                            child: Image.network(
-                              user!.photoURL!,
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: AppColors.primaryBlue,
-                                );
-                              },
+                  // Avatar with tap to change
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: AppColors.primaryBlue.withOpacity(0.1),
+                        child: _isUploadingImage
+                            ? const CircularProgressIndicator()
+                            : user?.photoURL != null
+                                ? ClipOval(
+                                    child: Image.network(
+                                      user!.photoURL!,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: AppColors.primaryBlue,
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                      ),
+                      // Edit button overlay
+                      if (!_isUploadingImage)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _updateProfileImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryBlue,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
-                          )
-                        : Icon(
-                            Icons.person,
-                            size: 50,
-                            color: AppColors.primaryBlue,
                           ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   // Name

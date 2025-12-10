@@ -39,6 +39,9 @@ class AggregatedRssService {
     // Only fetch Instagram feed - Erasmus feed disabled for performance
     // Fetch Instagram feed with progress tracking
     try {
+      // Report initial progress
+      onProgress?.call(0, 100);
+      
       final instagramNews = await _fetchInstagramFeed(onProgress: onProgress);
       allNews.addAll(instagramNews);
       
@@ -48,8 +51,13 @@ class AggregatedRssService {
           onItemFound(item);
         }
       }
+      
+      // Ensure progress reaches 100% on success
+      onProgress?.call(100, 100);
     } catch (e) {
       debugPrint('❌ [RSS] Error fetching Instagram feed: $e');
+      // Report error progress (could be partial completion)
+      onProgress?.call(100, 100);
     }
     
     // Erasmus feed disabled - was causing slow loading
@@ -151,7 +159,7 @@ class AggregatedRssService {
           now.difference(_cacheTimestamp!) < _xmlCacheTTL) {
         debugPrint('📦 [RSS] Using cached Instagram feed XML (age: ${now.difference(_cacheTimestamp!).inSeconds}s)');
         xmlString = _cachedXml!;
-        // Report progress: using cache (skip network fetch)
+        // Report progress: using cache (skip network fetch) - start at 40%
         onProgress?.call(40, 100);
       } else {
         // Report progress: starting fetch (10%)
@@ -169,6 +177,8 @@ class AggregatedRssService {
         final response = await http.get(requestUri).timeout(
           const Duration(seconds: 8), // Slightly increased for reliability
           onTimeout: () {
+            // Report timeout progress before throwing
+            onProgress?.call(30, 100);
             throw Exception('Instagram feed request timeout');
           },
         );
@@ -225,7 +235,12 @@ class AggregatedRssService {
           return limitedItems;
         } catch (cacheError) {
           debugPrint('❌ [RSS] Cache fallback also failed: $cacheError');
+          // Report error but still try to complete
+          onProgress?.call(100, 100);
         }
+      } else {
+        // No cache available - report error progress
+        onProgress?.call(100, 100);
       }
       
       return [];
@@ -267,7 +282,8 @@ class AggregatedRssService {
         // Report progress: 40% (fetch) + 60% (parsing) = 40 + (processedCount/totalMatches * 60)
         if (onProgress != null && totalMatches > 0) {
           final parsingProgress = (processedCount / totalMatches * 60).round();
-          onProgress(40 + parsingProgress, 100);
+          final currentProgress = (40 + parsingProgress).clamp(40, 99); // Ensure we don't go to 100% until done
+          onProgress(currentProgress, 100);
         }
         
         final itemXml = match.group(1) ?? '';
