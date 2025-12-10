@@ -5,6 +5,7 @@ class NGO {
   final String id;
   final String name;
   final String description;
+  final String? instagramUsername;
   final String? website;
   final String? email;
   final String? phone;
@@ -19,6 +20,7 @@ class NGO {
     required this.id,
     required this.name,
     required this.description,
+    this.instagramUsername,
     this.website,
     this.email,
     this.phone,
@@ -37,6 +39,7 @@ class NGO {
       id: doc.id,
       name: data['name'] ?? '',
       description: data['description'] ?? '',
+      instagramUsername: data['instagramUsername'],
       website: data['website'],
       email: data['email'],
       phone: data['phone'],
@@ -54,6 +57,7 @@ class NGO {
     return {
       'name': name,
       'description': description,
+      'instagramUsername': instagramUsername,
       'website': website,
       'email': email,
       'phone': phone,
@@ -71,6 +75,7 @@ class NGO {
     String? id,
     String? name,
     String? description,
+    String? instagramUsername,
     String? website,
     String? email,
     String? phone,
@@ -85,6 +90,7 @@ class NGO {
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
+      instagramUsername: instagramUsername ?? this.instagramUsername,
       website: website ?? this.website,
       email: email ?? this.email,
       phone: phone ?? this.phone,

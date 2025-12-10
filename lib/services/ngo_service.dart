@@ -105,7 +105,7 @@ class NGOService {
   }
 
   /// Stream of all NGOs (for real-time updates)
-  /// OPTIMIZED: Uses server-side filtering to reduce reads
+  /// OPTIMIZED: Uses server-side filtering, client-side sorting to avoid index requirement
   Stream<List<NGO>> getNGOsStream({bool includeInactive = false}) {
     Query query = _firestore.collection(_ngosCollection);
     
@@ -115,13 +115,18 @@ class NGOService {
     }
     
     // Limit to 100 NGOs max to prevent excessive reads
+    // Sort client-side to avoid requiring composite index (isActive + name)
     return query
-        .orderBy('name')
         .limit(100)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => NGO.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          final ngos = snapshot.docs
+              .map((doc) => NGO.fromFirestore(doc))
+              .toList();
+          // Sort by name client-side (avoids Firestore index requirement)
+          ngos.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+          return ngos;
+        });
   }
 
   /// Get NGOs assigned to a specific organizer
