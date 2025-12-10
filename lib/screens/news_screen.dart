@@ -133,7 +133,16 @@ class _NewsScreenState extends State<NewsScreen> {
         }
 
         // Final comparison and cache update (non-blocking)
-        final comparison = await _cacheService.compareWithCache(fetchedNews);
+        debugPrint('📰 [NEWS_SCREEN] Comparing ${fetchedNews.length} items with cache...');
+        final comparison = await _cacheService.compareWithCache(fetchedNews).timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('⚠️ [NEWS_SCREEN] Cache comparison timeout, using fetched items as-is');
+            return {'new': fetchedNews, 'updated': <NewsItem>[], 'unchanged': <NewsItem>[]};
+          },
+        );
+        
+        debugPrint('📰 [NEWS_SCREEN] Cache comparison complete: ${comparison['new']?.length ?? 0} new, ${comparison['updated']?.length ?? 0} updated');
         
         // Update items with final comparison results
         if (mounted) {
@@ -143,8 +152,11 @@ class _NewsScreenState extends State<NewsScreen> {
             return item.copyWith(isNew: isNew, isUpdated: isUpdated);
           }).toList();
 
+          debugPrint('📰 [NEWS_SCREEN] Saving ${finalItems.length} items to cache...');
           // Save to cache (async, non-blocking)
-          _cacheService.saveToCache(finalItems).catchError((e) {
+          _cacheService.saveToCache(finalItems).then((_) {
+            debugPrint('✅ [NEWS_SCREEN] Cache saved successfully');
+          }).catchError((e) {
             debugPrint('⚠️ [NEWS_SCREEN] Cache save error: $e');
           });
 
@@ -153,7 +165,9 @@ class _NewsScreenState extends State<NewsScreen> {
             _isLoading = false;
             _loadingProgress = 100;
           });
-          debugPrint('✅ [NEWS_SCREEN] News loaded successfully: ${finalItems.length} items');
+          debugPrint('✅ [NEWS_SCREEN] News loaded successfully: ${finalItems.length} items, loading complete');
+        } else {
+          debugPrint('⚠️ [NEWS_SCREEN] Widget not mounted, skipping state update');
         }
       }).catchError((e, stackTrace) {
         debugPrint('❌ [NEWS_SCREEN] Error fetching news: $e');

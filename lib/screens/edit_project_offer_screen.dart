@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/project_offer.dart';
 import '../services/firebase_firestore_service.dart';
+import '../services/user_role_service.dart';
+import '../services/ngo_service.dart';
 
 class EditProjectOfferScreen extends StatefulWidget {
   final String projectId;
@@ -24,7 +26,6 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
   final _durationController = TextEditingController();
   final _targetingController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _instagramController = TextEditingController();
   final _applyLinkController = TextEditingController();
   final _infoPackController = TextEditingController();
   
@@ -35,6 +36,10 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
   final List<TextEditingController> _benefitControllers = [TextEditingController()];
   bool _isLoading = false;
   ProjectOffer? _projectOffer;
+  String? _instagramAccount; // Will be loaded from user's NGO
+  
+  final UserRoleService _userRoleService = UserRoleService();
+  final NGOService _ngoService = NGOService();
 
   @override
   void initState() {
@@ -84,7 +89,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
           _durationController.text = offer.duration ?? '';
           _targetingController.text = offer.targeting;
           _descriptionController.text = offer.description;
-          _instagramController.text = offer.instagramAccount;
+          // Instagram will be loaded from NGO, not from project
           _applyLinkController.text = offer.applyLink;
           _infoPackController.text = offer.infoPackUrl;
           _selectedDate = offer.expiresAt;
@@ -103,6 +108,9 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
         });
         
         debugPrint('✅ Form fields populated successfully');
+        
+        // Load Instagram from user's NGO if organizer
+        await _loadInstagramFromNGO();
       } else {
         debugPrint('❌ Document does not exist for ID: ${widget.projectId}');
         if (mounted) {
@@ -127,6 +135,26 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
     }
   }
 
+  Future<void> _loadInstagramFromNGO() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      final userRole = await _userRoleService.getUserRole(user.uid);
+      if (userRole?.isOrganizer == true && userRole?.ngoId != null) {
+        final ngo = await _ngoService.getNGOById(userRole!.ngoId!);
+        if (ngo != null && ngo.instagramUsername != null) {
+          setState(() {
+            _instagramAccount = ngo.instagramUsername;
+          });
+          debugPrint('✅ [EDIT_PROJECT] Loaded Instagram from NGO: ${ngo.instagramUsername}');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [EDIT_PROJECT] Could not load Instagram from NGO: $e');
+    }
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -134,7 +162,6 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
     _durationController.dispose();
     _targetingController.dispose();
     _descriptionController.dispose();
-    _instagramController.dispose();
     _applyLinkController.dispose();
     _infoPackController.dispose();
     for (var controller in _benefitControllers) {
@@ -214,7 +241,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
         description: _descriptionController.text.trim(),
         benefits: benefits,
         contactInfo: _instagramController.text.trim(), // Use Instagram as contact
-        instagramAccount: _instagramController.text.trim(),
+        instagramAccount: _instagramAccount ?? _projectOffer?.instagramAccount ?? 'tmelnik_cz',
         applyLink: _applyLinkController.text.trim(),
         infoPackUrl: _infoPackController.text.trim(),
         expiresAt: _selectedDate,

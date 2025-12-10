@@ -15,6 +15,7 @@ class NGOService {
   static const String _ngosCollection = 'ngos';
 
   /// Get all active NGOs
+  /// OPTIMIZED: Sort client-side to avoid Firestore index requirement
   Future<List<NGO>> getAllNGOs({bool includeInactive = false}) async {
     try {
       Query query = _firestore.collection(_ngosCollection);
@@ -23,13 +24,21 @@ class NGOService {
         query = query.where('isActive', isEqualTo: true);
       }
       
-      final snapshot = await query.orderBy('name').get();
+      // Don't use orderBy to avoid index requirement - sort client-side instead
+      final snapshot = await query.get();
       
-      return snapshot.docs
+      final ngos = snapshot.docs
           .map((doc) => NGO.fromFirestore(doc))
           .toList();
+      
+      // Sort by name client-side (avoids Firestore index requirement)
+      ngos.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      
+      debugPrint('✅ [NGO_SERVICE] Loaded ${ngos.length} NGOs (includeInactive: $includeInactive)');
+      return ngos;
     } catch (e) {
       debugPrint('❌ [NGO_SERVICE] Error getting NGOs: $e');
+      debugPrint('❌ [NGO_SERVICE] Stack trace: ${StackTrace.current}');
       return [];
     }
   }

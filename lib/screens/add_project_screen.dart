@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/project_offer.dart';
 import '../services/user_role_service.dart';
+import '../services/ngo_service.dart';
 
 /// Screen for admins to add new project offers
 class AddProjectScreen extends StatefulWidget {
@@ -19,7 +20,6 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   final _durationController = TextEditingController(); // Opzionale
   final _targetingController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _instagramController = TextEditingController();
   final _applyLinkController = TextEditingController();
   final _infoPackController = TextEditingController();
   final _expiresController = TextEditingController();
@@ -29,14 +29,40 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   bool _isLoading = false;
   DateTime? _departureDate;
   DateTime? _returnDate;
+  String? _instagramAccount; // Will be loaded from user's NGO
+
+  final UserRoleService _userRoleService = UserRoleService();
+  final NGOService _ngoService = NGOService();
 
   @override
   void initState() {
     super.initState();
     // Prefill defaults
-    _instagramController.text = 'tmelnik_cz';
     _applyLinkController.text =
         'https://docs.google.com/forms/d/e/1FAIpQLScNi27ECIvUlRY6cKdQLUe3TLZ6J2ykh8er6TEFyL3Tpx8ITw/viewform?fbclid=PAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQMMjU2MjgxMDQwNTU4AAGnihTWmbYtm8XfzxXjrGxY0E_K5NsgtmL7-T2gXjY5j2MSLZNPqCQvi0a9_nU_aem_R_PhOicwa1l3F3igHYTxag';
+    
+    // Load Instagram from user's NGO if organizer
+    _loadInstagramFromNGO();
+  }
+  
+  Future<void> _loadInstagramFromNGO() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      final userRole = await _userRoleService.getUserRole(user.uid);
+      if (userRole?.isOrganizer == true && userRole?.ngoId != null) {
+        final ngo = await _ngoService.getNGOById(userRole!.ngoId!);
+        if (ngo != null && ngo.instagramUsername != null) {
+          setState(() {
+            _instagramAccount = ngo.instagramUsername;
+          });
+          debugPrint('✅ [ADD_PROJECT] Loaded Instagram from NGO: ${ngo.instagramUsername}');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [ADD_PROJECT] Could not load Instagram from NGO: $e');
+    }
   }
 
   @override
@@ -46,7 +72,6 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     _durationController.dispose();
     _targetingController.dispose();
     _descriptionController.dispose();
-    _instagramController.dispose();
     _applyLinkController.dispose();
     _infoPackController.dispose();
     _expiresController.dispose();
@@ -132,8 +157,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         description: _descriptionController.text.trim(),
         requirements: '', // Empty for now
         benefits: benefits,
-        contactInfo: _instagramController.text.trim(), // Use Instagram as contact
-        instagramAccount: _instagramController.text.trim(),
+        contactInfo: _instagramAccount ?? 'tmelnik_cz', // Use Instagram from NGO or default
+        instagramAccount: _instagramAccount ?? 'tmelnik_cz',
         applyLink: _applyLinkController.text.trim(),
         infoPackUrl: _infoPackController.text.trim(),
         createdAt: DateTime.now(),

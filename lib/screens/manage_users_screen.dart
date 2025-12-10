@@ -270,9 +270,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   }
 
   Future<void> _showOrganizerDialog(BuildContext context, UserRole user) async {
-    final ngos = await _ngoService.getAllNGOs();
+    debugPrint('🔍 [MANAGE_USERS] Loading NGOs for organizer assignment...');
+    final ngos = await _ngoService.getAllNGOs(includeInactive: false);
+    debugPrint('🔍 [MANAGE_USERS] Found ${ngos.length} active NGOs');
     
     if (ngos.isEmpty && !user.isOrganizer) {
+      debugPrint('⚠️ [MANAGE_USERS] No NGOs available, showing error message');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No NGOs available. Please create an NGO first.'),
@@ -281,6 +284,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
       );
       return;
     }
+    
+    debugPrint('✅ [MANAGE_USERS] NGOs loaded: ${ngos.map((n) => n.name).join(", ")}');
 
     String? selectedNgoId = user.ngoId;
 
