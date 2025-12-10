@@ -287,6 +287,21 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                     fit: BoxFit.cover,
                     cacheWidth: 800, // Same cache size as card to prevent reloading
                     cacheHeight: 450,
+                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                      // If image was loaded synchronously (from cache), show immediately
+                      // Otherwise show placeholder until loaded
+                      if (wasSynchronouslyLoaded || frame != null) {
+                        return child;
+                      }
+                      return Container(
+                        width: double.infinity,
+                        height: 180,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    },
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         width: double.infinity,
@@ -299,35 +314,35 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                     },
                   )
                 : isLocalFile
-                    ? FutureBuilder<bool>(
-                        future: File(widget.imagePathOrUrl).exists(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData && snapshot.data == true) {
-                            return Image.file(
-                              File(widget.imagePathOrUrl),
-                              width: double.infinity,
-                              height: 180,
-                              fit: BoxFit.cover,
-                              cacheWidth: 800, // Cache to prevent reloading
-                              cacheHeight: 450,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: double.infinity,
-                                  height: 180,
-                                  color: Colors.grey[300],
-                                  child: const Center(
-                                    child: Icon(Icons.broken_image, size: 64),
-                                  ),
-                                );
-                              },
-                            );
+                    ? Image.file(
+                        File(widget.imagePathOrUrl),
+                        width: double.infinity,
+                        height: 180,
+                        fit: BoxFit.cover,
+                        cacheWidth: 800, // Same cache size as card to prevent reloading
+                        cacheHeight: 450,
+                        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                          // If image was loaded synchronously (from cache), show immediately
+                          if (wasSynchronouslyLoaded || frame != null) {
+                            return child;
                           }
+                          // Show placeholder while loading
                           return Container(
                             width: double.infinity,
                             height: 180,
                             color: Colors.grey[300],
                             child: const Center(
-                              child: Icon(Icons.image_outlined, size: 64),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: double.infinity,
+                            height: 180,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Icon(Icons.broken_image, size: 64),
                             ),
                           );
                         },
@@ -670,3 +685,5 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
     );
   }
 }
+
+

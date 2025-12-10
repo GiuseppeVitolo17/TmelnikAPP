@@ -270,3 +270,5 @@ class NewsDetailScreen extends StatelessWidget {
     );
   }
 }
+
+

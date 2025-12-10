@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/project_card.dart';
 import '../services/image_cache_service.dart';
@@ -41,6 +41,38 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAdminStatus();
     });
+  }
+
+  /// Gets cached image or automatically fetches from API if not in cache
+  Future<String?> _getOrFetchCityImage(String city) async {
+    // First, try to get from cache
+    final cachedImage = await _imageCacheService.getCachedImage(city);
+    
+    if (cachedImage != null && cachedImage.isNotEmpty) {
+      // Image is in cache, return it
+      return cachedImage;
+    }
+    
+    // Not in cache - automatically fetch from API
+    try {
+      debugPrint('🔄 [IMAGE] Auto-fetching image for city: $city (not in cache)');
+      final fetchedImage = await _imageCacheService.fetchAndCacheImage(city);
+      
+      if (fetchedImage != null && fetchedImage.isNotEmpty) {
+        // Update timestamp to force rebuild
+        if (mounted) {
+          setState(() {
+            _imageCacheTimestamps[city] = DateTime.now().millisecondsSinceEpoch;
+          });
+        }
+        return fetchedImage;
+      }
+    } catch (e) {
+      debugPrint('❌ [IMAGE] Error auto-fetching image for $city: $e');
+    }
+    
+    // Return null if fetch failed
+    return null;
   }
 
   Future<void> _checkAdminStatus() async {
@@ -233,25 +265,29 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                     
                     // Firestore projects (created by admins)
               ...firestoreOffers.map((offer) {
-                // Get image - use offer.imageUrl if available, otherwise use cached image
+                // Get image - use offer.imageUrl if available, otherwise fetch from cache or API
                 final hasImageUrl = offer.imageUrl.isNotEmpty;
-                final cacheKey = '${offer.location}_${_imageCacheTimestamps[offer.location] ?? 0}';
                 
+                // Build widget with automatic image fetching if not in cache
                 return FutureBuilder<String?>(
-                  key: ValueKey(cacheKey), // Force rebuild when timestamp changes
                   future: hasImageUrl 
                       ? Future.value(offer.imageUrl)
-                      : _imageCacheService.getCachedImage(offer.location),
+                      : _getOrFetchCityImage(offer.location), // Auto-fetch if not in cache
                   builder: (context, snapshot) {
                     String imagePath = '';
+                    bool isLoading = false;
                     
                     if (hasImageUrl) {
                       imagePath = offer.imageUrl;
                     } else if (snapshot.connectionState == ConnectionState.waiting) {
+                      // Loading from cache or fetching from API
+                      isLoading = true;
                       imagePath = '';
-                    } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    } else if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+                      // Image found in cache or fetched from API
                       imagePath = snapshot.data!;
                     } else {
+                      // No image available (fetch failed or no cache)
                       imagePath = '';
                     }
 
@@ -296,8 +332,8 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                         });
                         
                         try {
-                          // Fetch and cache new image
-                          final newImagePath = await _imageCacheService.fetchAndCacheImage(offer.location);
+                          // Fetch and cache new image (manual refresh)
+                          await _imageCacheService.fetchAndCacheImage(offer.location);
                           
                           if (mounted) {
                             // Update timestamp to force FutureBuilder rebuild
@@ -315,7 +351,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                           }
                         }
                       },
-                      isLoadingImage: _imageLoadingStates[offer.location] ?? false,
+                      isLoadingImage: isLoading || (_imageLoadingStates[offer.location] ?? false),
                     );
                   },
                 );

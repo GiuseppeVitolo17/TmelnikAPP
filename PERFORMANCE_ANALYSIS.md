@@ -90,3 +90,5 @@
 3. **Media**: Ridurre timeout a 5 secondi
 4. **Media**: Limitare numero item da parsare (primi 100)
 5. **Bassa**: Ottimizzare regex/pulizia testo
+
+

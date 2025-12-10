@@ -90,3 +90,5 @@ Se non vuoi usare un CMS esterno, puoi creare una semplice interfaccia admin usa
 3. **Opzione 3**: Usare Firebase Console per gestione manuale (solo per sviluppo)
 
 Quale opzione preferisci?
+
+

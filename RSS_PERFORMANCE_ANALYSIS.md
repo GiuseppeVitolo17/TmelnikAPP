@@ -75,3 +75,5 @@ Le descrizioni RSS possono essere molto lunghe (centinaia di righe HTML), e veng
 - Tempo parsing: ~0.5-1 secondo
 - Item processati: ~30-50 (solo recenti)
 - Regex eseguite: ~90-150 (30 item × 3-5 regex dopo ottimizzazione)
+
+

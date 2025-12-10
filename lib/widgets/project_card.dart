@@ -104,11 +104,28 @@ class ProjectCard extends StatelessWidget {
                         ),
                       ),
                     // Hero image - Material wrapper for consistent structure
+                    // Precache image to prevent reloading during Hero transition
                     isNetworkImage
                         ? Hero(
                             tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                            flightShuttleBuilder: (
+                              BuildContext flightContext,
+                              Animation<double> animation,
+                              HeroFlightDirection flightDirection,
+                              BuildContext fromHeroContext,
+                              BuildContext toHeroContext,
+                            ) {
+                              // Use the destination widget directly to avoid reloading
+                              final Hero toHero = toHeroContext.widget as Hero;
+                              return Material(
+                                color: Colors.transparent,
+                                clipBehavior: Clip.antiAlias,
+                                child: toHero.child,
+                              );
+                            },
                             child: Material(
                               color: Colors.transparent,
+                              clipBehavior: Clip.antiAlias,
                               child: Image.network(
                                 imagePathOrUrl,
                                 width: double.infinity,
@@ -116,14 +133,18 @@ class ProjectCard extends StatelessWidget {
                                 fit: BoxFit.cover,
                                 cacheWidth: 800, // Cache to prevent reloading during Hero transition
                                 cacheHeight: 450,
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
+                                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                                  // If loaded from cache, show immediately
+                                  if (wasSynchronouslyLoaded || frame != null) {
+                                    return child;
+                                  }
+                                  // Show placeholder while loading
                                   return Container(
                                     width: double.infinity,
                                     height: 180,
                                     color: Colors.grey[300],
                                     child: const Center(
-                                      child: Text('Loading...'),
+                                      child: CircularProgressIndicator(),
                                     ),
                                   );
                                 },
@@ -134,28 +155,35 @@ class ProjectCard extends StatelessWidget {
                             ),
                           )
                         : isLocalFile
-                            ? FutureBuilder<bool>(
-                                future: File(imagePathOrUrl).exists(),
-                                builder: (context, snapshot) {
-                                  if (snapshot.hasData && snapshot.data == true) {
-                                    return Hero(
-                                      tag: heroTag ?? 'project_image_${imagePathOrUrl}',
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: Image.file(
-                                          File(imagePathOrUrl),
-                                          width: double.infinity,
-                                          height: 180,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return _buildPlaceholderImage();
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  return _buildPlaceholderImage();
+                            ? Hero(
+                                tag: heroTag ?? 'project_image_${imagePathOrUrl}',
+                                flightShuttleBuilder: (
+                                  BuildContext flightContext,
+                                  Animation<double> animation,
+                                  HeroFlightDirection flightDirection,
+                                  BuildContext fromHeroContext,
+                                  BuildContext toHeroContext,
+                                ) {
+                                  final Hero toHero = toHeroContext.widget as Hero;
+                                  return Material(
+                                    color: Colors.transparent,
+                                    child: toHero.child,
+                                  );
                                 },
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: Image.file(
+                                    File(imagePathOrUrl),
+                                    width: double.infinity,
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                    cacheWidth: 800, // Cache to prevent reloading during Hero transition
+                                    cacheHeight: 450,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _buildPlaceholderImage();
+                                    },
+                                  ),
+                                ),
                               )
                             : Hero(
                                 tag: heroTag ?? 'project_image_${imagePathOrUrl}',

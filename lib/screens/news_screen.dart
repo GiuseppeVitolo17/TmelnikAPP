@@ -23,6 +23,7 @@ class _NewsScreenState extends State<NewsScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage;
+  int _loadingProgress = 0; // 0-100
 
   @override
   void initState() {
@@ -58,6 +59,13 @@ class _NewsScreenState extends State<NewsScreen> {
       const int batchSize = 5; // Update UI every 5 items
       
         await _rssService.fetchAggregatedNews(
+        onProgress: (current, total) {
+          if (mounted) {
+            setState(() {
+              _loadingProgress = current;
+            });
+          }
+        },
         onItemFound: (item) async {
           // Collect items in batch instead of updating UI for each
           if (mounted) {
@@ -333,8 +341,24 @@ class _NewsScreenState extends State<NewsScreen> {
                   ),
                 )
               : _newsItems.isEmpty && _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Loading news... ${_loadingProgress}%',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     )
                   : _newsItems.isEmpty
                       ? Center(
@@ -386,10 +410,25 @@ class _NewsScreenState extends State<NewsScreen> {
                                 left: 0,
                                 right: 0,
                                 child: Container(
-                                  height: 3,
-                                  child: LinearProgressIndicator(
-                                    backgroundColor: Colors.transparent,
-                                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  color: Colors.white.withOpacity(0.9),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      LinearProgressIndicator(
+                                        value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
+                                        backgroundColor: Colors.grey[200],
+                                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Updating... ${_loadingProgress}%',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                         ),
                       ),
