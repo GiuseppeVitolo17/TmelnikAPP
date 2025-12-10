@@ -393,20 +393,32 @@ class ProfileImageService {
 
       // Step 2: Crop to square (user selects square area)
       debugPrint('✂️ [PROFILE_IMAGE] Step 2: Cropping image to square...');
-      File? croppedFile;
+      File croppedFile;
       try {
-        croppedFile = await cropImageToSquare(imageFile);
-        if (croppedFile == null) {
+        final cropped = await cropImageToSquare(imageFile);
+        if (cropped == null) {
           debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop');
           return null;
         }
+        croppedFile = cropped;
         debugPrint('✅ [PROFILE_IMAGE] Image cropped: ${croppedFile.path}');
-      } catch (e) {
-        debugPrint('❌ [PROFILE_IMAGE] Crop failed, but continuing with original image');
-        debugPrint('❌ [PROFILE_IMAGE] Error: $e');
-        // Use original image if crop fails - better than crashing
+      } catch (e, stackTrace) {
+        debugPrint('❌ [PROFILE_IMAGE] Crop operation failed: $e');
+        debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
+        // If crop fails, use original image - better than crashing
+        debugPrint('⚠️ [PROFILE_IMAGE] Using original image without crop (crop failed)');
         croppedFile = imageFile;
-        debugPrint('⚠️ [PROFILE_IMAGE] Using original image without crop');
+        
+        // Show user-friendly error but continue
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Crop failed, using original image'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
 
       // Step 3: Resize and compress
