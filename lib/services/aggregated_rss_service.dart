@@ -202,19 +202,22 @@ class AggregatedRssService {
         }
 
         debugPrint('🌐 [RSS] Making HTTP request to: $requestUri');
-        final response = await http.get(requestUri).timeout(
-          const Duration(seconds: 15), // Increased timeout for slow connections
-          onTimeout: () {
-            // Report timeout progress before throwing
-            debugPrint('⏱️ [RSS] Request timeout after 15 seconds');
-            onProgress?.call(30, 100);
-            throw Exception('Instagram feed request timeout');
-          },
-        ).catchError((error) {
+        http.Response response;
+        try {
+          response = await http.get(requestUri).timeout(
+            const Duration(seconds: 15), // Increased timeout for slow connections
+            onTimeout: () {
+              // Report timeout progress before throwing
+              debugPrint('⏱️ [RSS] Request timeout after 15 seconds');
+              onProgress?.call(30, 100);
+              throw Exception('Instagram feed request timeout');
+            },
+          );
+        } catch (error) {
           debugPrint('❌ [RSS] HTTP request error: $error');
           onProgress?.call(30, 100);
           rethrow;
-        });
+        }
 
         // Report progress: fetch complete (30%)
         debugPrint('✅ [RSS] HTTP request completed, status: ${response.statusCode}');
