@@ -137,6 +137,34 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
     }
   }
 
+  Future<void> _confirmRemoveDate(String dateType, VoidCallback onConfirm) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Date'),
+        content: Text('Are you sure you want to remove the $dateType? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      onConfirm();
+    }
+  }
+
   Future<void> _saveProject() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -428,9 +456,11 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                                   tooltip: 'Remove date',
                                   onPressed: () {
-                                    setState(() {
-                                      _selectedDate = null;
-                                      _expiresController.clear();
+                                    _confirmRemoveDate('application deadline', () {
+                                      setState(() {
+                                        _selectedDate = null;
+                                        _expiresController.clear();
+                                      });
                                     });
                                   },
                                 )
@@ -460,8 +490,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                                   tooltip: 'Remove departure date',
                                   onPressed: () {
-                                    setState(() {
-                                      _departureDate = null;
+                                    _confirmRemoveDate('departure date', () {
+                                      setState(() {
+                                        _departureDate = null;
+                                      });
                                     });
                                   },
                                 )
@@ -491,8 +523,10 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                                   tooltip: 'Remove return date',
                                   onPressed: () {
-                                    setState(() {
-                                      _returnDate = null;
+                                    _confirmRemoveDate('return date', () {
+                                      setState(() {
+                                        _returnDate = null;
+                                      });
                                     });
                                   },
                                 )
