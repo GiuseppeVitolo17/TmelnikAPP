@@ -189,15 +189,15 @@ class UserRoleService {
     return _usersCollection
         .doc(user.uid)
         .snapshots()
-        .map((doc) {
+        .map<bool>((doc) {
           if (!doc.exists) return false;
           final data = doc.data() as Map<String, dynamic>?;
           return data?['isAdmin'] ?? false;
         })
         .handleError((error) {
           debugPrint('❌ [USER_ROLE] Error in admin status stream: $error');
-          return false; // Return false on error
-        });
+        })
+        .cast<bool>();
   }
 
   /// Get all admin users

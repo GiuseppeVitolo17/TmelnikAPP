@@ -27,25 +27,22 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   
   List<JournalEntry> _journalEntries = [];
-  List<ProjectOffer> _projectOffers = [];
   List<DailyReflection> _dailyReflections = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadStaticData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadStaticData() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
       final entries = await _journalService.getAllEntries();
-      // Note: Using ProjectOffer from Firebase instead of local Projects
-      final offers = await _firestoreService.getProjectOffers();
       
       // Load Daily Reflections for current user
       final user = FirebaseAuth.instance.currentUser;
@@ -55,11 +52,10 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
         reflections = allReflections;
       }
       
-      debugPrint('📅 [CALENDAR] Loaded ${entries.length} journal entries, ${offers.length} projects, ${reflections.length} daily reflections');
+      debugPrint('📅 [CALENDAR] Loaded ${entries.length} journal entries, ${reflections.length} daily reflections');
       
       setState(() {
         _journalEntries = entries;
-        _projectOffers = offers;
         _dailyReflections = reflections;
         _isLoading = false;
       });
@@ -75,7 +71,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     }
   }
 
-  List<CalendarEvent> _getEventsForDay(DateTime day) {
+  List<CalendarEvent> _getEventsForDay(DateTime day, List<ProjectOffer> projectOffers) {
     final events = <CalendarEvent>[];
     
     // Daily Reflections (from Daily Reflection screen)
@@ -120,7 +116,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     }
     
     // Project offers - departure, return, and deadline dates
-    for (var offer in _projectOffers) {
+    for (var offer in projectOffers) {
       // Departure dates
       if (offer.departureDate != null &&
           offer.departureDate!.year == day.year &&
@@ -169,6 +165,26 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       backgroundColor: AppColors.backgroundGrey,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : StreamBuilder<List<ProjectOffer>>(
+              stream: _firestoreService.getProjectOffersStream(),
+              builder: (context, snapshot) {
+                final projectOffers = snapshot.data ?? [];
+                
+                if (snapshot.hasError) {
+                  debugPrint('❌ [CALENDAR] Error loading projects: ${snapshot.error}');
+                }
+                
+                return _buildCalendarContent(projectOffers);
+              },
+            ),
+    );
+  }
+
+  Widget _buildCalendarContent(List<ProjectOffer> projectOffers) {
+    // Create eventLoader closure that captures projectOffers
+    List<CalendarEvent> eventLoader(DateTime day) {
+      return _getEventsForDay(day, projectOffers);
+    }
           : Column(
               children: [
                 // Calendar
@@ -178,7 +194,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   focusedDay: _focusedDay,
                   calendarFormat: _calendarFormat,
                   selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  eventLoader: _getEventsForDay,
+                  eventLoader: eventLoader,
                   startingDayOfWeek: StartingDayOfWeek.monday,
                   calendarStyle: CalendarStyle(
                     outsideDaysVisible: false,
@@ -262,35 +278,36 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   },
                   calendarBuilders: CalendarBuilders(
                     markerBuilder: (context, date, events) {
-                      if (events.isEmpty) {
+                      // Get events for this day using projectOffers from closure
+                      final dayEvents = eventLoader(date);
+                      if (dayEvents.isEmpty) {
                         return const SizedBox.shrink();
                       }
                       
-                        // Get emoji for first event
-                        String emoji = '📅';
+                      // Get emoji for first event
+                      String emoji = '📅';
+                      final firstEvent = dayEvents.first;
                       
-                          final firstEvent = events.first as CalendarEvent;
-                      
-                          switch (firstEvent.type) {
+                      switch (firstEvent.type) {
                         case EventType.reflection:
                           final reflection = firstEvent.data as DailyReflection;
                           emoji = reflection.moodEmoji.isNotEmpty 
                               ? reflection.moodEmoji 
                               : '📝';
                           break;
-                            case EventType.journal:
+                        case EventType.journal:
                           emoji = '📝';
-                              break;
-                            case EventType.departure:
-                              emoji = '🛫';
-                              break;
-                            case EventType.returnDate:
-                              emoji = '🛬';
-                              break;
-                            case EventType.deadline:
-                              emoji = '⏰';
-                              break;
-                        }
+                          break;
+                        case EventType.departure:
+                          emoji = '🛫';
+                          break;
+                        case EventType.returnDate:
+                          emoji = '🛬';
+                          break;
+                        case EventType.deadline:
+                          emoji = '⏰';
+                          break;
+                      }
                         
                       // Position emoji above the day number like a sticker
                       // This makes it clear which day the emoji belongs to
@@ -325,15 +342,15 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                 const Divider(),
                 // Events for selected day
                 Expanded(
-                  child: _buildEventsList(),
+                  child: _buildEventsList(projectOffers),
                 ),
               ],
             ),
     );
   }
 
-  Widget _buildEventsList() {
-    final events = _getEventsForDay(_selectedDay);
+  Widget _buildEventsList(List<ProjectOffer> projectOffers) {
+    final events = _getEventsForDay(_selectedDay, projectOffers);
     
     if (events.isEmpty) {
       return Center(
