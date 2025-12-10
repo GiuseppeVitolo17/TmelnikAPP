@@ -285,9 +285,8 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                           value?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
-                    // Description field with check button below
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    // Description field with check button inside (bottom right corner)
+                    Stack(
                       children: [
                         TextFormField(
                           controller: _descriptionController,
@@ -295,6 +294,12 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                             labelText: 'Description *',
                             border: OutlineInputBorder(),
                             prefixIcon: Icon(Icons.description),
+                            contentPadding: EdgeInsets.only(
+                              left: 16,
+                              top: 16,
+                              right: 50, // Space for check button
+                              bottom: 16,
+                            ),
                           ),
                           maxLines: 4,
                           textInputAction: TextInputAction.newline, // Enable newline on keyboard
@@ -302,14 +307,17 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
                           validator: (value) =>
                               value?.isEmpty ?? true ? 'Required' : null,
                         ),
-                        const SizedBox(height: 8),
-                        // Round check button to close keyboard
-                        FloatingActionButton.small(
-                          onPressed: () {
-                            FocusScope.of(context).unfocus();
-                          },
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          child: const Icon(Icons.check, color: Colors.white),
+                        // Round check button positioned inside bottom right corner
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: FloatingActionButton.small(
+                            onPressed: () {
+                              FocusScope.of(context).unfocus();
+                            },
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            child: const Icon(Icons.check, color: Colors.white, size: 20),
+                          ),
                         ),
                       ],
                     ),
