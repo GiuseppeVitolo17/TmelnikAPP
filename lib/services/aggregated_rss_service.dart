@@ -41,9 +41,18 @@ class AggregatedRssService {
     try {
       // Report initial progress
       onProgress?.call(0, 100);
+      debugPrint('🔄 [RSS] Starting aggregated news fetch...');
       
-      final instagramNews = await _fetchInstagramFeed(onProgress: onProgress);
+      final instagramNews = await _fetchInstagramFeed(onProgress: onProgress).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          debugPrint('❌ [RSS] Timeout fetching Instagram feed (RSS_ERR_TIMEOUT)');
+          throw Exception('RSS_ERR_TIMEOUT: Feed fetch timeout after 30 seconds');
+        },
+      );
+      
       allNews.addAll(instagramNews);
+      debugPrint('✅ [RSS] Fetched ${instagramNews.length} items from Instagram');
       
       // Emit items immediately if callback provided
       if (onItemFound != null) {
@@ -54,10 +63,26 @@ class AggregatedRssService {
       
       // Ensure progress reaches 100% on success
       onProgress?.call(100, 100);
+      debugPrint('✅ [RSS] Aggregated news fetch completed successfully');
     } catch (e) {
-      debugPrint('❌ [RSS] Error fetching Instagram feed: $e');
+      String errorCode = 'RSS_ERR_UNKNOWN';
+      if (e.toString().contains('RSS_ERR_TIMEOUT')) {
+        errorCode = 'RSS_ERR_TIMEOUT';
+      } else if (e.toString().contains('timeout')) {
+        errorCode = 'RSS_ERR_TIMEOUT';
+      } else if (e.toString().contains('network') || e.toString().contains('Network')) {
+        errorCode = 'RSS_ERR_NETWORK';
+      } else if (e.toString().contains('status')) {
+        errorCode = 'RSS_ERR_HTTP';
+      } else if (e.toString().contains('parse') || e.toString().contains('XML')) {
+        errorCode = 'RSS_ERR_PARSE';
+      }
+      
+      debugPrint('❌ [RSS] Error fetching Instagram feed ($errorCode): $e');
       // Report error progress (could be partial completion)
       onProgress?.call(100, 100);
+      // Re-throw with error code for better debugging
+      throw Exception('$errorCode: $e');
     }
     
     // Erasmus feed disabled - was causing slow loading
@@ -216,7 +241,16 @@ class AggregatedRssService {
       debugPrint('✅ [RSS] Fetched ${limitedItems.length} items from Instagram feed');
       return limitedItems;
     } catch (e, stackTrace) {
-      debugPrint('❌ [RSS] Error fetching Instagram feed: $e');
+      String errorCode = 'RSS_ERR_FETCH_UNKNOWN';
+      if (e.toString().contains('timeout')) {
+        errorCode = 'RSS_ERR_FETCH_TIMEOUT';
+      } else if (e.toString().contains('status')) {
+        errorCode = 'RSS_ERR_FETCH_HTTP';
+      } else if (e.toString().contains('network')) {
+        errorCode = 'RSS_ERR_FETCH_NETWORK';
+      }
+      
+      debugPrint('❌ [RSS] Error fetching Instagram feed ($errorCode): $e');
       debugPrint('❌ [RSS] Stack trace: $stackTrace');
       
       // If error and we have cached XML, try to use it even if expired
@@ -234,16 +268,17 @@ class AggregatedRssService {
           debugPrint('✅ [RSS] Used expired cache: ${limitedItems.length} items');
           return limitedItems;
         } catch (cacheError) {
-          debugPrint('❌ [RSS] Cache fallback also failed: $cacheError');
+          debugPrint('❌ [RSS] Cache fallback also failed (RSS_ERR_CACHE_FALLBACK): $cacheError');
           // Report error but still try to complete
           onProgress?.call(100, 100);
+          throw Exception('RSS_ERR_CACHE_FALLBACK: $cacheError');
         }
       } else {
         // No cache available - report error progress
+        debugPrint('❌ [RSS] No cache available for fallback (RSS_ERR_NO_CACHE)');
         onProgress?.call(100, 100);
+        throw Exception('RSS_ERR_NO_CACHE: No cached data available and fetch failed');
       }
-      
-      return [];
     }
   }
 
@@ -362,8 +397,18 @@ class AggregatedRssService {
       debugPrint('📰 [RSS] Parsed ${items.length} items from $source feed');
       
     } catch (e, stackTrace) {
-      debugPrint('❌ [RSS] Error parsing $source XML: $e');
+      String errorCode = 'RSS_ERR_PARSE_UNKNOWN';
+      if (e.toString().contains('regex') || e.toString().contains('RegExp')) {
+        errorCode = 'RSS_ERR_PARSE_REGEX';
+      } else if (e.toString().contains('date') || e.toString().contains('DateTime')) {
+        errorCode = 'RSS_ERR_PARSE_DATE';
+      } else if (e.toString().contains('index') || e.toString().contains('range')) {
+        errorCode = 'RSS_ERR_PARSE_INDEX';
+      }
+      
+      debugPrint('❌ [RSS] Error parsing $source XML ($errorCode): $e');
       debugPrint('❌ [RSS] Stack trace: $stackTrace');
+      // Don't throw - return what we have parsed so far
     }
 
     return items;

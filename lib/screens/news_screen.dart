@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import '../services/erasmus_rss_service.dart';
 import '../services/aggregated_rss_service.dart';
 import '../services/news_cache_service.dart';
 import '../models/news_item.dart';
@@ -23,6 +21,7 @@ class _NewsScreenState extends State<NewsScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage;
+  String? _errorCode; // Error code for debugging (e.g., "RSS_001", "RSS_002")
   int _loadingProgress = 0; // 0-100
 
   @override
@@ -54,16 +53,29 @@ class _NewsScreenState extends State<NewsScreen> {
   /// Fetches fresh news and updates UI in batches for better performance
   Future<void> _fetchAndUpdateNews() async {
     try {
+      debugPrint('📰 [NEWS_SCREEN] Starting news fetch...');
       final cachedNews = await _cacheService.getFromCache();
       final List<NewsItem> batchItems = [];
       const int batchSize = 5; // Update UI every 5 items
       
-        await _rssService.fetchAggregatedNews(
+      // Set loading state
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _hasError = false;
+          _errorMessage = null;
+          _errorCode = null;
+          _loadingProgress = 0;
+        });
+      }
+      
+      await _rssService.fetchAggregatedNews(
         onProgress: (current, total) {
           if (mounted) {
             setState(() {
               _loadingProgress = current;
             });
+            debugPrint('📊 [NEWS_SCREEN] Progress: $current/$total');
           }
         },
         onItemFound: (item) async {
@@ -132,26 +144,38 @@ class _NewsScreenState extends State<NewsScreen> {
           }).toList();
 
           // Save to cache (async, non-blocking)
-          _cacheService.saveToCache(finalItems).catchError((_) {
-            // Silent fail
+          _cacheService.saveToCache(finalItems).catchError((e) {
+            debugPrint('⚠️ [NEWS_SCREEN] Cache save error: $e');
           });
 
           setState(() {
             _newsItems = finalItems;
             _isLoading = false;
+            _loadingProgress = 100;
           });
+          debugPrint('✅ [NEWS_SCREEN] News loaded successfully: ${finalItems.length} items');
         }
-      }).catchError((e) {
+      }).catchError((e, stackTrace) {
+        debugPrint('❌ [NEWS_SCREEN] Error fetching news: $e');
+        debugPrint('❌ [NEWS_SCREEN] Stack trace: $stackTrace');
         if (mounted) {
           setState(() {
             _isLoading = false;
+            _hasError = true;
+            _errorMessage = 'Error loading news: $e';
+            _errorCode = 'NEWS_001'; // Fetch error
           });
         }
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ [NEWS_SCREEN] Fatal error: $e');
+      debugPrint('❌ [NEWS_SCREEN] Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _hasError = true;
+          _errorMessage = 'Fatal error: $e';
+          _errorCode = 'NEWS_000'; // Fatal error
         });
       }
     }
@@ -300,7 +324,7 @@ class _NewsScreenState extends State<NewsScreen> {
     // This Scaffold only provides background color
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
-      body: _hasError && _newsItems.isEmpty
+      body              : _hasError && _newsItems.isEmpty
               ? Center(
             child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -318,10 +342,31 @@ class _NewsScreenState extends State<NewsScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (_errorMessage != null) ...[
+                        if (_errorCode != null) ...[
                           const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange),
+                            ),
+                            child: Text(
+                              'Error Code: $_errorCode',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange[800],
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (_errorMessage != null) ...[
+                          const SizedBox(height: 12),
                           Text(
                             _errorMessage!,
                             style: TextStyle(
@@ -350,7 +395,7 @@ class _NewsScreenState extends State<NewsScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Loading news... ${_loadingProgress}%',
+                            'Loading news... $_loadingProgress%',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -422,7 +467,7 @@ class _NewsScreenState extends State<NewsScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Updating... ${_loadingProgress}%',
+                                        'Updating... $_loadingProgress%',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: Colors.grey[600],
