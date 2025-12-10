@@ -565,7 +565,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   final success = await _journalService.addEntry(entry);
                   if (success && mounted) {
                     Navigator.pop(context);
-                    _loadData();
+                    _loadStaticData();
                     ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Note added!')),
                     );
@@ -670,7 +670,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                 if (confirmed == true && mounted) {
                   await _journalService.deleteEntry(entry.id);
                   Navigator.pop(context);
-                  _loadData();
+                  _loadStaticData();
                 }
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -697,7 +697,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   final success = await _journalService.updateEntry(updatedEntry);
                   if (success && mounted) {
                     Navigator.pop(context);
-                    _loadData();
+                    _loadStaticData();
                     ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Note updated!')),
                     );
