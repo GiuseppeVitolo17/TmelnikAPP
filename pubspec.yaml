@@ -36,6 +36,7 @@ dependencies:
   # Image handling
   image_picker: ^1.1.2  # For selecting images from gallery/camera
   image: ^4.3.0  # For image resizing and compression
+  image_cropper: ^5.0.1  # For cropping images to square
   
   # Notifications
   flutter_local_notifications: ^17.2.2  # Local notifications for Android/iOS

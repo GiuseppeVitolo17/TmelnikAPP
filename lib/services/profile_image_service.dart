@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_cropper/image_cropper.dart';
 
 /// Service for handling profile image uploads with resize and compression
 /// Follows best practices: resize to 320x320 or 160x160, compress, then upload
@@ -55,6 +56,56 @@ class ProfileImageService {
   /// Picks an image from gallery only (no camera option)
   Future<File?> pickImageFromGallery(BuildContext context) async {
     return pickImage(source: ImageSource.gallery);
+  }
+
+  /// Crops image to square aspect ratio
+  /// Returns the cropped file or null if cancelled
+  Future<File?> cropImageToSquare(File imageFile) async {
+    try {
+      debugPrint('✂️ [PROFILE_IMAGE] Starting square crop...');
+      
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imageFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1), // Square 1:1
+        aspectRatioPresets: [
+          CropAspectRatioPreset.square, // Force square
+        ],
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Colors.blue,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true, // Force square, user can't change aspect ratio
+            hideBottomControls: false,
+            showCropGrid: true,
+            cropFrameColor: Colors.blue,
+            cropGridColor: Colors.blue.withOpacity(0.5),
+            cropFrameStrokeWidth: 2,
+            cropGridStrokeWidth: 1,
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioPresets: [CropAspectRatioPreset.square],
+            resetAspectRatioEnabled: false,
+          ),
+        ],
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 100, // We'll compress later, keep quality here
+      );
+
+      if (croppedFile == null) {
+        debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop');
+        return null;
+      }
+
+      debugPrint('✅ [PROFILE_IMAGE] Image cropped to square: ${croppedFile.path}');
+      return File(croppedFile.path);
+    } catch (e, stackTrace) {
+      debugPrint('❌ [PROFILE_IMAGE] Error cropping image: $e');
+      debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
+      return null;
+    }
   }
 
   /// Resizes and compresses image to specified dimensions
@@ -292,7 +343,7 @@ class ProfileImageService {
     }
   }
 
-  /// Complete workflow: pick from gallery, resize, compress, and upload profile image
+  /// Complete workflow: pick from gallery, crop to square, resize, compress, and upload profile image
   /// Returns the download URL or null if any step fails
   Future<String?> pickResizeAndUploadProfileImage(
     BuildContext context,
@@ -301,17 +352,35 @@ class ProfileImageService {
     int maxHeight = 320,
   }) async {
     try {
+      debugPrint('🔄 [PROFILE_IMAGE] ========== STARTING WORKFLOW ==========');
+      
       // Step 1: Pick image from gallery only
+      debugPrint('📸 [PROFILE_IMAGE] Step 1: Picking image from gallery...');
       final imageFile = await pickImageFromGallery(context);
-      if (imageFile == null) return null;
+      if (imageFile == null) {
+        debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled image selection');
+        return null;
+      }
+      debugPrint('✅ [PROFILE_IMAGE] Image selected: ${imageFile.path}');
 
-      // Step 2: Resize and compress
+      // Step 2: Crop to square (user selects square area)
+      debugPrint('✂️ [PROFILE_IMAGE] Step 2: Cropping image to square...');
+      final croppedFile = await cropImageToSquare(imageFile);
+      if (croppedFile == null) {
+        debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop');
+        return null;
+      }
+      debugPrint('✅ [PROFILE_IMAGE] Image cropped: ${croppedFile.path}');
+
+      // Step 3: Resize and compress
+      debugPrint('🔄 [PROFILE_IMAGE] Step 3: Resizing and compressing...');
       final compressedBytes = await resizeAndCompressImage(
-        imageFile,
+        croppedFile, // Use cropped file instead of original
         maxWidth: maxWidth,
         maxHeight: maxHeight,
       );
       if (compressedBytes == null) {
+        debugPrint('❌ [PROFILE_IMAGE] Failed to resize/compress image');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -322,6 +391,7 @@ class ProfileImageService {
         }
         return null;
       }
+      debugPrint('✅ [PROFILE_IMAGE] Image resized and compressed: ${compressedBytes.length} bytes');
 
       // Step 3: Delete old image (optional, but good practice)
       // Silently handle deletion errors - it's OK if image doesn't exist
