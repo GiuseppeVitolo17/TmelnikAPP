@@ -240,7 +240,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
         targeting: _targetingController.text.trim(),
         description: _descriptionController.text.trim(),
         benefits: benefits,
-        contactInfo: _instagramController.text.trim(), // Use Instagram as contact
+        contactInfo: _instagramAccount ?? _projectOffer?.instagramAccount ?? 'tmelnik_cz', // Use Instagram from NGO or existing
         instagramAccount: _instagramAccount ?? _projectOffer?.instagramAccount ?? 'tmelnik_cz',
         applyLink: _applyLinkController.text.trim(),
         infoPackUrl: _infoPackController.text.trim(),
