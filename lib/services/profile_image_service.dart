@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
@@ -23,13 +22,32 @@ class ProfileImageService {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
         imageQuality: 100, // We'll compress manually for better control
+        maxWidth: 2048, // Limit initial size to avoid memory issues
+        maxHeight: 2048,
       );
 
-      if (pickedFile == null) return null;
+      if (pickedFile == null) {
+        debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled image selection');
+        return null;
+      }
 
-      return File(pickedFile.path);
-    } catch (e) {
+      final file = File(pickedFile.path);
+      
+      // Verify file exists and is readable
+      if (!await file.exists()) {
+        throw Exception('Selected file does not exist');
+      }
+      
+      final fileSize = await file.length();
+      if (fileSize == 0) {
+        throw Exception('Selected file is empty');
+      }
+      
+      debugPrint('✅ [PROFILE_IMAGE] Selected image: ${file.path} ($fileSize bytes)');
+      return file;
+    } catch (e, stackTrace) {
       debugPrint('❌ [PROFILE_IMAGE] Error picking image: $e');
+      debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
       return null;
     }
   }
@@ -84,7 +102,7 @@ class ProfileImageService {
         img.encodeJpg(resizedImage, quality: quality),
       );
 
-      debugPrint('✅ [PROFILE_IMAGE] Resized: ${image.width}x${image.height} → $newWidth x $newHeight');
+      debugPrint('✅ [PROFILE_IMAGE] Resized: ${image.width}x${image.height} → ${newWidth}x${newHeight}');
       debugPrint('✅ [PROFILE_IMAGE] Compressed: ${imageBytes.length} → ${compressedBytes.length} bytes');
 
       return compressedBytes;
@@ -101,8 +119,15 @@ class ProfileImageService {
     String userId,
   ) async {
     try {
+      // Verify Firebase Storage is initialized
+      if (imageBytes.isEmpty) {
+        throw Exception('Image bytes are empty');
+      }
+
       // Create reference: profile_images/{userId}.jpg
       final ref = _storage.ref().child('profile_images/$userId.jpg');
+
+      debugPrint('📤 [PROFILE_IMAGE] Starting upload for user: $userId (${imageBytes.length} bytes)');
 
       // Upload with metadata
       final uploadTask = ref.putData(
@@ -113,17 +138,37 @@ class ProfileImageService {
         ),
       );
 
-      // Wait for upload to complete
-      final snapshot = await uploadTask;
+      // Wait for upload to complete with timeout
+      final snapshot = await uploadTask.timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Upload timeout after 30 seconds');
+        },
+      );
       
       // Get download URL
       final downloadUrl = await snapshot.ref.getDownloadURL();
       
-      debugPrint('✅ [PROFILE_IMAGE] Uploaded to: $downloadUrl');
+      debugPrint('✅ [PROFILE_IMAGE] Uploaded successfully to: $downloadUrl');
       return downloadUrl;
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('❌ [PROFILE_IMAGE] Error uploading image: $e');
-      return null;
+      debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
+      
+      // Provide more specific error messages
+      String errorMessage = 'Unknown error';
+      if (e.toString().contains('permission-denied') || e.toString().contains('Permission denied')) {
+        errorMessage = 'Permission denied. Please check Firebase Storage rules.';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Upload timeout. Please check your internet connection.';
+      } else if (e.toString().contains('network')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else {
+        errorMessage = 'Upload failed: ${e.toString()}';
+      }
+      
+      debugPrint('❌ [PROFILE_IMAGE] Error details: $errorMessage');
+      rethrow; // Re-throw to be caught by caller
     }
   }
 
@@ -174,7 +219,33 @@ class ProfileImageService {
       await deleteProfileImage(userId);
 
       // Step 4: Upload to Firebase Storage
-      final downloadUrl = await uploadProfileImage(compressedBytes, userId);
+      String? downloadUrl;
+      try {
+        downloadUrl = await uploadProfileImage(compressedBytes, userId);
+      } catch (e) {
+        if (context.mounted) {
+          String errorMsg = 'Error uploading image';
+          if (e.toString().contains('permission-denied') || e.toString().contains('Permission denied')) {
+            errorMsg = 'Permission denied. Please check Firebase Storage rules.';
+          } else if (e.toString().contains('timeout')) {
+            errorMsg = 'Upload timeout. Please check your internet connection.';
+          } else if (e.toString().contains('network')) {
+            errorMsg = 'Network error. Please check your internet connection.';
+          } else {
+            errorMsg = 'Upload failed: ${e.toString()}';
+          }
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMsg),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        return null;
+      }
+      
       if (downloadUrl == null) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

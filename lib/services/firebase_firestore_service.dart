@@ -22,15 +22,24 @@ class FirebaseFirestoreService {
     try {
     return _firestore
         .collection(_offersCollection)
-        .where('isActive', isEqualTo: true)
-        .snapshots()
+        .snapshots() // Get all projects first, filter client-side
           .map((snapshot) {
             final offers = snapshot.docs
                 .map((doc) {
                   try {
+                    final data = doc.data();
+                    
+                    // Check if isActive exists and is true, or if isActive doesn't exist (legacy projects)
+                    final isActive = data['isActive'] as bool?;
+                    if (isActive == false) {
+                      // Skip explicitly inactive projects
+                      debugPrint('⏭️ [FIRESTORE] Skipping inactive project: ${doc.id}');
+                      return null;
+                    }
+                    // Include projects with isActive == true or isActive == null (legacy)
                     return ProjectOffer.fromFirestore(doc);
                   } catch (e) {
-                    debugPrint('Error parsing project offer ${doc.id}: $e');
+                    debugPrint('❌ [FIRESTORE] Error parsing project offer ${doc.id}: $e');
                     return null;
                   }
                 })
@@ -39,6 +48,8 @@ class FirebaseFirestoreService {
             
             // Sort by createdAt descending (client-side to avoid index requirement)
             offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            
+            debugPrint('📊 [FIRESTORE] Loaded ${offers.length} project offers from ${snapshot.docs.length} total documents');
             return offers;
           })
           .handleError((error) {
@@ -67,15 +78,34 @@ class FirebaseFirestoreService {
     try {
       final snapshot = await _firestore
           .collection(_offersCollection)
-          .where('isActive', isEqualTo: true)
-          .get();
+          .get(); // Get all projects, filter client-side
 
       final offers = snapshot.docs
-          .map((doc) => ProjectOffer.fromFirestore(doc))
+          .map((doc) {
+            try {
+              final data = doc.data();
+              
+              // Check if isActive exists and is true, or if isActive doesn't exist (legacy projects)
+              final isActive = data['isActive'] as bool?;
+              if (isActive == false) {
+                // Skip explicitly inactive projects
+                debugPrint('⏭️ [FIRESTORE] Skipping inactive project: ${doc.id}');
+                return null;
+              }
+              // Include projects with isActive == true or isActive == null (legacy)
+              return ProjectOffer.fromFirestore(doc);
+            } catch (e) {
+              debugPrint('❌ [FIRESTORE] Error parsing project offer ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<ProjectOffer>()
           .toList();
       
       // Sort by createdAt descending (client-side to avoid index requirement)
       offers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
+      debugPrint('📊 [FIRESTORE] Loaded ${offers.length} project offers from ${snapshot.docs.length} total documents');
       return offers;
     } catch (e) {
       throw Exception('Error getting project offers: $e');
