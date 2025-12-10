@@ -185,8 +185,9 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     List<CalendarEvent> eventLoader(DateTime day) {
       return _getEventsForDay(day, projectOffers);
     }
-          : Column(
-              children: [
+    
+    return Column(
+      children: [
                 // Calendar
                 TableCalendar(
                   firstDay: DateTime.utc(2020, 1, 1),
