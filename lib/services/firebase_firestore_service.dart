@@ -20,23 +20,25 @@ class FirebaseFirestoreService {
   // Project Offers
   Stream<List<ProjectOffer>> getProjectOffersStream() {
     try {
+    // OPTIMIZED: Use where clause to reduce reads - only fetch active projects
+    // This reduces Firebase quota usage significantly
     return _firestore
         .collection(_offersCollection)
-        .snapshots() // Get all projects first, filter client-side
+        .where('isActive', isEqualTo: true) // Server-side filter to reduce reads
+        .snapshots()
           .map((snapshot) {
+            // All documents from query are already active (server-side filtered)
+            // Still handle legacy projects without isActive field by checking client-side
             final offers = snapshot.docs
                 .map((doc) {
                   try {
+                    // Server already filtered isActive == true, but check for legacy projects
                     final data = doc.data();
-                    
-                    // Check if isActive exists and is true, or if isActive doesn't exist (legacy projects)
                     final isActive = data['isActive'] as bool?;
+                    // Include if isActive is true or null (legacy)
                     if (isActive == false) {
-                      // Skip explicitly inactive projects
-                      debugPrint('⏭️ [FIRESTORE] Skipping inactive project: ${doc.id}');
-                      return null;
+                      return null; // Should not happen with server filter, but safety check
                     }
-                    // Include projects with isActive == true or isActive == null (legacy)
                     return ProjectOffer.fromFirestore(doc);
                   } catch (e) {
                     debugPrint('❌ [FIRESTORE] Error parsing project offer ${doc.id}: $e');
@@ -76,23 +78,16 @@ class FirebaseFirestoreService {
 
   Future<List<ProjectOffer>> getProjectOffers() async {
     try {
+      // OPTIMIZED: Use where clause to reduce reads
       final snapshot = await _firestore
           .collection(_offersCollection)
-          .get(); // Get all projects, filter client-side
+          .where('isActive', isEqualTo: true) // Server-side filter
+          .get();
 
+      // All documents are already filtered server-side (isActive == true)
       final offers = snapshot.docs
           .map((doc) {
             try {
-              final data = doc.data();
-              
-              // Check if isActive exists and is true, or if isActive doesn't exist (legacy projects)
-              final isActive = data['isActive'] as bool?;
-              if (isActive == false) {
-                // Skip explicitly inactive projects
-                debugPrint('⏭️ [FIRESTORE] Skipping inactive project: ${doc.id}');
-                return null;
-              }
-              // Include projects with isActive == true or isActive == null (legacy)
               return ProjectOffer.fromFirestore(doc);
             } catch (e) {
               debugPrint('❌ [FIRESTORE] Error parsing project offer ${doc.id}: $e');

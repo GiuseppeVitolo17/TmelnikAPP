@@ -22,6 +22,8 @@ import 'screens/news_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/email_verification_screen.dart';
+import 'screens/manage_ngos_screen.dart';
+import 'screens/manage_users_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -1026,57 +1028,113 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Menu items
-              _buildMenuTile(
-                context: context,
-                icon: Icons.person,
-                title: 'Profile',
-                subtitle: 'View your information',
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
+      builder: (context) => StreamBuilder<bool>(
+        stream: userRoleService.adminStatusStream,
+        builder: (context, adminSnapshot) {
+          final isAdmin = adminSnapshot.data ?? false;
+          
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  );
-                },
-              ),
-              _buildMenuTile(
-                context: context,
-                icon: Icons.settings,
-                title: 'Settings',
-                subtitle: 'Manage app preferences',
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
+                  ),
+                  // Menu items
+                  _buildMenuTile(
+                    context: context,
+                    icon: Icons.person,
+                    title: 'Profile',
+                    subtitle: 'View your information',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuTile(
+                    context: context,
+                    icon: Icons.settings,
+                    title: 'Settings',
+                    subtitle: 'Manage app preferences',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  // Admin-only menu items
+                  if (isAdmin) ...[
+                    const Divider(height: 1),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.admin_panel_settings, size: 16, color: Colors.purple[700]),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Admin Panel',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.purple[700],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                },
-              ),
-              const Divider(height: 1),
+                    _buildMenuTile(
+                      context: context,
+                      icon: Icons.business,
+                      title: 'Manage NGOs',
+                      subtitle: 'Create and manage organizations',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ManageNGOScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuTile(
+                      context: context,
+                      icon: Icons.people,
+                      title: 'Manage Users',
+                      subtitle: 'Assign roles and permissions',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ManageUsersScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  const Divider(height: 1),
               _buildMenuTile(
                 context: context,
                 icon: Icons.logout,
@@ -1115,9 +1173,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 isDestructive: true,
               ),
               const SizedBox(height: 8),
-            ],
-          ),
-        ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

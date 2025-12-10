@@ -1,11 +1,11 @@
+import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firebase_firestore_service.dart';
-import '../models/project_offer.dart';
 
 /// Service for displaying push notifications when new projects appear
 /// Works on Android and iOS only (not web)
@@ -20,6 +20,10 @@ class NotificationService {
   // Global toggle: disable local pop-up notifications by default
   static bool notificationsEnabled = false;
   final FirebaseFirestoreService _firestoreService = FirebaseFirestoreService();
+  
+  // Store subscriptions to cancel them properly and prevent memory leaks
+  StreamSubscription<RemoteMessage>? _foregroundSubscription;
+  StreamSubscription<RemoteMessage>? _openedAppSubscription;
 
   /// 5 fun notification messages templates
   static final List<String> _notificationTemplates = [
@@ -111,7 +115,10 @@ class NotificationService {
       }
 
       // Foreground message listener (no intrusive popups)
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+      // Store subscription to cancel when service is disposed
+      _foregroundSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        if (!notificationsEnabled) return; // Skip if disabled
+        
         debugPrint('📩 FCM message (foreground): ${message.messageId} | ${message.notification?.title}');
         // Show a local notification in foreground so the user sees it
         try {
@@ -136,7 +143,7 @@ class NotificationService {
       });
 
       // App opened from notification
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _openedAppSubscription = FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         debugPrint('📬 Opened from notification: ${message.messageId}');
       });
 
@@ -145,6 +152,16 @@ class NotificationService {
     } catch (e) {
       debugPrint('❌ Error initializing notifications: $e');
     }
+  }
+
+  /// Dispose resources and cancel subscriptions to prevent memory leaks
+  void dispose() {
+    _foregroundSubscription?.cancel();
+    _openedAppSubscription?.cancel();
+    _foregroundSubscription = null;
+    _openedAppSubscription = null;
+    _initialized = false;
+    debugPrint('🔄 [NOTIFICATION] Service disposed, subscriptions cancelled');
   }
 
   /// Get a random notification message

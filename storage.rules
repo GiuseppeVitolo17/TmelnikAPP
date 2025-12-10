@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile images: users can only upload/delete their own profile image
+    match /profile_images/{userId}.jpg {
+      // Allow read to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow write (create/update) only if:
+      // 1. User is authenticated
+      // 2. User is uploading their own image (userId matches auth.uid)
+      // 3. File is JPEG and under 5MB
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.contentType == 'image/jpeg'
+                   && request.resource.size < 5 * 1024 * 1024; // 5MB max
+      
+      // Allow delete only if user is deleting their own image
+      allow delete: if request.auth != null
+                    && request.auth.uid == userId;
+    }
+    
+    // Deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
