@@ -169,10 +169,30 @@ class ProfileImageService {
       
       debugPrint('✅ [PROFILE_IMAGE] Upload task completed');
       debugPrint('✅ [PROFILE_IMAGE] Bytes transferred: ${snapshot.bytesTransferred}/${snapshot.totalBytes}');
+      debugPrint('✅ [PROFILE_IMAGE] Upload state: ${snapshot.state}');
       
-      // Get download URL
+      // Get download URL with error handling
       debugPrint('🔗 [PROFILE_IMAGE] Getting download URL...');
-      final downloadUrl = await snapshot.ref.getDownloadURL();
+      String downloadUrl;
+      try {
+        downloadUrl = await snapshot.ref.getDownloadURL();
+        debugPrint('✅ [PROFILE_IMAGE] Download URL retrieved successfully');
+      } catch (urlError) {
+        debugPrint('❌ [PROFILE_IMAGE] Error getting download URL: $urlError');
+        // If upload succeeded but getting URL fails, the file is still uploaded
+        // Try to construct URL manually or wait a bit and retry
+        debugPrint('🔄 [PROFILE_IMAGE] Retrying download URL after 1 second...');
+        await Future.delayed(const Duration(seconds: 1));
+        try {
+          downloadUrl = await snapshot.ref.getDownloadURL();
+          debugPrint('✅ [PROFILE_IMAGE] Download URL retrieved on retry');
+        } catch (retryError) {
+          debugPrint('❌ [PROFILE_IMAGE] Retry also failed: $retryError');
+          // Upload succeeded, but can't get URL - this is unusual but not critical
+          // The file exists in Storage, we just can't get the URL right now
+          throw Exception('Upload completed but failed to get download URL: $retryError');
+        }
+      }
       
       debugPrint('✅ [PROFILE_IMAGE] ========== UPLOAD SUCCESS ==========');
       debugPrint('✅ [PROFILE_IMAGE] Download URL: $downloadUrl');
@@ -200,8 +220,16 @@ class ProfileImageService {
         debugPrint('🔒 [PROFILE_IMAGE] UNAUTHENTICATED - User needs to sign in');
       } else if (errorString.contains('object-not-found')) {
         errorCode = 'OBJECT_NOT_FOUND';
-        errorMessage = 'Storage object not found. This should not happen during upload.';
-        debugPrint('⚠️ [PROFILE_IMAGE] OBJECT_NOT_FOUND - Unexpected during upload');
+        // OBJECT_NOT_FOUND during upload usually means:
+        // 1. Error getting download URL after upload (file uploaded but URL retrieval failed)
+        // 2. Error accessing metadata before upload
+        // 3. Some other Storage operation failed
+        if (errorString.contains('download url') || errorString.contains('getdownloadurl')) {
+          errorMessage = 'Upload completed but failed to get download URL. The image may still be uploaded. Please try again or check Storage.';
+        } else {
+          errorMessage = 'Storage object not found. This may indicate a temporary Storage issue. Please try again.';
+        }
+        debugPrint('⚠️ [PROFILE_IMAGE] OBJECT_NOT_FOUND - Check if this occurred during URL retrieval or metadata access');
       } else if (errorString.contains('quota') || errorString.contains('storage quota')) {
         errorCode = 'QUOTA_EXCEEDED';
         errorMessage = 'Storage quota exceeded. Please check Firebase Storage usage.';
@@ -297,11 +325,18 @@ class ProfileImageService {
 
       // Step 3: Delete old image (optional, but good practice)
       // Silently handle deletion errors - it's OK if image doesn't exist
+      debugPrint('🗑️ [PROFILE_IMAGE] Attempting to delete old image (if exists)...');
       try {
         await deleteProfileImage(userId);
+        debugPrint('✅ [PROFILE_IMAGE] Old image deletion completed (or didn\'t exist)');
       } catch (e) {
-        debugPrint('ℹ️ [PROFILE_IMAGE] Could not delete old image (non-critical): $e');
-        // Continue with upload even if deletion fails
+        // OBJECT_NOT_FOUND during deletion is expected and OK
+        if (e.toString().contains('object-not-found') || e.toString().contains('not-found')) {
+          debugPrint('ℹ️ [PROFILE_IMAGE] No old image to delete (expected for first upload)');
+        } else {
+          debugPrint('⚠️ [PROFILE_IMAGE] Could not delete old image (non-critical): $e');
+        }
+        // Continue with upload even if deletion fails - this is not a blocker
       }
       
       // Verify user is authenticated before upload

@@ -201,16 +201,23 @@ class AggregatedRssService {
           requestUri = Uri.parse(_instagramRssUrl);
         }
 
+        debugPrint('🌐 [RSS] Making HTTP request to: $requestUri');
         final response = await http.get(requestUri).timeout(
-          const Duration(seconds: 8), // Slightly increased for reliability
+          const Duration(seconds: 15), // Increased timeout for slow connections
           onTimeout: () {
             // Report timeout progress before throwing
+            debugPrint('⏱️ [RSS] Request timeout after 15 seconds');
             onProgress?.call(30, 100);
             throw Exception('Instagram feed request timeout');
           },
-        );
+        ).catchError((error) {
+          debugPrint('❌ [RSS] HTTP request error: $error');
+          onProgress?.call(30, 100);
+          rethrow;
+        });
 
         // Report progress: fetch complete (30%)
+        debugPrint('✅ [RSS] HTTP request completed, status: ${response.statusCode}');
         onProgress?.call(30, 100);
 
         debugPrint('📡 [RSS] Instagram feed response status: ${response.statusCode}');
@@ -291,9 +298,12 @@ class AggregatedRssService {
       } else {
         // No cache available - return empty list instead of throwing error
         // This allows the app to continue functioning even without RSS data
-        debugPrint('⚠️ [RSS] No cache available for fallback (RSS_ERR_NO_CACHE) - returning empty list');
+        debugPrint('⚠️ [RSS] No cache available for fallback (RSS_ERR_NO_CACHE)');
+        debugPrint('⚠️ [RSS] This means: 1) First time loading, or 2) Cache expired and fetch failed');
+        debugPrint('⚠️ [RSS] Returning empty list to allow app to continue');
         onProgress?.call(100, 100);
-        return []; // Return empty list instead of throwing
+        // Re-throw the original error so the UI can show it
+        throw Exception('RSS_ERR_NO_CACHE: No cached data available and fetch failed. Please check your internet connection.');
       }
     }
   }
