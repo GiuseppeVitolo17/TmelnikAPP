@@ -434,17 +434,53 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _instagramController,
-                      decoration: const InputDecoration(
-                        labelText: 'Instagram Account *',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.camera_alt),
-                        hintText: 'Instagram username or handle',
+                    // Instagram is now automatically loaded from user's NGO
+                    if (_instagramAccount != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.camera_alt, color: Colors.blue[700], size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Instagram Account',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '@$_instagramAccount',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.blue[700],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Automatically loaded from your NGO',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Required' : null,
-                    ),
                     const SizedBox(height: 16),
                     InkWell(
                       onTap: _selectDate,
