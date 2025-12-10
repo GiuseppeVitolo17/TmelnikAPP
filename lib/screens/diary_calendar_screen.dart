@@ -346,8 +346,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                   child: _buildEventsList(projectOffers),
                 ),
               ],
-            ),
-    );
+            );
   }
 
   Widget _buildEventsList(List<ProjectOffer> projectOffers) {
