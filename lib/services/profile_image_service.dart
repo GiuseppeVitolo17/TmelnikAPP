@@ -116,11 +116,23 @@ class ProfileImageService {
       
       return croppedFileObj;
     } catch (e, stackTrace) {
-      debugPrint('❌ [PROFILE_IMAGE] Error cropping image: $e');
+      debugPrint('❌ [PROFILE_IMAGE] ========== CROP ERROR ==========');
+      debugPrint('❌ [PROFILE_IMAGE] Error type: ${e.runtimeType}');
+      debugPrint('❌ [PROFILE_IMAGE] Error message: $e');
+      debugPrint('❌ [PROFILE_IMAGE] Error string: ${e.toString()}');
       debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
-      // Return original file if crop fails, so user can still proceed
-      debugPrint('⚠️ [PROFILE_IMAGE] Returning original image due to crop error');
-      return imageFile;
+      debugPrint('❌ [PROFILE_IMAGE] ======================================');
+      
+      // Check for specific error types
+      final errorString = e.toString().toLowerCase();
+      if (errorString.contains('activity') || errorString.contains('ucrop')) {
+        debugPrint('🔧 [PROFILE_IMAGE] This looks like a missing UCropActivity configuration issue');
+        debugPrint('🔧 [PROFILE_IMAGE] Check AndroidManifest.xml for UCropActivity declaration');
+      }
+      
+      // Don't return original - let the error propagate so user knows something went wrong
+      // The caller should handle this gracefully
+      rethrow;
     }
   }
 
@@ -381,12 +393,21 @@ class ProfileImageService {
 
       // Step 2: Crop to square (user selects square area)
       debugPrint('✂️ [PROFILE_IMAGE] Step 2: Cropping image to square...');
-      final croppedFile = await cropImageToSquare(imageFile);
-      if (croppedFile == null) {
-        debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop');
-        return null;
+      File? croppedFile;
+      try {
+        croppedFile = await cropImageToSquare(imageFile);
+        if (croppedFile == null) {
+          debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop');
+          return null;
+        }
+        debugPrint('✅ [PROFILE_IMAGE] Image cropped: ${croppedFile.path}');
+      } catch (e) {
+        debugPrint('❌ [PROFILE_IMAGE] Crop failed, but continuing with original image');
+        debugPrint('❌ [PROFILE_IMAGE] Error: $e');
+        // Use original image if crop fails - better than crashing
+        croppedFile = imageFile;
+        debugPrint('⚠️ [PROFILE_IMAGE] Using original image without crop');
       }
-      debugPrint('✅ [PROFILE_IMAGE] Image cropped: ${croppedFile.path}');
 
       // Step 3: Resize and compress
       debugPrint('🔄 [PROFILE_IMAGE] Step 3: Resizing and compressing...');
