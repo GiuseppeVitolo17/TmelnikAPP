@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../services/profile_image_service.dart';
@@ -17,7 +18,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _updateProfileImage() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      debugPrint('❌ [PROFILE_SCREEN] No authenticated user found');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: User not authenticated. Please sign in again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    debugPrint('✅ [PROFILE_SCREEN] User authenticated: ${user.uid}');
+    debugPrint('✅ [PROFILE_SCREEN] User email: ${user.email}');
+    debugPrint('✅ [PROFILE_SCREEN] User email verified: ${user.emailVerified}');
 
     setState(() {
       _isUploadingImage = true;
@@ -25,6 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       // Pick, resize, and upload image (320x320 for profile)
+      debugPrint('🖼️ [PROFILE_SCREEN] Starting image pick and upload workflow...');
       final downloadUrl = await _profileImageService.pickResizeAndUploadProfileImage(
         context,
         user.uid,

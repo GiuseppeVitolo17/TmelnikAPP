@@ -119,23 +119,36 @@ class ProfileImageService {
     String userId,
   ) async {
     try {
+      debugPrint('🔍 [PROFILE_IMAGE] ========== UPLOAD START ==========');
+      debugPrint('🔍 [PROFILE_IMAGE] User ID: $userId');
+      debugPrint('🔍 [PROFILE_IMAGE] Image bytes length: ${imageBytes.length}');
+      debugPrint('🔍 [PROFILE_IMAGE] Image bytes empty: ${imageBytes.isEmpty}');
+      
       // Verify Firebase Storage is initialized
       if (imageBytes.isEmpty) {
         throw Exception('Image bytes are empty');
       }
 
-      // Create reference: profile_images/{userId}.jpg
-      final ref = _storage.ref().child('profile_images/$userId.jpg');
-
-      debugPrint('📤 [PROFILE_IMAGE] Starting upload for user: $userId (${imageBytes.length} bytes)');
-      debugPrint('📤 [PROFILE_IMAGE] Storage path: profile_images/$userId.jpg');
-      
       // Verify reference is valid
       if (userId.isEmpty) {
         throw Exception('User ID is empty - cannot upload image');
       }
 
+      // Create reference: profile_images/{userId}.jpg
+      final ref = _storage.ref().child('profile_images/$userId.jpg');
+      debugPrint('🔍 [PROFILE_IMAGE] Storage reference created: profile_images/$userId.jpg');
+      debugPrint('🔍 [PROFILE_IMAGE] Storage bucket: ${ref.bucket}');
+      debugPrint('🔍 [PROFILE_IMAGE] Storage full path: ${ref.fullPath}');
+
+      // Verify image size (must be under 5MB for Storage rules)
+      final sizeInMB = imageBytes.length / (1024 * 1024);
+      debugPrint('🔍 [PROFILE_IMAGE] Image size: ${sizeInMB.toStringAsFixed(2)} MB');
+      if (sizeInMB > 5) {
+        throw Exception('Image size (${sizeInMB.toStringAsFixed(2)} MB) exceeds 5MB limit');
+      }
+
       // Upload with metadata
+      debugPrint('📤 [PROFILE_IMAGE] Starting upload task...');
       final uploadTask = ref.putData(
         imageBytes,
         SettableMetadata(
@@ -143,38 +156,80 @@ class ProfileImageService {
           cacheControl: 'public, max-age=31536000', // Cache for 1 year
         ),
       );
+      debugPrint('📤 [PROFILE_IMAGE] Upload task created, waiting for completion...');
 
       // Wait for upload to complete with timeout
       final snapshot = await uploadTask.timeout(
         const Duration(seconds: 30),
         onTimeout: () {
+          debugPrint('⏱️ [PROFILE_IMAGE] Upload timeout after 30 seconds');
           throw Exception('Upload timeout after 30 seconds');
         },
       );
       
+      debugPrint('✅ [PROFILE_IMAGE] Upload task completed');
+      debugPrint('✅ [PROFILE_IMAGE] Bytes transferred: ${snapshot.bytesTransferred}/${snapshot.totalBytes}');
+      
       // Get download URL
+      debugPrint('🔗 [PROFILE_IMAGE] Getting download URL...');
       final downloadUrl = await snapshot.ref.getDownloadURL();
       
-      debugPrint('✅ [PROFILE_IMAGE] Uploaded successfully to: $downloadUrl');
+      debugPrint('✅ [PROFILE_IMAGE] ========== UPLOAD SUCCESS ==========');
+      debugPrint('✅ [PROFILE_IMAGE] Download URL: $downloadUrl');
       return downloadUrl;
     } catch (e, stackTrace) {
-      debugPrint('❌ [PROFILE_IMAGE] Error uploading image: $e');
+      debugPrint('❌ [PROFILE_IMAGE] ========== UPLOAD ERROR ==========');
+      debugPrint('❌ [PROFILE_IMAGE] Error type: ${e.runtimeType}');
+      debugPrint('❌ [PROFILE_IMAGE] Error message: $e');
+      debugPrint('❌ [PROFILE_IMAGE] Error string: ${e.toString()}');
       debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
       
-      // Provide more specific error messages
-      String errorMessage = 'Unknown error';
-      if (e.toString().contains('permission-denied') || e.toString().contains('Permission denied')) {
-        errorMessage = 'Permission denied. Please check Firebase Storage rules.';
-      } else if (e.toString().contains('timeout')) {
-        errorMessage = 'Upload timeout. Please check your internet connection.';
-      } else if (e.toString().contains('network')) {
+      // Extract Firebase-specific error codes
+      String errorCode = 'UNKNOWN';
+      String errorMessage = 'Unknown error occurred';
+      
+      final errorString = e.toString().toLowerCase();
+      
+      if (errorString.contains('permission-denied') || errorString.contains('permission denied')) {
+        errorCode = 'PERMISSION_DENIED';
+        errorMessage = 'Permission denied. User may not be authenticated or Storage rules may be blocking upload.';
+        debugPrint('🔒 [PROFILE_IMAGE] PERMISSION_DENIED - Check: 1) User authenticated? 2) Storage rules? 3) User ID matches auth.uid?');
+      } else if (errorString.contains('unauthenticated') || errorString.contains('unauthorized')) {
+        errorCode = 'UNAUTHENTICATED';
+        errorMessage = 'User not authenticated. Please sign in again.';
+        debugPrint('🔒 [PROFILE_IMAGE] UNAUTHENTICATED - User needs to sign in');
+      } else if (errorString.contains('object-not-found')) {
+        errorCode = 'OBJECT_NOT_FOUND';
+        errorMessage = 'Storage object not found. This should not happen during upload.';
+        debugPrint('⚠️ [PROFILE_IMAGE] OBJECT_NOT_FOUND - Unexpected during upload');
+      } else if (errorString.contains('quota') || errorString.contains('storage quota')) {
+        errorCode = 'QUOTA_EXCEEDED';
+        errorMessage = 'Storage quota exceeded. Please check Firebase Storage usage.';
+        debugPrint('💾 [PROFILE_IMAGE] QUOTA_EXCEEDED - Firebase Storage quota limit reached');
+      } else if (errorString.contains('timeout')) {
+        errorCode = 'TIMEOUT';
+        errorMessage = 'Upload timeout. Please check your internet connection and try again.';
+        debugPrint('⏱️ [PROFILE_IMAGE] TIMEOUT - Network may be slow or unstable');
+      } else if (errorString.contains('network') || errorString.contains('connection')) {
+        errorCode = 'NETWORK_ERROR';
         errorMessage = 'Network error. Please check your internet connection.';
+        debugPrint('🌐 [PROFILE_IMAGE] NETWORK_ERROR - Connection issue');
+      } else if (errorString.contains('canceled') || errorString.contains('cancelled')) {
+        errorCode = 'CANCELLED';
+        errorMessage = 'Upload was cancelled.';
+        debugPrint('🚫 [PROFILE_IMAGE] CANCELLED - Upload was cancelled');
       } else {
+        errorCode = 'UNKNOWN_ERROR';
         errorMessage = 'Upload failed: ${e.toString()}';
+        debugPrint('❓ [PROFILE_IMAGE] UNKNOWN_ERROR - Full error: $e');
       }
       
-      debugPrint('❌ [PROFILE_IMAGE] Error details: $errorMessage');
-      rethrow; // Re-throw to be caught by caller
+      debugPrint('❌ [PROFILE_IMAGE] Error Code: $errorCode');
+      debugPrint('❌ [PROFILE_IMAGE] Error Message: $errorMessage');
+      debugPrint('❌ [PROFILE_IMAGE] ======================================');
+      
+      // Re-throw with detailed error
+      throw Exception('$errorCode: $errorMessage');
     }
   }
 
@@ -255,38 +310,68 @@ class ProfileImageService {
       // Step 4: Upload to Firebase Storage
       String? downloadUrl;
       try {
+        debugPrint('🚀 [PROFILE_IMAGE] Starting upload workflow for user: $userId');
         downloadUrl = await uploadProfileImage(compressedBytes, userId);
+        debugPrint('✅ [PROFILE_IMAGE] Upload workflow completed successfully');
       } catch (e) {
-        debugPrint('❌ [PROFILE_IMAGE] Upload error caught: $e');
+        debugPrint('❌ [PROFILE_IMAGE] Upload error caught in workflow: $e');
         if (context.mounted) {
           String errorMsg = 'Error uploading image';
-          if (e.toString().contains('object-not-found')) {
-            // This shouldn't happen during upload, but handle gracefully
-            errorMsg = 'Storage error. Please try again.';
-            debugPrint('⚠️ [PROFILE_IMAGE] object-not-found during upload (unexpected)');
-          } else if (e.toString().contains('permission-denied') || e.toString().contains('Permission denied')) {
-            errorMsg = 'Permission denied. Please check Firebase Storage rules.';
-            debugPrint('🔒 [PROFILE_IMAGE] Permission denied - check Storage rules and user authentication');
-          } else if (e.toString().contains('unauthenticated') || e.toString().contains('Unauthenticated')) {
-            errorMsg = 'Authentication error. Please sign in again.';
-            debugPrint('🔒 [PROFILE_IMAGE] User not authenticated');
-          } else if (e.toString().contains('timeout')) {
-            errorMsg = 'Upload timeout. Please check your internet connection.';
-          } else if (e.toString().contains('network')) {
-            errorMsg = 'Network error. Please check your internet connection.';
-          } else if (e.toString().contains('object-not-found')) {
-            errorMsg = 'Storage error. Please try again.';
-            debugPrint('⚠️ [PROFILE_IMAGE] object-not-found during upload (unexpected)');
+          
+          // Extract error code from exception message
+          final errorString = e.toString();
+          if (errorString.contains('PERMISSION_DENIED:')) {
+            errorMsg = errorString.split('PERMISSION_DENIED:')[1].trim();
+          } else if (errorString.contains('UNAUTHENTICATED:')) {
+            errorMsg = errorString.split('UNAUTHENTICATED:')[1].trim();
+          } else if (errorString.contains('QUOTA_EXCEEDED:')) {
+            errorMsg = errorString.split('QUOTA_EXCEEDED:')[1].trim();
+          } else if (errorString.contains('TIMEOUT:')) {
+            errorMsg = errorString.split('TIMEOUT:')[1].trim();
+          } else if (errorString.contains('NETWORK_ERROR:')) {
+            errorMsg = errorString.split('NETWORK_ERROR:')[1].trim();
+          } else if (errorString.contains('CANCELLED:')) {
+            errorMsg = errorString.split('CANCELLED:')[1].trim();
+          } else if (errorString.contains('UNKNOWN_ERROR:')) {
+            errorMsg = errorString.split('UNKNOWN_ERROR:')[1].trim();
           } else {
-            errorMsg = 'Upload failed: ${e.toString()}';
-            debugPrint('❌ [PROFILE_IMAGE] Unknown upload error: $e');
+            // Fallback: use the full error message
+            errorMsg = errorString.contains(':') 
+                ? errorString.split(':').skip(1).join(':').trim()
+                : 'Upload failed: $errorString';
           }
           
+          debugPrint('📱 [PROFILE_IMAGE] Showing error to user: $errorMsg');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMsg),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'Details',
+                textColor: Colors.white,
+                onPressed: () {
+                  // Show detailed error in a dialog
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Upload Error Details'),
+                      content: SingleChildScrollView(
+                        child: Text(
+                          'Error: $e\n\nCheck console logs for more details.',
+                          style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           );
         }

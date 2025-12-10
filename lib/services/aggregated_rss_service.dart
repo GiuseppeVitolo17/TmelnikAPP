@@ -213,13 +213,22 @@ class AggregatedRssService {
         // Report progress: fetch complete (30%)
         onProgress?.call(30, 100);
 
+        debugPrint('📡 [RSS] Instagram feed response status: ${response.statusCode}');
+        debugPrint('📡 [RSS] Response headers: ${response.headers}');
+        
         if (response.statusCode == 522 || response.statusCode == 524) {
           // RSSHub service timeout/connection error
           debugPrint('⚠️ [RSS] RSSHub service timeout (${response.statusCode}) - service may be down');
-          throw Exception('RSS_ERR_SERVICE_DOWN: RSSHub service unavailable (${response.statusCode})');
+          debugPrint('⚠️ [RSS] This is a Cloudflare 522/524 error - RSSHub backend is not responding');
+          debugPrint('⚠️ [RSS] RSSHub may be experiencing high load or maintenance');
+          throw Exception('RSS_ERR_SERVICE_DOWN: RSSHub service unavailable (${response.statusCode}). The service may be temporarily down. Please try again later.');
         } else if (response.statusCode != 200) {
+          debugPrint('❌ [RSS] Instagram feed returned non-200 status: ${response.statusCode}');
+          debugPrint('❌ [RSS] Response body preview: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}');
           throw Exception('Instagram feed returned status ${response.statusCode}');
         }
+        
+        debugPrint('✅ [RSS] Instagram feed response successful (200 OK)');
 
         xmlString = utf8.decode(response.bodyBytes);
         
