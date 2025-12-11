@@ -28,6 +28,14 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   bool _isAdmin = false;
   bool _isLoadingAdmin = true;
   
+  // Search and filter state
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String? _selectedLocation;
+  DateTime? _filterStartDate;
+  DateTime? _filterEndDate;
+  bool _showFilters = false;
+  
   // Track previously seen project IDs to detect new ones
   final Set<String> _seenProjectIds = {};
   // Track image cache refresh timestamps per city to force FutureBuilder rebuild
@@ -38,10 +46,60 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
     // Check admin status in background (non-blocking)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAdminStatus();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ProjectOffer> _filterProjects(List<ProjectOffer> projects) {
+    return projects.where((offer) {
+      // Search filter
+      if (_searchQuery.isNotEmpty) {
+        final matchesSearch = offer.title.toLowerCase().contains(_searchQuery) ||
+            offer.location.toLowerCase().contains(_searchQuery) ||
+            offer.description.toLowerCase().contains(_searchQuery);
+        if (!matchesSearch) return false;
+      }
+
+      // Location filter
+      if (_selectedLocation != null && _selectedLocation!.isNotEmpty) {
+        if (offer.location.toLowerCase() != _selectedLocation!.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // Date range filter
+      if (_filterStartDate != null && offer.departureDate != null) {
+        if (offer.departureDate!.isBefore(_filterStartDate!)) {
+          return false;
+        }
+      }
+      if (_filterEndDate != null && offer.departureDate != null) {
+        if (offer.departureDate!.isAfter(_filterEndDate!)) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
+  }
+
+  List<String> _getUniqueLocations(List<ProjectOffer> projects) {
+    final locations = projects.map((p) => p.location).where((l) => l.isNotEmpty).toSet().toList();
+    locations.sort();
+    return locations;
   }
 
   /// Gets cached image or automatically fetches from API if not in cache
@@ -245,9 +303,229 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
             });
           }
           
-          return ListView(
-                    padding: const EdgeInsets.all(16),
+          final filteredOffers = _filterProjects(firestoreOffers);
+          final uniqueLocations = _getUniqueLocations(firestoreOffers);
+
+          return Column(
+            children: [
+              // Search bar and filters
+              Container(
+                padding: const EdgeInsets.all(16),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    // Search bar
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search projects...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Filter toggle button
+                    Row(
                       children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _showFilters = !_showFilters;
+                            });
+                          },
+                          icon: Icon(_showFilters ? Icons.filter_alt : Icons.filter_alt_outlined),
+                          label: Text(_showFilters ? 'Hide Filters' : 'Show Filters'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primaryBlue,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (_searchQuery.isNotEmpty || _selectedLocation != null || _filterStartDate != null || _filterEndDate != null)
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _searchQuery = '';
+                                _selectedLocation = null;
+                                _filterStartDate = null;
+                                _filterEndDate = null;
+                                _searchController.clear();
+                              });
+                            },
+                            child: const Text('Clear All'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
+                          ),
+                      ],
+                    ),
+                    // Filters panel
+                    if (_showFilters) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Location filter
+                            if (uniqueLocations.isNotEmpty) ...[
+                              const Text(
+                                'Location:',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  ChoiceChip(
+                                    label: const Text('All'),
+                                    selected: _selectedLocation == null,
+                                    onSelected: (selected) {
+                                      if (selected) {
+                                        setState(() {
+                                          _selectedLocation = null;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  ...uniqueLocations.take(10).map((location) {
+                                    return ChoiceChip(
+                                      label: Text(location),
+                                      selected: _selectedLocation == location,
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          _selectedLocation = selected ? location : null;
+                                        });
+                                      },
+                                    );
+                                  }),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                            // Date range filter
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'From Date:',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      OutlinedButton(
+                                        onPressed: () async {
+                                          final date = await showDatePicker(
+                                            context: context,
+                                            initialDate: _filterStartDate ?? DateTime.now(),
+                                            firstDate: DateTime.now(),
+                                            lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                                          );
+                                          if (date != null) {
+                                            setState(() {
+                                              _filterStartDate = date;
+                                            });
+                                          }
+                                        },
+                                        child: Text(
+                                          _filterStartDate == null
+                                              ? 'Select'
+                                              : '${_filterStartDate!.day}/${_filterStartDate!.month}/${_filterStartDate!.year}',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'To Date:',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      OutlinedButton(
+                                        onPressed: () async {
+                                          final date = await showDatePicker(
+                                            context: context,
+                                            initialDate: _filterEndDate ?? (_filterStartDate ?? DateTime.now()),
+                                            firstDate: _filterStartDate ?? DateTime.now(),
+                                            lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                                          );
+                                          if (date != null) {
+                                            setState(() {
+                                              _filterEndDate = date;
+                                            });
+                                          }
+                                        },
+                                        child: Text(
+                                          _filterEndDate == null
+                                              ? 'Select'
+                                              : '${_filterEndDate!.day}/${_filterEndDate!.month}/${_filterEndDate!.year}',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    // Results count
+                    if (_searchQuery.isNotEmpty || _selectedLocation != null || _filterStartDate != null || _filterEndDate != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Showing ${filteredOffers.length} of ${firestoreOffers.length} projects',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Projects list
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
                     // Debug info (remove in production)
                     if (snapshot.hasError)
                             Container(
@@ -265,7 +543,39 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                             ),
                     
                     // Firestore projects (created by admins)
-              ...firestoreOffers.map((offer) {
+              if (filteredOffers.isEmpty && (_searchQuery.isNotEmpty || _selectedLocation != null || _filterStartDate != null || _filterEndDate != null))
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No projects match your filters',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _searchQuery = '';
+                            _selectedLocation = null;
+                            _filterStartDate = null;
+                            _filterEndDate = null;
+                            _searchController.clear();
+                          });
+                        },
+                        child: const Text('Clear filters'),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...filteredOffers.map((offer) {
                 // Get image - use offer.imageUrl if available, otherwise fetch from cache or API
                 final hasImageUrl = offer.imageUrl.isNotEmpty;
                 
