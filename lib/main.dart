@@ -33,6 +33,9 @@ import 'services/user_role_service.dart';
 import 'services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Initialize analytics service instance
+final analyticsService = AnalyticsService();
+
 // Background handler for FCM (must be a top-level function)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
