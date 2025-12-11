@@ -697,8 +697,11 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                     );
                   },
                 );
-              }),
-                                ],
+              }).toList(),
+                  ],
+                ),
+              ),
+            ],
           );
         },
       ),
