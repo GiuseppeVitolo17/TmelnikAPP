@@ -20,6 +20,7 @@ class ProjectOffer {
   final OfferStatus status;
   final int shareCount;
   final String imageUrl;
+  final String? ngoId; // NGO ID that owns this project
 
   ProjectOffer({
     required this.id,
@@ -41,6 +42,7 @@ class ProjectOffer {
     this.status = OfferStatus.active,
     this.shareCount = 0,
     this.imageUrl = '',
+    this.ngoId,
   });
 
   ProjectOffer copyWith({
@@ -63,6 +65,7 @@ class ProjectOffer {
     OfferStatus? status,
     int? shareCount,
     String? imageUrl,
+    String? ngoId,
   }) {
     return ProjectOffer(
       id: id ?? this.id,
@@ -84,6 +87,7 @@ class ProjectOffer {
       status: status ?? this.status,
       shareCount: shareCount ?? this.shareCount,
       imageUrl: imageUrl ?? this.imageUrl,
+      ngoId: ngoId ?? this.ngoId,
     );
   }
 
@@ -108,6 +112,7 @@ class ProjectOffer {
       'status': status.name,
       'shareCount': shareCount,
       'imageUrl': imageUrl,
+      'ngoId': ngoId,
     };
   }
 
@@ -135,6 +140,7 @@ class ProjectOffer {
       ),
       shareCount: json['shareCount'] ?? 0,
       imageUrl: json['imageUrl'] ?? '',
+      ngoId: json['ngoId'],
     );
   }
 
@@ -160,6 +166,7 @@ class ProjectOffer {
       'status': status.name,
       'shareCount': shareCount,
       'imageUrl': imageUrl,
+      'ngoId': ngoId,
       'isActive': true,
       'lastUpdated': FieldValue.serverTimestamp(),
     };
@@ -195,6 +202,7 @@ class ProjectOffer {
       ),
       shareCount: data['shareCount'] ?? 0,
       imageUrl: data['imageUrl'] ?? '',
+      ngoId: data['ngoId'],
     );
   }
 
@@ -258,7 +266,8 @@ ${benefits.isNotEmpty ? '✅ Benefits:\n${benefits.map((b) => '• $b').join('\n
         other.expiresAt == expiresAt &&
         other.status == status &&
         other.shareCount == shareCount &&
-        other.imageUrl == imageUrl;
+        other.imageUrl == imageUrl &&
+        other.ngoId == ngoId;
   }
 
   @override
@@ -276,7 +285,8 @@ ${benefits.isNotEmpty ? '✅ Benefits:\n${benefits.map((b) => '• $b').join('\n
         expiresAt.hashCode ^
         status.hashCode ^
         shareCount.hashCode ^
-        imageUrl.hashCode;
+        imageUrl.hashCode ^
+        (ngoId?.hashCode ?? 0);
   }
 }
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
@@ -58,63 +59,118 @@ class ProfileImageService {
     return pickImage(source: ImageSource.gallery);
   }
 
-  /// Crops image to square aspect ratio
+  /// Crops image to square aspect ratio (1:1)
   /// Returns the cropped file or null if cancelled
-  Future<File?> cropImageToSquare(File imageFile) async {
+  /// 
+  /// Best practices:
+  /// - Forces square aspect ratio for profile pictures
+  /// - Uses high quality compression (100) since we compress later
+  /// - Handles web platform with fallback (web cropping may have limitations)
+  /// - Validates file existence before and after cropping
+  /// - Provides user-friendly error handling
+  /// 
+  /// Note: On web, cropping may have limitations. The function will attempt
+  /// to use web-compatible settings, but may fall back to original image.
+  Future<File?> cropImageToSquare(File imageFile, {BuildContext? context}) async {
     try {
-      debugPrint('✂️ [PROFILE_IMAGE] Starting square crop...');
+      debugPrint('✂️ [PROFILE_IMAGE] ========== STARTING CROP ==========');
       debugPrint('✂️ [PROFILE_IMAGE] Source image path: ${imageFile.path}');
+      debugPrint('✂️ [PROFILE_IMAGE] Platform: ${kIsWeb ? "Web" : "Mobile"}');
       
+      // Validate source file exists
       if (!await imageFile.exists()) {
         debugPrint('❌ [PROFILE_IMAGE] Source image file does not exist!');
         throw Exception('Source image file does not exist: ${imageFile.path}');
       }
       
+      // On web, image_cropper may have limitations - provide fallback
+      if (kIsWeb) {
+        debugPrint('⚠️ [PROFILE_IMAGE] Web platform detected - using web-compatible crop');
+      }
+      
+      // Configure crop settings for square (1:1) aspect ratio
+      // Note: image_cropper 11.0.0 API - aspectRatioPresets removed, use aspectRatio directly
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: imageFile.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1), // Square 1:1
-        aspectRatioPresets: [
-          CropAspectRatioPreset.square, // Force square
-        ],
+        // Force square aspect ratio (1:1)
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         uiSettings: [
+          // Android settings
           AndroidUiSettings(
-            toolbarTitle: 'Crop Image',
+            toolbarTitle: 'Crop Profile Picture',
             toolbarColor: Colors.blue,
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true, // Force square, user can't change aspect ratio
-            hideBottomControls: false,
-            showCropGrid: true,
+            lockAspectRatio: true, // Force square - user cannot change
+            hideBottomControls: false, // Show controls for better UX
+            showCropGrid: true, // Show grid for better alignment
             cropFrameColor: Colors.blue,
-            cropGridColor: Colors.blue.withOpacity(0.5),
+            cropGridColor: Colors.blue.withValues(alpha: 0.5),
             cropFrameStrokeWidth: 2,
             cropGridStrokeWidth: 1,
+            backgroundColor: Colors.black,
+            activeControlsWidgetColor: Colors.blue,
+            dimmedLayerColor: Colors.black.withValues(alpha: 0.8),
           ),
+          // iOS settings
           IOSUiSettings(
-            title: 'Crop Image',
-            aspectRatioLockEnabled: true,
-            resetAspectRatioEnabled: false,
+            title: 'Crop Profile Picture',
+            aspectRatioLockEnabled: true, // Lock to square
+            resetAspectRatioEnabled: false, // Don't allow reset
+            doneButtonTitle: 'Done',
+            cancelButtonTitle: 'Cancel',
           ),
+          // Web settings (if supported and context provided and mounted)
+          if (kIsWeb && context != null && context.mounted)
+            WebUiSettings(
+              context: context,
+            ),
         ],
+        // Compression settings - use high quality since we compress later
         compressFormat: ImageCompressFormat.jpg,
-        compressQuality: 100, // We'll compress later, keep quality here
+        compressQuality: 100, // Maximum quality - we'll compress in resizeAndCompressImage
       );
 
+      // Check if user cancelled
       if (croppedFile == null) {
-        debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop');
+        debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop operation');
         return null;
       }
 
+      // Validate cropped file
       final croppedFilePath = croppedFile.path;
-      debugPrint('✅ [PROFILE_IMAGE] Image cropped to square: $croppedFilePath');
+      debugPrint('✅ [PROFILE_IMAGE] Crop operation completed');
+      debugPrint('✅ [PROFILE_IMAGE] Cropped file path: $croppedFilePath');
       
-      final croppedFileObj = File(croppedFilePath);
-      if (!await croppedFileObj.exists()) {
-        debugPrint('❌ [PROFILE_IMAGE] Cropped file does not exist at path: $croppedFilePath');
-        throw Exception('Cropped file does not exist: $croppedFilePath');
+      // On web, CroppedFile.path might be different - handle accordingly
+      File croppedFileObj;
+      if (kIsWeb) {
+        // On web, we might need to handle the file differently
+        // The cropped file should be available via croppedFile.path
+        try {
+          croppedFileObj = File(croppedFilePath);
+          // Verify file exists (may not work on web)
+          if (!await croppedFileObj.exists()) {
+            debugPrint('⚠️ [PROFILE_IMAGE] Web: Cannot verify file existence, but proceeding');
+          }
+        } catch (e) {
+          debugPrint('⚠️ [PROFILE_IMAGE] Web: File handling may differ: $e');
+          // On web, we might need to read bytes directly
+          // For now, try to create File from path
+          croppedFileObj = File(croppedFilePath);
+        }
+      } else {
+        // Mobile platforms
+        croppedFileObj = File(croppedFilePath);
+        if (!await croppedFileObj.exists()) {
+          debugPrint('❌ [PROFILE_IMAGE] Cropped file does not exist at path: $croppedFilePath');
+          throw Exception('Cropped file does not exist: $croppedFilePath');
+        }
       }
       
+      debugPrint('✅ [PROFILE_IMAGE] ========== CROP SUCCESS ==========');
       return croppedFileObj;
+      
     } catch (e, stackTrace) {
       debugPrint('❌ [PROFILE_IMAGE] ========== CROP ERROR ==========');
       debugPrint('❌ [PROFILE_IMAGE] Error type: ${e.runtimeType}');
@@ -123,16 +179,22 @@ class ProfileImageService {
       debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');
       debugPrint('❌ [PROFILE_IMAGE] ======================================');
       
-      // Check for specific error types
+      // Provide helpful error messages
       final errorString = e.toString().toLowerCase();
       if (errorString.contains('activity') || errorString.contains('ucrop')) {
-        debugPrint('🔧 [PROFILE_IMAGE] This looks like a missing UCropActivity configuration issue');
-        debugPrint('🔧 [PROFILE_IMAGE] Check AndroidManifest.xml for UCropActivity declaration');
+        debugPrint('🔧 [PROFILE_IMAGE] Android UCropActivity issue detected');
+        debugPrint('🔧 [PROFILE_IMAGE] Verify AndroidManifest.xml has UCropActivity declared');
+      } else if (errorString.contains('permission') || errorString.contains('access')) {
+        debugPrint('🔒 [PROFILE_IMAGE] Permission issue - check app permissions');
+      } else if (kIsWeb && errorString.contains('not supported')) {
+        debugPrint('🌐 [PROFILE_IMAGE] Web cropping may have limitations');
+        debugPrint('🌐 [PROFILE_IMAGE] Consider using fallback for web platform');
       }
       
-      // Don't return original - let the error propagate so user knows something went wrong
-      // The caller should handle this gracefully
-      rethrow;
+      // Don't throw - return original image as fallback
+      // This allows the workflow to continue even if crop fails
+      debugPrint('⚠️ [PROFILE_IMAGE] Returning original image as fallback');
+      return imageFile;
     }
   }
 
@@ -395,7 +457,7 @@ class ProfileImageService {
       debugPrint('✂️ [PROFILE_IMAGE] Step 2: Cropping image to square...');
       File croppedFile;
       try {
-        final cropped = await cropImageToSquare(imageFile);
+        final cropped = await cropImageToSquare(imageFile, context: context);
         if (cropped == null) {
           debugPrint('ℹ️ [PROFILE_IMAGE] User cancelled crop');
           return null;

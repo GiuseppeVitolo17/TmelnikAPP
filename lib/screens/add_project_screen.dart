@@ -30,6 +30,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
   DateTime? _departureDate;
   DateTime? _returnDate;
   String? _instagramAccount; // Will be loaded from user's NGO
+  String? _ngoId; // NGO ID for the project
 
   final UserRoleService _userRoleService = UserRoleService();
   final NGOService _ngoService = NGOService();
@@ -53,11 +54,12 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
       final userRole = await _userRoleService.getUserRole(user.uid);
       if (userRole?.isOrganizer == true && userRole?.ngoId != null) {
         final ngo = await _ngoService.getNGOById(userRole!.ngoId!);
-        if (ngo != null && ngo.instagramUsername != null) {
+        if (ngo != null) {
           setState(() {
+            _ngoId = userRole.ngoId;
             _instagramAccount = ngo.instagramUsername;
           });
-          debugPrint('✅ [ADD_PROJECT] Loaded Instagram from NGO: ${ngo.instagramUsername}');
+          debugPrint('✅ [ADD_PROJECT] Loaded NGO ID: ${userRole.ngoId} and Instagram: ${ngo.instagramUsername}');
         }
       }
     } catch (e) {
@@ -193,6 +195,7 @@ class _AddProjectScreenState extends State<AddProjectScreen> {
         expiresAt: _selectedDate,
         departureDate: _departureDate,
         returnDate: _returnDate,
+        ngoId: _ngoId, // Associate project with NGO
       );
 
       // Save to Firestore - use .add() to get auto-generated ID

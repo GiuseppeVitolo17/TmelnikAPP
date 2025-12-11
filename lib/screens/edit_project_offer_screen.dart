@@ -37,6 +37,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
   bool _isLoading = false;
   ProjectOffer? _projectOffer;
   String? _instagramAccount; // Will be loaded from user's NGO
+  String? _ngoId; // NGO ID for the project
   
   final UserRoleService _userRoleService = UserRoleService();
   final NGOService _ngoService = NGOService();
@@ -143,8 +144,9 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
       final userRole = await _userRoleService.getUserRole(user.uid);
       if (userRole?.isOrganizer == true && userRole?.ngoId != null) {
         final ngo = await _ngoService.getNGOById(userRole!.ngoId!);
-        if (ngo != null && ngo.instagramUsername != null) {
+        if (ngo != null) {
           setState(() {
+            _ngoId = userRole.ngoId;
             _instagramAccount = ngo.instagramUsername;
           });
           debugPrint('✅ [EDIT_PROJECT] Loaded Instagram from NGO: ${ngo.instagramUsername}');
@@ -275,6 +277,7 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
         expiresAt: _selectedDate,
         departureDate: _departureDate,
         returnDate: _returnDate,
+        ngoId: _ngoId ?? _projectOffer?.ngoId, // Preserve or update NGO ID
       );
 
       await FirebaseFirestore.instance

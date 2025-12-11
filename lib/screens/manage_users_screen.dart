@@ -7,8 +7,16 @@ import '../theme/app_theme.dart';
 import 'manage_ngos_screen.dart';
 
 /// Screen for admins to manage users and assign roles (admin, organizer)
+/// Can optionally filter users by NGO ID
 class ManageUsersScreen extends StatefulWidget {
-  const ManageUsersScreen({super.key});
+  final String? filterByNgoId;
+  final String? ngoName;
+  
+  const ManageUsersScreen({
+    super.key,
+    this.filterByNgoId,
+    this.ngoName,
+  });
 
   @override
   State<ManageUsersScreen> createState() => _ManageUsersScreenState();
@@ -24,7 +32,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
       appBar: AppBar(
-        title: const Text('Manage Users'),
+        title: Text(widget.filterByNgoId != null 
+          ? widget.ngoName != null 
+            ? '${widget.ngoName} - Users'
+            : 'Organization Users'
+          : 'Manage Users'),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
@@ -54,12 +66,35 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             );
           }
 
-          final users = snapshot.data ?? [];
+          final allUsers = snapshot.data ?? [];
+          // Filter users by NGO ID if filter is provided
+          final users = widget.filterByNgoId != null
+              ? allUsers.where((user) => user.ngoId == widget.filterByNgoId).toList()
+              : allUsers;
           _isLoading = false;
 
           if (users.isEmpty) {
-            return const Center(
-              child: Text('No users found'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    widget.filterByNgoId != null ? Icons.people_outline : Icons.person_outline,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    widget.filterByNgoId != null
+                        ? 'No users found for this organization'
+                        : 'No users found',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
             );
           }
 

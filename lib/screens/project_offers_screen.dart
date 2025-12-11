@@ -6,6 +6,7 @@ import '../services/image_cache_service.dart';
 import '../services/firebase_firestore_service.dart';
 import '../services/user_role_service.dart';
 import '../services/notification_service.dart';
+import '../services/application_service.dart';
 import '../models/project_offer.dart';
 import '../theme/app_theme.dart';
 import 'add_project_screen.dart';
@@ -311,7 +312,38 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
                           ),
                         );
                       },
-                      onApply: () => _openUrl(offer.applyLink.isNotEmpty ? offer.applyLink : offer.contactInfo),
+                      onApply: () async {
+                        // Save application if user is logged in
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user != null) {
+                          try {
+                            final applicationService = ApplicationService();
+                            await applicationService.applyToProject(offer);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('✅ Application saved!'),
+                                  backgroundColor: Colors.green,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            // If already applied, continue to open link
+                            if (!e.toString().contains('already applied') && mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Note: $e'),
+                                  backgroundColor: Colors.orange,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          }
+                        }
+                        // Always open the apply link
+                        _openUrl(offer.applyLink.isNotEmpty ? offer.applyLink : offer.contactInfo);
+                      },
                       onInfo: () => _openUrl(offer.infoPackUrl),
                       showAdminActions: _isAdmin,
                       onEdit: _isAdmin ? () {

@@ -24,6 +24,8 @@ import 'screens/settings_screen.dart';
 import 'screens/email_verification_screen.dart';
 import 'screens/manage_ngos_screen.dart';
 import 'screens/manage_users_screen.dart';
+import 'screens/project_applications_screen.dart';
+import 'screens/organizer_projects_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -186,7 +188,7 @@ class TmelnikApp extends StatelessWidget {
             TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
           },
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -1028,12 +1030,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => StreamBuilder<bool>(
         stream: userRoleService.adminStatusStream,
         builder: (context, adminSnapshot) {
           final isAdmin = adminSnapshot.data ?? false;
           
-          return Container(
+          return FutureBuilder(
+            future: userRoleService.isCurrentUserOrganizer(),
+            builder: (context, organizerSnapshot) {
+              final isOrganizer = organizerSnapshot.data ?? false;
+              
+              return Container(
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -1042,17 +1050,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle bar
-                  Container(
-                    margin: const EdgeInsets.only(top: 12, bottom: 8),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
+                    // Handle bar
+                    Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                  // Menu items
+                    // Menu items
                   _buildMenuTile(
                     context: context,
                     icon: Icons.person,
@@ -1134,23 +1142,81 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       },
                     ),
                   ],
+                  // Organizer and Admin menu items
+                  if (isOrganizer || isAdmin) ...[
+                    const Divider(height: 1),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isAdmin ? Icons.admin_panel_settings : Icons.event,
+                            size: 16,
+                            color: isAdmin ? Colors.purple[700] : Colors.blue[700],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isAdmin ? 'Admin & Organizer Tools' : 'Organizer Panel',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isAdmin ? Colors.purple[700] : Colors.blue[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildMenuTile(
+                      context: context,
+                      icon: Icons.work,
+                      title: isAdmin ? 'All Projects & Applications' : 'My Projects & Applications',
+                      subtitle: isAdmin
+                          ? 'View all projects with applications by NGO'
+                          : 'View your projects and their applications',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const OrganizerProjectsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (isOrganizer)
+                      _buildMenuTile(
+                        context: context,
+                        icon: Icons.assignment_ind,
+                        title: 'Project Applications',
+                        subtitle: 'View all applications grouped by project',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ProjectApplicationsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                   const Divider(height: 1),
-              _buildMenuTile(
-                context: context,
-                icon: Icons.logout,
-                title: 'Logout',
-                subtitle: 'Sign out of your account',
-                onTap: () async {
-                  Navigator.pop(context);
-                  final confirmed = await showDialog<bool>(
+                  _buildMenuTile(
                     context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Log Out'),
-                      content: const Text('Are you sure you want to sign out?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
+                    icon: Icons.logout,
+                    title: 'Logout',
+                    subtitle: 'Sign out of your account',
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Log Out'),
+                          content: const Text('Are you sure you want to sign out?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
@@ -1176,6 +1242,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ],
               ),
             ),
+          );
+            },
           );
         },
       ),

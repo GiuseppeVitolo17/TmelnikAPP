@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/ngo.dart';
 import '../services/ngo_service.dart';
 import '../theme/app_theme.dart';
+import 'manage_users_screen.dart';
 
 /// Screen for admins to manage NGOs (create, edit, delete)
 class ManageNGOScreen extends StatefulWidget {
@@ -105,128 +106,194 @@ class _ManageNGOScreenState extends State<ManageNGOScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppShadows.soft,
+        border: Border.all(
+          color: AppColors.primaryBlue.withOpacity(0.2),
+          width: 1,
+        ),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primaryBlue.withOpacity(0.1),
-          child: Icon(
-            Icons.business,
-            color: AppColors.primaryBlue,
-          ),
-        ),
-        title: Text(
-          ngo.name,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            if (ngo.description.isNotEmpty)
-              Text(
-                ngo.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                if (ngo.instagramUsername != null) ...[
-                  Icon(Icons.camera_alt, size: 14, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '@${ngo.instagramUsername!}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                if (ngo.email != null) ...[
-                  Icon(Icons.email, size: 14, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    ngo.email!,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: ngo.isActive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    ngo.isActive ? 'Active' : 'Inactive',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: ngo.isActive ? Colors.green[700] : Colors.red[700],
-                      fontWeight: FontWeight.w600,
+      child: InkWell(
+        onTap: () => _viewNGOUsers(context, ngo),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Row(
+            children: [
+              Expanded(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primaryBlue.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.business,
+                      color: AppColors.primaryBlue,
+                      size: 24,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton(
-          icon: const Icon(Icons.more_vert),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              child: const Row(
-                children: [
-                  Icon(Icons.edit, size: 20),
-                  SizedBox(width: 8),
-                  Text('Edit'),
-                ],
-              ),
-              onTap: () => Future.delayed(
-                const Duration(milliseconds: 100),
-                () => _showEditNGODialog(context, ngo),
-              ),
-            ),
-            PopupMenuItem(
-              child: Row(
-                children: [
-                  Icon(
-                    ngo.isActive ? Icons.block : Icons.check_circle,
-                    size: 20,
-                    color: ngo.isActive ? Colors.red : Colors.green,
+                  title: Text(
+                    ngo.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(ngo.isActive ? 'Deactivate' : 'Activate'),
-                ],
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      if (ngo.description.isNotEmpty)
+                        Text(
+                          ngo.description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          if (ngo.instagramUsername != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.camera_alt, size: 14, color: Colors.grey[600]),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    '@${ngo.instagramUsername!}',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (ngo.email != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.email, size: 14, color: Colors.grey[600]),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    ngo.email!,
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: ngo.isActive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              ngo.isActive ? 'Active' : 'Inactive',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: ngo.isActive ? Colors.green[700] : Colors.red[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  trailing: Icon(
+                    Icons.people,
+                    color: AppColors.primaryBlue.withOpacity(0.7),
+                    size: 20,
+                  ),
+                ),
               ),
-              onTap: () => Future.delayed(
-                const Duration(milliseconds: 100),
-                () => _toggleNGOStatus(ngo),
-              ),
+              const SizedBox(width: 8),
+              Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!, width: 1),
+          ),
+          child: PopupMenuButton<void>(
+            icon: const Icon(Icons.settings, size: 20, color: Colors.grey),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            if (ngo.isActive)
-              PopupMenuItem(
+            itemBuilder: (context) => [
+              PopupMenuItem<void>(
                 child: const Row(
                   children: [
-                    Icon(Icons.delete, size: 20, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Delete', style: TextStyle(color: Colors.red)),
+                    Icon(Icons.edit, size: 20, color: AppColors.primaryBlue),
+                    SizedBox(width: 12),
+                    Text('Edit Details', style: TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
                 onTap: () => Future.delayed(
                   const Duration(milliseconds: 100),
-                  () => _showDeleteDialog(context, ngo),
+                  () => _showEditNGODialog(context, ngo),
                 ),
               ),
-          ],
+              PopupMenuItem<void>(
+                child: Row(
+                  children: [
+                    Icon(
+                      ngo.isActive ? Icons.block : Icons.check_circle,
+                      size: 20,
+                      color: ngo.isActive ? Colors.orange : Colors.green,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      ngo.isActive ? 'Deactivate' : 'Activate',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                onTap: () => Future.delayed(
+                  const Duration(milliseconds: 100),
+                  () => _toggleNGOStatus(ngo),
+                ),
+              ),
+              if (ngo.isActive) ...[
+                const PopupMenuDivider(),
+                PopupMenuItem<void>(
+                  child: const Row(
+                    children: [
+                      Icon(Icons.delete, size: 20, color: Colors.red),
+                      SizedBox(width: 12),
+                      Text(
+                        'Delete',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () => Future.delayed(
+                    const Duration(milliseconds: 100),
+                    () => _showDeleteDialog(context, ngo),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
-        onTap: () => _showEditNGODialog(context, ngo),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -464,6 +531,15 @@ class _ManageNGOScreenState extends State<ManageNGOScreen> {
         );
       }
     }
+  }
+
+  void _viewNGOUsers(BuildContext context, NGO ngo) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ManageUsersScreen(filterByNgoId: ngo.id, ngoName: ngo.name),
+      ),
+    );
   }
 
   Future<void> _showDeleteDialog(BuildContext context, NGO ngo) async {

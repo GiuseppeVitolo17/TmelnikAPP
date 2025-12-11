@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/project_offer.dart';
 import '../theme/app_theme.dart';
+import '../services/application_service.dart';
 
 /// Detail screen for project offers with scale animation and card-like design
 class ProjectOfferDetailScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  final ApplicationService _applicationService = ApplicationService();
 
   @override
   void initState() {
@@ -51,6 +54,71 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  /// Handle Apply button click
+  /// Saves the application to user's profile and opens the apply link
+  Future<void> _handleApply() async {
+    final user = FirebaseAuth.instance.currentUser;
+    
+    // Check if user is logged in
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please log in to apply'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      // Save application to Firestore
+      await _applicationService.applyToProject(widget.projectOffer);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Application saved! Opening apply form...'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Open the apply link
+      final applyUrl = widget.projectOffer.applyLink.isNotEmpty
+          ? widget.projectOffer.applyLink
+          : widget.projectOffer.contactInfo;
+      
+      await _openUrl(applyUrl);
+    } catch (e) {
+      if (mounted) {
+        // If user already applied, still open the link
+        if (e.toString().contains('already applied')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You have already applied. Opening form...'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          final applyUrl = widget.projectOffer.applyLink.isNotEmpty
+              ? widget.projectOffer.applyLink
+              : widget.projectOffer.contactInfo;
+          await _openUrl(applyUrl);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving application: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Future<void> _openUrl(String url) async {
@@ -590,49 +658,66 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
   }
 
   Widget _buildContactCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppShadows.soft,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.pink.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+    final instagramUsername = widget.projectOffer.instagramAccount;
+    final instagramUrl = 'https://www.instagram.com/$instagramUsername/';
+    
+    return InkWell(
+      onTap: () async {
+        final uri = Uri.parse(instagramUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: AppShadows.soft,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.pink.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.camera_alt, color: Colors.pink, size: 24),
             ),
-            child: const Icon(Icons.camera_alt, color: Colors.pink, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Instagram',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Instagram',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '@${widget.projectOffer.instagramAccount}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                  const SizedBox(height: 4),
+                  Text(
+                    '@$instagramUsername',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -664,11 +749,7 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => _openUrl(
-              widget.projectOffer.applyLink.isNotEmpty
-                  ? widget.projectOffer.applyLink
-                  : widget.projectOffer.contactInfo,
-            ),
+            onPressed: () => _handleApply(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryBlue,
               foregroundColor: Colors.white,
