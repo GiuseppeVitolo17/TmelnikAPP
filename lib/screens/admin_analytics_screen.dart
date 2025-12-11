@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../services/application_service.dart';
 import '../services/user_role_service.dart';
@@ -16,8 +15,6 @@ class AdminAnalyticsScreen extends StatefulWidget {
 
 class _AdminAnalyticsScreenState extends State<AdminAnalyticsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final ApplicationService _applicationService = ApplicationService();
-  final UserRoleService _userRoleService = UserRoleService();
   final NGOService _ngoService = NGOService();
   
   bool _isLoading = true;

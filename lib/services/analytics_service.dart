@@ -52,9 +52,15 @@ class AnalyticsService {
     if (!_initialized || _analytics == null) return;
     
     try {
+      // Convert Map<String, dynamic>? to Map<String, Object>?
+      Map<String, Object>? convertedParams;
+      if (parameters != null) {
+        convertedParams = parameters.map((key, value) => MapEntry(key, value as Object));
+      }
+      
       await _analytics!.logEvent(
         name: eventName,
-        parameters: parameters,
+        parameters: convertedParams,
       );
       if (kDebugMode) {
         debugPrint('📊 [ANALYTICS] Event: $eventName ${parameters != null ? "($parameters)" : ""}');

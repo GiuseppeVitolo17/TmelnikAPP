@@ -100,7 +100,7 @@ void _initializeBackgroundServices() {
       });
       
       // Initialize Analytics in background (non-blocking)
-      AnalyticsService().initialize().catchError((e) {
+      analyticsService.initialize().catchError((e) {
         if (kDebugMode) print('Analytics init error: $e');
       });
       
