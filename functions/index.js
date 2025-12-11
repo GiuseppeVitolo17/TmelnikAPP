@@ -1,44 +1,11 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const nodemailer = require('nodemailer');
 
 admin.initializeApp();
 
-// Configure email transporter
-// Supports multiple email providers: Gmail, SendGrid, SMTP
-function getEmailTransporter() {
-  const emailConfig = functions.config().email || {};
-  const emailUser = emailConfig.user || process.env.EMAIL_USER;
-  const emailPass = emailConfig.pass || process.env.EMAIL_PASS;
-  const emailService = emailConfig.service || process.env.EMAIL_SERVICE || 'gmail';
-  const emailHost = emailConfig.host || process.env.EMAIL_HOST;
-  const emailPort = emailConfig.port || process.env.EMAIL_PORT || 587;
-  const emailSecure = emailConfig.secure || process.env.EMAIL_SECURE === 'true';
-
-  // Use SMTP config if host is provided, otherwise use service
-  if (emailHost) {
-    return nodemailer.createTransport({
-      host: emailHost,
-      port: parseInt(emailPort),
-      secure: emailSecure,
-      auth: {
-        user: emailUser,
-        pass: emailPass,
-      },
-    });
-  }
-
-  // Use service-based config (Gmail, SendGrid, etc.)
-  return nodemailer.createTransport({
-    service: emailService,
-    auth: {
-      user: emailUser,
-      pass: emailPass,
-    },
-  });
-}
-
-const transporter = getEmailTransporter();
+// Email collection name for Firebase Trigger Email extension
+// Default is 'mail', but check your extension configuration
+const MAIL_COLLECTION = 'mail';
 
 /**
  * Cloud Function triggered when a new project application is created
@@ -102,16 +69,69 @@ exports.onApplicationCreated = functions
         });
       }
 
-      // Send email to organizer(s)
+      // Send email to organizer(s) using Firebase Trigger Email extension
       if (organizerEmails.length > 0) {
-        const emailFrom = functions.config().email?.from || process.env.EMAIL_FROM || 'noreply@tmelnikapp.com';
-        
         for (const email of organizerEmails) {
           try {
-            await transporter.sendMail({
-              from: emailFrom,
+            // Write to mail collection - Firebase Trigger Email extension will send it
+            await admin.firestore().collection(MAIL_COLLECTION).add({
               to: email,
-              subject: `New Application: ${application.projectTitle}`,
+              message: {
+                subject: `New Application: ${application.projectTitle}`,
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <style>
+                      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                      .header { background-color: #2196F3; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                      .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+                      .info-box { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #2196F3; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="container">
+                      <div class="header">
+                        <h1>📧 New Project Application</h1>
+                      </div>
+                      <div class="content">
+                        <p>A new application has been submitted for your project.</p>
+                        <div class="info-box">
+                          <h3>${application.projectTitle}</h3>
+                          <p><strong>Applicant:</strong> ${application.userEmail}</p>
+                          <p><strong>Applied on:</strong> ${new Date(application.appliedAt.toMillis()).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                          <p><strong>Status:</strong> <span style="color: orange; font-weight: bold;">${application.status.toUpperCase()}</span></p>
+                          ${ngoData ? `<p><strong>Organization:</strong> ${ngoData.name || 'N/A'}</p>` : ''}
+                        </div>
+                        <p>Please log in to the app to review and manage this application.</p>
+                        <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+                          This is an automated notification from Tmelnik App.
+                        </p>
+                      </div>
+                    </div>
+                  </body>
+                  </html>
+                `,
+              },
+            });
+            console.log(`✅ Email queued for organizer: ${email}`);
+          } catch (emailError) {
+            console.error(`❌ Failed to queue email to ${email}:`, emailError);
+          }
+        }
+        console.log(`📧 Email notifications queued for ${organizerEmails.length} organizer(s)`);
+      }
+
+      // Send confirmation email to applicant using Firebase Trigger Email extension
+      if (application.userEmail) {
+        try {
+          // Write to mail collection - Firebase Trigger Email extension will send it
+          await admin.firestore().collection(MAIL_COLLECTION).add({
+            to: application.userEmail,
+            message: {
+              subject: `Application Confirmation: ${application.projectTitle}`,
               html: `
                 <!DOCTYPE html>
                 <html>
@@ -120,96 +140,41 @@ exports.onApplicationCreated = functions
                   <style>
                     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background-color: #2196F3; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                    .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
                     .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
-                    .info-box { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #2196F3; }
-                    .button { display: inline-block; padding: 12px 24px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+                    .info-box { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #4CAF50; }
+                    .status-badge { display: inline-block; padding: 5px 10px; background-color: orange; color: white; border-radius: 3px; font-weight: bold; }
                   </style>
                 </head>
                 <body>
                   <div class="container">
                     <div class="header">
-                      <h1>📧 New Project Application</h1>
+                      <h1>✅ Application Received</h1>
                     </div>
                     <div class="content">
-                      <p>A new application has been submitted for your project.</p>
+                      <p>Dear Applicant,</p>
+                      <p>Thank you for your application! We have received your submission and it is now under review.</p>
                       <div class="info-box">
                         <h3>${application.projectTitle}</h3>
-                        <p><strong>Applicant:</strong> ${application.userEmail}</p>
-                        <p><strong>Applied on:</strong> ${new Date(application.appliedAt.toMillis()).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
-                        <p><strong>Status:</strong> <span style="color: orange; font-weight: bold;">${application.status.toUpperCase()}</span></p>
-                        ${ngoData ? `<p><strong>Organization:</strong> ${ngoData.name || 'N/A'}</p>` : ''}
+                        <p><strong>Application Date:</strong> ${new Date(application.appliedAt.toMillis()).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
+                        <p><strong>Status:</strong> <span class="status-badge">${application.status.toUpperCase()}</span></p>
                       </div>
-                      <p>Please log in to the app to review and manage this application.</p>
+                      <p>You will receive an email notification when your application status is updated.</p>
+                      <p>You can also track all your applications in the app under your profile section.</p>
                       <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
-                        This is an automated notification from Tmelnik App.
+                        This is an automated confirmation from Tmelnik App.<br>
+                        If you have any questions, please contact the organization directly.
                       </p>
                     </div>
                   </div>
                 </body>
                 </html>
               `,
-            });
-            console.log(`✅ Email sent to organizer: ${email}`);
-          } catch (emailError) {
-            console.error(`❌ Failed to send email to ${email}:`, emailError);
-            // Continue with other emails even if one fails
-          }
-        }
-        console.log(`📧 Email notifications sent to ${organizerEmails.length} organizer(s)`);
-      }
-
-      // Send confirmation email to applicant
-      if (application.userEmail) {
-        try {
-          const emailFrom = functions.config().email?.from || process.env.EMAIL_FROM || 'noreply@tmelnikapp.com';
-          
-          await transporter.sendMail({
-            from: emailFrom,
-            to: application.userEmail,
-            subject: `Application Confirmation: ${application.projectTitle}`,
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="utf-8">
-                <style>
-                  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                  .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-                  .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
-                  .info-box { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #4CAF50; }
-                  .status-badge { display: inline-block; padding: 5px 10px; background-color: orange; color: white; border-radius: 3px; font-weight: bold; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <div class="header">
-                    <h1>✅ Application Received</h1>
-                  </div>
-                  <div class="content">
-                    <p>Dear Applicant,</p>
-                    <p>Thank you for your application! We have received your submission and it is now under review.</p>
-                    <div class="info-box">
-                      <h3>${application.projectTitle}</h3>
-                      <p><strong>Application Date:</strong> ${new Date(application.appliedAt.toMillis()).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
-                      <p><strong>Status:</strong> <span class="status-badge">${application.status.toUpperCase()}</span></p>
-                    </div>
-                    <p>You will receive an email notification when your application status is updated.</p>
-                    <p>You can also track all your applications in the app under your profile section.</p>
-                    <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
-                      This is an automated confirmation from Tmelnik App.<br>
-                      If you have any questions, please contact the organization directly.
-                    </p>
-                  </div>
-                </div>
-              </body>
-              </html>
-            `,
+            },
           });
-          console.log(`✅ Confirmation email sent to applicant: ${application.userEmail}`);
+          console.log(`✅ Confirmation email queued for applicant: ${application.userEmail}`);
         } catch (emailError) {
-          console.error(`❌ Failed to send confirmation email to ${application.userEmail}:`, emailError);
+          console.error(`❌ Failed to queue confirmation email to ${application.userEmail}:`, emailError);
         }
       }
 
@@ -241,8 +206,6 @@ exports.onApplicationStatusUpdated = functions
 
     try {
       if (after.userEmail) {
-        const emailFrom = functions.config().email?.from || process.env.EMAIL_FROM || 'noreply@tmelnikapp.com';
-        
         // Determine status color and emoji
         let statusColor = '#FF9800'; // orange for pending
         let statusEmoji = '⏳';
@@ -255,53 +218,55 @@ exports.onApplicationStatusUpdated = functions
         }
 
         try {
-          await transporter.sendMail({
-            from: emailFrom,
+          // Write to mail collection - Firebase Trigger Email extension will send it
+          await admin.firestore().collection(MAIL_COLLECTION).add({
             to: after.userEmail,
-            subject: `Application Update: ${after.projectTitle}`,
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="utf-8">
-                <style>
-                  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                  .header { background-color: ${statusColor}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-                  .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
-                  .status-box { background-color: white; padding: 20px; margin: 15px 0; border-radius: 5px; border-left: 4px solid ${statusColor}; }
-                  .status-badge { display: inline-block; padding: 8px 16px; background-color: ${statusColor}; color: white; border-radius: 5px; font-weight: bold; font-size: 16px; }
-                  .old-status { color: #666; text-decoration: line-through; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <div class="header">
-                    <h1>${statusEmoji} Application Status Updated</h1>
-                  </div>
-                  <div class="content">
-                    <p>Dear Applicant,</p>
-                    <p>Your application status has been updated by the organization.</p>
-                    <div class="status-box">
-                      <h3>${after.projectTitle}</h3>
-                      <p><span class="old-status">Previous: ${before.status.toUpperCase()}</span></p>
-                      <p><strong>New Status:</strong> <span class="status-badge">${statusEmoji} ${after.status.toUpperCase()}</span></p>
+            message: {
+              subject: `Application Update: ${after.projectTitle}`,
+              html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background-color: ${statusColor}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                    .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+                    .status-box { background-color: white; padding: 20px; margin: 15px 0; border-radius: 5px; border-left: 4px solid ${statusColor}; }
+                    .status-badge { display: inline-block; padding: 8px 16px; background-color: ${statusColor}; color: white; border-radius: 5px; font-weight: bold; font-size: 16px; }
+                    .old-status { color: #666; text-decoration: line-through; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <div class="header">
+                      <h1>${statusEmoji} Application Status Updated</h1>
                     </div>
-                    ${after.status === 'accepted' ? '<p style="background-color: #E8F5E9; padding: 15px; border-radius: 5px;"><strong>🎉 Congratulations!</strong> Your application has been accepted. The organization will contact you soon with further details.</p>' : ''}
-                    ${after.status === 'rejected' ? '<p style="background-color: #FFEBEE; padding: 15px; border-radius: 5px;">We\'re sorry to inform you that your application was not selected this time. Don\'t give up - there are many other opportunities available!</p>' : ''}
-                    <p>Please log in to the app to view more details and manage your applications.</p>
-                    <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
-                      This is an automated notification from Tmelnik App.
-                    </p>
+                    <div class="content">
+                      <p>Dear Applicant,</p>
+                      <p>Your application status has been updated by the organization.</p>
+                      <div class="status-box">
+                        <h3>${after.projectTitle}</h3>
+                        <p><span class="old-status">Previous: ${before.status.toUpperCase()}</span></p>
+                        <p><strong>New Status:</strong> <span class="status-badge">${statusEmoji} ${after.status.toUpperCase()}</span></p>
+                      </div>
+                      ${after.status === 'accepted' ? '<p style="background-color: #E8F5E9; padding: 15px; border-radius: 5px;"><strong>🎉 Congratulations!</strong> Your application has been accepted. The organization will contact you soon with further details.</p>' : ''}
+                      ${after.status === 'rejected' ? '<p style="background-color: #FFEBEE; padding: 15px; border-radius: 5px;">We\'re sorry to inform you that your application was not selected this time. Don\'t give up - there are many other opportunities available!</p>' : ''}
+                      <p>Please log in to the app to view more details and manage your applications.</p>
+                      <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+                        This is an automated notification from Tmelnik App.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </body>
-              </html>
-            `,
+                </body>
+                </html>
+              `,
+            },
           });
-          console.log(`✅ Status update email sent to: ${after.userEmail}`);
+          console.log(`✅ Status update email queued for: ${after.userEmail}`);
         } catch (emailError) {
-          console.error(`❌ Failed to send status update email to ${after.userEmail}:`, emailError);
+          console.error(`❌ Failed to queue status update email to ${after.userEmail}:`, emailError);
         }
       }
 
