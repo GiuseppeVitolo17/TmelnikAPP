@@ -31,6 +31,7 @@ import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
 import 'services/notification_service.dart';
+import 'services/analytics_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Initialize analytics service instance
