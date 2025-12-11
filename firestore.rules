@@ -104,6 +104,39 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
     }
     
+    // Project Applications collection
+    match /project_applications/{applicationId} {
+      // Users can read their own applications
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      
+      // Organizers can read applications for projects from their NGO
+      allow read: if isOrganizer() && 
+                     resource.data.ngoId != null &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.ngoId == resource.data.ngoId;
+      
+      // Admins can read all applications
+      allow read: if isAdmin();
+      
+      // Users can create their own applications
+      allow create: if isAuthenticated() 
+                     && request.resource.data.userId == request.auth.uid
+                     && request.resource.data.userEmail == request.auth.token.email;
+      
+      // Only organizers and admins can update application status
+      // Organizers can only update applications for their NGO's projects
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (isOrganizer() && 
+         resource.data.ngoId != null &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.ngoId == resource.data.ngoId &&
+         // Can only update status field, not other fields
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lastUpdated']))
+      );
+      
+      // Users can delete their own applications (withdraw), admins can delete any
+      allow delete: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
+    }
+    
     // Deny all other collections
     match /{document=**} {
       allow read, write: if false;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 import '../services/notification_service.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
 
 /// Settings screen with app preferences
 class SettingsScreen extends StatefulWidget {
@@ -146,6 +148,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 24),
                   
+                  // Legal Section
+                  const Text(
+                    'Legal',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: AppShadows.soft,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildLegalTile(
+                          icon: Icons.privacy_tip,
+                          label: 'Privacy Policy',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PrivacyPolicyScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildLegalTile(
+                          icon: Icons.description,
+                          label: 'Terms of Service',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TermsOfServiceScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
                   // App Info Section
                   const Text(
                     'App Information',
@@ -228,6 +278,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLegalTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.primaryBlue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: AppColors.primaryBlue, size: 24),
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      trailing: Icon(Icons.chevron_right, color: Colors.grey[400]),
+      onTap: onTap,
     );
   }
 }

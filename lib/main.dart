@@ -26,6 +26,7 @@ import 'screens/manage_ngos_screen.dart';
 import 'screens/manage_users_screen.dart';
 import 'screens/project_applications_screen.dart';
 import 'screens/organizer_projects_screen.dart';
+import 'screens/admin_analytics_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -96,6 +97,11 @@ void _initializeBackgroundServices() {
         debugLogger.log('App started');
       }).catchError((e) {
         if (kDebugMode) print('Log init error: $e');
+      });
+      
+      // Initialize Analytics in background (non-blocking)
+      AnalyticsService().initialize().catchError((e) {
+        if (kDebugMode) print('Analytics init error: $e');
       });
       
       // Restore Google session in background (non-blocking)
@@ -1137,6 +1143,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => const ManageUsersScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildMenuTile(
+                      context: context,
+                      icon: Icons.analytics,
+                      title: 'Analytics Dashboard',
+                      subtitle: 'View app statistics and insights',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminAnalyticsScreen(),
                           ),
                         );
                       },
