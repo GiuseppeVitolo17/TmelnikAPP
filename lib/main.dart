@@ -27,6 +27,7 @@ import 'screens/manage_users_screen.dart';
 import 'screens/project_applications_screen.dart';
 import 'screens/organizer_projects_screen.dart';
 import 'screens/admin_analytics_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'config/loading_config.dart';
 import 'services/loading_controller.dart';
 import 'services/user_role_service.dart';
@@ -234,6 +235,34 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _isGuestMode = false;
+  bool _isCheckingOnboarding = true;
+  bool _onboardingCompleted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final completed = prefs.getBool('onboarding_completed') ?? false;
+      if (mounted) {
+        setState(() {
+          _onboardingCompleted = completed;
+          _isCheckingOnboarding = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _onboardingCompleted = false;
+          _isCheckingOnboarding = false;
+        });
+      }
+    }
+  }
 
   void _enterGuestMode() {
     setState(() {
@@ -252,6 +281,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     debugLogger.ui('Building AuthWrapper widget');
+    
+    // Check onboarding status first
+    if (_isCheckingOnboarding) {
+      return const LoadingScreen();
+    }
+
+    // Show onboarding if not completed
+    if (!_onboardingCompleted) {
+      return const OnboardingScreen();
+    }
     
     // If in guest mode, show main app with guest restrictions
     if (_isGuestMode) {
