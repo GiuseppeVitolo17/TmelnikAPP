@@ -4,13 +4,24 @@
 
 This guide explains how to set up email notifications for project applications using Firebase Cloud Functions.
 
-## Prerequisites
+**✅ Functions are already created and ready to deploy!**
 
-1. Firebase CLI installed: `npm install -g firebase-tools`
-2. Firebase project with Cloud Functions enabled
-3. Email service credentials (Gmail, SendGrid, Mailgun, etc.)
+## Quick Start (Automated Setup)
 
-## Setup Steps
+Run the setup script:
+
+```bash
+chmod +x setup_email_functions.sh
+./setup_email_functions.sh
+```
+
+The script will:
+- Check/install Firebase CLI
+- Install function dependencies
+- Guide you through email configuration
+- Optionally deploy the functions
+
+## Manual Setup Steps
 
 ### 1. Install Firebase CLI and Login
 
@@ -19,33 +30,62 @@ npm install -g firebase-tools
 firebase login
 ```
 
-### 2. Initialize Functions (if not already done)
+### 2. Install Function Dependencies
 
 ```bash
 cd functions
 npm install
+cd ..
 ```
 
 ### 3. Configure Email Credentials
 
-#### Option A: Using Firebase Functions Config (Recommended)
+#### Option A: Gmail (Easiest for Testing)
+
+**Step 1:** Enable 2-factor authentication on your Google Account
+- Go to: https://myaccount.google.com/security
+- Enable "2-Step Verification"
+
+**Step 2:** Generate App Password
+- Go to: https://myaccount.google.com/apppasswords
+- Select "Mail" and "Other (Custom name)"
+- Enter "Tmelnik Functions" as name
+- Copy the generated 16-character password
+
+**Step 3:** Configure Firebase Functions
 
 ```bash
 firebase functions:config:set email.user="your-email@gmail.com"
-firebase functions:config:set email.pass="your-app-password"
+firebase functions:config:set email.pass="xxxx xxxx xxxx xxxx"  # Your app password
+firebase functions:config:set email.from="noreply@tmelnikapp.com"
+firebase functions:config:set email.service="gmail"
+```
+
+#### Option B: Custom SMTP Server
+
+```bash
+firebase functions:config:set email.host="smtp.example.com"
+firebase functions:config:set email.port="587"
+firebase functions:config:set email.user="your-email@example.com"
+firebase functions:config:set email.pass="your-password"
+firebase functions:config:set email.from="noreply@tmelnikapp.com"
+firebase functions:config:set email.secure="false"
+```
+
+#### Option C: SendGrid (Recommended for Production)
+
+1. Sign up at https://sendgrid.com
+2. Create API Key with "Mail Send" permissions
+3. Configure:
+
+```bash
+firebase functions:config:set email.service="sendgrid"
+firebase functions:config:set email.user="apikey"
+firebase functions:config:set email.pass="your-sendgrid-api-key"
 firebase functions:config:set email.from="noreply@tmelnikapp.com"
 ```
 
-**For Gmail:**
-- Enable 2-factor authentication
-- Generate an "App Password" in Google Account settings
-- Use the app password instead of your regular password
-
-#### Option B: Using Environment Variables
-
-Set environment variables in Firebase Console:
-- Go to Firebase Console → Functions → Configuration
-- Add: `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_FROM`
+**Note:** For SendGrid, you'll need to modify the transporter configuration to use SendGrid's API.
 
 ### 4. Deploy Functions
 
@@ -53,11 +93,32 @@ Set environment variables in Firebase Console:
 firebase deploy --only functions
 ```
 
-### 5. Test Email Notifications
+**Deploy only specific functions:**
+```bash
+firebase deploy --only functions:onApplicationCreated
+firebase deploy --only functions:onApplicationStatusUpdated
+```
+
+### 5. Verify Deployment
+
+Check deployed functions:
+```bash
+firebase functions:list
+```
+
+### 6. Test Email Notifications
 
 1. Create a test application in the app
-2. Check Firebase Functions logs: `firebase functions:log`
-3. Verify emails are sent to organizer and applicant
+2. Check Firebase Functions logs:
+   ```bash
+   firebase functions:log
+   ```
+3. View logs in real-time:
+   ```bash
+   firebase functions:log --only onApplicationCreated
+   ```
+4. Verify emails are sent to organizer and applicant
+5. Test status update by changing application status in the app
 
 ## Functions Created
 
