@@ -79,6 +79,7 @@ class _LoadingScreenState extends State<LoadingScreen>
 
   @override
   Widget build(BuildContext context) {
+    print('📱 LoadingScreen: Building widget');
     return Scaffold(
       backgroundColor: Colors.white,
       body: Container(

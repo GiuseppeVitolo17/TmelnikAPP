@@ -64,16 +64,15 @@ void main() async {
   
   // Initialize Firebase (critical - must be done before runApp)
   try {
+    print('🔥 Starting Firebase initialization...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    if (kDebugMode) {
-      print('✅ Firebase initialized');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print('❌ Error initializing Firebase: $e');
-    }
+    print('✅ Firebase initialized successfully');
+  } catch (e, stackTrace) {
+    print('❌ CRITICAL: Error initializing Firebase: $e');
+    print('Stack trace: $stackTrace');
+    // Continue app launch even if Firebase fails - don't block UI
   }
 
   // Register FCM background handler (non-blocking)
@@ -86,7 +85,9 @@ void main() async {
   }
   
   // Run app immediately - don't block UI
+  print('🚀 Starting Flutter app...');
   runApp(const TmelnikApp());
+  print('✅ Flutter app started');
   
   // Initialize non-critical services in background after UI is ready
   _initializeBackgroundServices();
@@ -184,10 +185,12 @@ class TmelnikApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('🏗️ Building TmelnikApp widget...');
     debugLogger.ui('Building TmelnikApp widget');
     
     // Use centralized theme and merge with additional customizations
     final baseTheme = buildAppTheme();
+    print('✅ Theme built, creating MaterialApp...');
     
     return MaterialApp(
       title: 'Tmelnik - Youth Exchange Management',
@@ -283,10 +286,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔐 Building AuthWrapper widget...');
     debugLogger.ui('Building AuthWrapper widget');
     
     // Check onboarding status first
     if (_isCheckingOnboarding) {
+      print('⏳ Showing LoadingScreen (checking onboarding)...');
       return const LoadingScreen();
     }
 
