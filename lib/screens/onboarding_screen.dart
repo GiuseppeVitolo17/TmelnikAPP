@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:lottie/lottie.dart';
 import 'package:animations/animations.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final VoidCallback? onCompleted;
+  
+  const OnboardingScreen({super.key, this.onCompleted});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -23,28 +24,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       description: 'Discover amazing volunteer projects and opportunities around the world.',
       icon: Icons.explore,
       color: AppColors.primaryBlue,
-      lottieUrl: 'https://lottie.host/embed/4f5b8c9d-1a2b-3c4d-5e6f-7a8b9c0d1e2f.json', // Explore animation
     ),
     OnboardingPage(
       title: 'Apply to Projects',
       description: 'Browse projects from NGOs and apply directly through the app. Track your applications easily.',
       icon: Icons.work,
       color: Colors.green,
-      lottieUrl: 'https://lottie.host/embed/5g6c9d0e-2b3c-4d5e-6f7a-8b9c0d1e2f3a.json', // Work/Apply animation
     ),
     OnboardingPage(
       title: 'Stay Updated',
       description: 'Get notifications about new projects and important updates. Never miss an opportunity!',
       icon: Icons.notifications,
       color: Colors.orange,
-      lottieUrl: 'https://lottie.host/embed/6h7d0e1f-3c4d-5e6f-7a8b-9c0d1e2f3b4c.json', // Notification animation
     ),
     OnboardingPage(
       title: 'Track Your Journey',
       description: 'Keep a personal diary and reflect on your experiences. Document your growth.',
       icon: Icons.book,
       color: Colors.purple,
-      lottieUrl: 'https://lottie.host/embed/7i8e1f2g-4d5e-6f7a-8b9c-0d1e2f3b4c5d.json', // Book/Journey animation
     ),
   ];
 
@@ -70,9 +67,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     await prefs.setBool('onboarding_completed', true);
     
     if (mounted) {
-      // Just pop or let AuthWrapper handle the navigation
-      // The AuthWrapper will automatically show the auth screen or main app
-      Navigator.of(context).pop();
+      // Call callback if provided, otherwise just pop
+      if (widget.onCompleted != null) {
+        widget.onCompleted!();
+      } else {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -166,10 +166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                       color: Colors.white,
                     ),
                   ),
-                )
-                    .animate()
-                    .fadeIn(duration: 400.ms, delay: 800.ms)
-                    .slideY(begin: 0.3, end: 0, duration: 400.ms, delay: 800.ms, curve: Curves.easeOut),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -201,46 +198,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ),
               ],
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Try to load Lottie animation, fallback to animated icon
-                if (page.lottieUrl != null)
-                  Lottie.network(
-                    page.lottieUrl!,
-                    width: 240,
-                    height: 240,
-                    fit: BoxFit.contain,
-                    repeat: true,
-                    errorBuilder: (context, error, stackTrace) {
-                      // Fallback to animated icon if Lottie fails
-                      return Icon(
-                        page.icon,
-                        size: 120,
-                        color: page.color,
-                      )
-                          .animate(onPlay: (controller) => controller.repeat())
-                          .shimmer(duration: 2000.ms, color: page.color.withOpacity(0.5))
-                          .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 1500.ms, curve: Curves.easeInOut);
-                    },
-                  )
-                else
-                  Icon(
-                    page.icon,
-                    size: 120,
-                    color: page.color,
-                  )
-                      .animate(onPlay: (controller) => controller.repeat())
-                      .shimmer(duration: 2000.ms, color: page.color.withOpacity(0.5))
-                      .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 1500.ms, curve: Curves.easeInOut),
-              ],
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 600.ms, delay: 200.ms)
-              .scale(begin: const Offset(0.7, 0.7), end: const Offset(1, 1), duration: 700.ms, delay: 200.ms, curve: Curves.easeOutBack)
-              .then()
-              .shimmer(duration: 1000.ms, color: page.color.withOpacity(0.3)),
+            child: Icon(
+              page.icon,
+              size: 120,
+              color: page.color,
+            )
+                .animate()
+                .fadeIn(duration: 300.ms, delay: 100.ms)
+                .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.0, 1.0), duration: 400.ms, delay: 100.ms, curve: Curves.easeOut),
+          ),
           
           const SizedBox(height: 48),
           
@@ -255,8 +221,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             textAlign: TextAlign.center,
           )
               .animate()
-              .fadeIn(duration: 500.ms, delay: 400.ms)
-              .slideY(begin: 0.2, end: 0, duration: 500.ms, delay: 400.ms, curve: Curves.easeOut),
+              .fadeIn(duration: 300.ms, delay: 200.ms)
+              .slideY(begin: 0.1, end: 0, duration: 300.ms, delay: 200.ms, curve: Curves.easeOut),
           
           const SizedBox(height: 16),
           
@@ -271,8 +237,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             textAlign: TextAlign.center,
           )
               .animate()
-              .fadeIn(duration: 500.ms, delay: 600.ms)
-              .slideY(begin: 0.2, end: 0, duration: 500.ms, delay: 600.ms, curve: Curves.easeOut),
+              .fadeIn(duration: 300.ms, delay: 300.ms)
+              .slideY(begin: 0.1, end: 0, duration: 300.ms, delay: 300.ms, curve: Curves.easeOut),
         ],
       ),
     );
@@ -297,16 +263,12 @@ class OnboardingPage {
   final String description;
   final IconData icon;
   final Color color;
-  final String? lottieUrl;
-  final String? imageUrl;
 
   OnboardingPage({
     required this.title,
     required this.description,
     required this.icon,
     required this.color,
-    this.lottieUrl,
-    this.imageUrl,
   });
 }
 

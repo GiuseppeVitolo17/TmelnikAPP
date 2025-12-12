@@ -289,7 +289,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Show onboarding if not completed
     if (!_onboardingCompleted) {
-      return const OnboardingScreen();
+      return OnboardingScreen(
+        onCompleted: () {
+          // Force rebuild by rechecking onboarding status
+          _checkOnboardingStatus();
+        },
+      );
     }
     
     // If in guest mode, show main app with guest restrictions
