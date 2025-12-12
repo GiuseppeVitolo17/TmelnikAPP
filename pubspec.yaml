@@ -44,6 +44,11 @@ dependencies:
   
   # State management
   provider: ^6.1.1
+  
+  # Animations
+  lottie: ^3.1.2  # Lottie animations from LottieFiles
+  animations: ^2.0.11  # Flutter animations package
+  flutter_animate: ^4.5.0  # Simple animations
 
 dev_dependencies:
   flutter_test:
@@ -55,3 +60,4 @@ flutter:
   assets:
     - assets/images/
     - assets/images/placeholder.jpg
+    - assets/animations/

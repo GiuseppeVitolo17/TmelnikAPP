@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script per avviare l'app Flutter su Chrome
-# SEMPRE sulla porta 5000
+# IMPORTANTE: SEMPRE usare la porta 5000 - non cambiare mai questa porta!
 
 cd /Users/giuseppe/TmelnikAPP
 
