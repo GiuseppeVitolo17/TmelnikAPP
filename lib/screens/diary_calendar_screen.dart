@@ -278,6 +278,67 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                     _focusedDay = focusedDay;
                   },
                   calendarBuilders: CalendarBuilders(
+                    defaultBuilder: (context, date, focusedDay) {
+                      // Get events for this day
+                      final dayEvents = eventLoader(date);
+                      if (dayEvents.isEmpty) {
+                        return null; // Use default styling
+                      }
+                      
+                      // Check if this day has departure, return, or deadline events
+                      bool hasDeparture = false;
+                      bool hasReturn = false;
+                      bool hasDeadline = false;
+                      
+                      for (var event in dayEvents) {
+                        if (event.type == EventType.departure) {
+                          hasDeparture = true;
+                        } else if (event.type == EventType.returnDate) {
+                          hasReturn = true;
+                        } else if (event.type == EventType.deadline) {
+                          hasDeadline = true;
+                        }
+                      }
+                      
+                      // Color the day based on event type
+                      Color? backgroundColor;
+                      Color? textColor;
+                      
+                      if (hasDeadline) {
+                        // Red for deadline
+                        backgroundColor = Colors.red.withOpacity(0.2);
+                        textColor = Colors.red[700];
+                      } else if (hasDeparture || hasReturn) {
+                        // Green for departure/return
+                        backgroundColor = Colors.green.withOpacity(0.2);
+                        textColor = Colors.green[700];
+                      }
+                      
+                      if (backgroundColor != null && textColor != null) {
+                        return Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: backgroundColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: textColor.withOpacity(0.5),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${date.day}',
+                              style: TextStyle(
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      return null; // Use default styling
+                    },
                     markerBuilder: (context, date, events) {
                       // Get events for this day using projectOffers from closure
                       final dayEvents = eventLoader(date);

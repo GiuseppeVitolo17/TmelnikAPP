@@ -5,7 +5,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId: '950924265668-m1ajd0cur7oi8uf90qqarfm1f5r3plj4.apps.googleusercontent.com', // Web client ID from Firebase
+  );
 
   // Get current user
   User? get currentUser => _auth.currentUser;

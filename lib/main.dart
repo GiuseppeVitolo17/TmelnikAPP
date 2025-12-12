@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -124,7 +124,10 @@ void _initializeBackgroundServices() {
 Future<void> _restoreGoogleSession() async {
   try {
     if (FirebaseAuth.instance.currentUser == null) {
-      final google = GoogleSignIn();
+      final google = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        serverClientId: '950924265668-m1ajd0cur7oi8uf90qqarfm1f5r3plj4.apps.googleusercontent.com',
+      );
       final silent = await google.signInSilently().timeout(
         const Duration(seconds: 3),
         onTimeout: () => null,
@@ -345,7 +348,10 @@ class _AuthScreenState extends State<AuthScreen> {
   String _password = '';
   bool _isLogin = true;
   bool _isLoading = false;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId: '950924265668-m1ajd0cur7oi8uf90qqarfm1f5r3plj4.apps.googleusercontent.com', // Web client ID from Firebase
+  );
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) {

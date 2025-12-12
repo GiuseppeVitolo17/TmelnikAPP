@@ -28,6 +28,9 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
   final _descriptionController = TextEditingController();
   final _applyLinkController = TextEditingController();
   final _infoPackController = TextEditingController();
+  final _selectedDateController = TextEditingController();
+  final _departureDateController = TextEditingController();
+  final _returnDateController = TextEditingController();
   
   DateTime? _selectedDate;
   DateTime? _departureDate;
@@ -96,6 +99,17 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
           _selectedDate = offer.expiresAt;
           _departureDate = offer.departureDate;
           _returnDate = offer.returnDate;
+          
+          // Update date controllers
+          _selectedDateController.text = _selectedDate != null
+              ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+              : '';
+          _departureDateController.text = _departureDate != null
+              ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
+              : '';
+          _returnDateController.text = _returnDate != null
+              ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
+              : '';
           
           // Load benefits - ensure unique
           _benefitControllers.clear();
@@ -166,6 +180,9 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
     _descriptionController.dispose();
     _applyLinkController.dispose();
     _infoPackController.dispose();
+    _selectedDateController.dispose();
+    _departureDateController.dispose();
+    _returnDateController.dispose();
     for (var controller in _benefitControllers) {
       controller.dispose();
     }
@@ -195,7 +212,10 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      setState(() {
+        _selectedDate = picked;
+        _selectedDateController.text = '${picked.day}/${picked.month}/${picked.year}';
+      });
     }
   }
 
@@ -207,7 +227,10 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      setState(() => _departureDate = picked);
+      setState(() {
+        _departureDate = picked;
+        _departureDateController.text = '${picked.day}/${picked.month}/${picked.year}';
+      });
     }
   }
 
@@ -219,7 +242,10 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      setState(() => _returnDate = picked);
+      setState(() {
+        _returnDate = picked;
+        _returnDateController.text = '${picked.day}/${picked.month}/${picked.year}';
+      });
     }
   }
 
@@ -535,102 +561,81 @@ class _EditProjectOfferScreenState extends State<EditProjectOfferScreen> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: _selectDate,
-                      child: AbsorbPointer(
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: 'Application Deadline (optional)',
-                            hintText: 'Select deadline date',
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.calendar_today),
-                            suffixIcon: _selectedDate != null
-                                ? IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                    tooltip: 'Remove date',
-                                    onPressed: () {
-                                      _confirmRemoveDate('application deadline', () {
-                                        setState(() => _selectedDate = null);
-                                      });
-                                    },
-                                  )
-                                : null,
-                          ),
-                          child: Text(
-                            _selectedDate != null
-                                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                                : 'Not set',
-                            style: TextStyle(
-                              color: _selectedDate != null ? Colors.black87 : Colors.grey[600],
-                            ),
-                          ),
-                        ),
+                    TextFormField(
+                      readOnly: true,
+                      onTap: _isLoading ? null : _selectDate,
+                      controller: _selectedDateController,
+                      decoration: InputDecoration(
+                        labelText: 'Application Deadline (optional)',
+                        hintText: 'Select deadline date',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        suffixIcon: _selectedDate != null
+                            ? IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                tooltip: 'Remove date',
+                                onPressed: _isLoading ? null : () {
+                                  _confirmRemoveDate('application deadline', () {
+                                    setState(() {
+                                      _selectedDate = null;
+                                      _selectedDateController.clear();
+                                    });
+                                  });
+                                },
+                              )
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: _selectDepartureDate,
-                      child: AbsorbPointer(
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: '🛫 Departure Date',
-                            hintText: 'Select departure date',
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.flight_takeoff),
-                            suffixIcon: _departureDate != null
-                                ? IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                    tooltip: 'Remove departure date',
-                                    onPressed: () {
-                                      _confirmRemoveDate('departure date', () {
-                                        setState(() => _departureDate = null);
-                                      });
-                                    },
-                                  )
-                                : null,
-                          ),
-                          child: Text(
-                            _departureDate != null
-                                ? '${_departureDate!.day}/${_departureDate!.month}/${_departureDate!.year}'
-                                : 'Not set',
-                            style: TextStyle(
-                              color: _departureDate != null ? Colors.black87 : Colors.grey[600],
-                            ),
-                          ),
-                        ),
+                    TextFormField(
+                      readOnly: true,
+                      onTap: _isLoading ? null : _selectDepartureDate,
+                      controller: _departureDateController,
+                      decoration: InputDecoration(
+                        labelText: '🛫 Departure Date',
+                        hintText: 'Select departure date',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.flight_takeoff),
+                        suffixIcon: _departureDate != null
+                            ? IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                tooltip: 'Remove departure date',
+                                onPressed: _isLoading ? null : () {
+                                  _confirmRemoveDate('departure date', () {
+                                    setState(() {
+                                      _departureDate = null;
+                                      _departureDateController.clear();
+                                    });
+                                  });
+                                },
+                              )
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: _selectReturnDate,
-                      child: AbsorbPointer(
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: '🛬 Return Date',
-                            hintText: 'Select return date',
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.flight_land),
-                            suffixIcon: _returnDate != null
-                                ? IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                    tooltip: 'Remove return date',
-                                    onPressed: () {
-                                      _confirmRemoveDate('return date', () {
-                                        setState(() => _returnDate = null);
-                                      });
-                                    },
-                                  )
-                                : null,
-                          ),
-                          child: Text(
-                            _returnDate != null
-                                ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
-                                : 'Not set',
-                            style: TextStyle(
-                              color: _returnDate != null ? Colors.black87 : Colors.grey[600],
-                            ),
-                          ),
-                        ),
+                    TextFormField(
+                      readOnly: true,
+                      onTap: _isLoading ? null : _selectReturnDate,
+                      controller: _returnDateController,
+                      decoration: InputDecoration(
+                        labelText: '🛬 Return Date',
+                        hintText: 'Select return date',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.flight_land),
+                        suffixIcon: _returnDate != null
+                            ? IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                tooltip: 'Remove return date',
+                                onPressed: _isLoading ? null : () {
+                                  _confirmRemoveDate('return date', () {
+                                    setState(() {
+                                      _returnDate = null;
+                                      _returnDateController.clear();
+                                    });
+                                  });
+                                },
+                              )
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 24),

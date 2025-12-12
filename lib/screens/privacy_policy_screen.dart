@@ -105,8 +105,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               ),
               _buildSection(
                 '9. Contact Us',
-                'If you have questions about this Privacy Policy, please contact us at:\n'
-                'Email: privacy@tmelnikapp.com',
+                'If you have questions about this Privacy Policy, please contact us through the app settings.',
               ),
               const SizedBox(height: 24),
               Container(

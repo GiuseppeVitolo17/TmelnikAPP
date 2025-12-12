@@ -464,6 +464,20 @@ class ProfileImageService {
         }
         croppedFile = cropped;
         debugPrint('✅ [PROFILE_IMAGE] Image cropped: ${croppedFile.path}');
+        
+        // Verify cropped file exists and is readable before proceeding
+        if (!await croppedFile.exists()) {
+          debugPrint('❌ [PROFILE_IMAGE] Cropped file does not exist at path: ${croppedFile.path}');
+          throw Exception('Cropped file does not exist: ${croppedFile.path}');
+        }
+        
+        final croppedFileSize = await croppedFile.length();
+        if (croppedFileSize == 0) {
+          debugPrint('❌ [PROFILE_IMAGE] Cropped file is empty');
+          throw Exception('Cropped file is empty');
+        }
+        
+        debugPrint('✅ [PROFILE_IMAGE] Cropped file verified: ${croppedFileSize} bytes');
       } catch (e, stackTrace) {
         debugPrint('❌ [PROFILE_IMAGE] Crop operation failed: $e');
         debugPrint('❌ [PROFILE_IMAGE] Stack trace: $stackTrace');

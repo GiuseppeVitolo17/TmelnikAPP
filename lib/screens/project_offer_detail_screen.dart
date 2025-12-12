@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -259,6 +259,7 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                         label: 'Target',
                         value: widget.projectOffer.targeting,
                         color: Colors.purple,
+                        onTap: () => _showDetailDialog('Target Audience', widget.projectOffer.targeting),
                       ),
                       const SizedBox(height: 20),
                     ],
@@ -267,7 +268,10 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                     if (widget.projectOffer.description.isNotEmpty) ...[
                       _buildSectionTitle('📝 Description'),
                       const SizedBox(height: 12),
-                      _buildDescriptionCard(widget.projectOffer.description),
+                      _buildDescriptionCard(
+                        widget.projectOffer.description,
+                        onTap: () => _showDetailDialog('Description', widget.projectOffer.description),
+                      ),
                       const SizedBox(height: 20),
                     ],
 
@@ -277,7 +281,10 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                       const SizedBox(height: 12),
                       ...widget.projectOffer.benefits.map((benefit) => Padding(
                             padding: const EdgeInsets.only(bottom: 8),
-                            child: _buildBenefitItem(benefit),
+                            child: _buildBenefitItem(
+                              benefit,
+                              onTap: () => _showDetailDialog('Benefit', benefit),
+                            ),
                           )),
                       const SizedBox(height: 20),
                     ],
@@ -291,6 +298,8 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                         label: 'Requirements',
                         value: widget.projectOffer.requirements,
                         color: Colors.teal,
+                        onTap: () => _showDetailDialog('Requirements', widget.projectOffer.requirements),
+                        fullWidth: true,
                       ),
                       const SizedBox(height: 20),
                     ],
@@ -299,7 +308,7 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
                     if (widget.projectOffer.instagramAccount.isNotEmpty) ...[
                       _buildSectionTitle('📱 Contact'),
                       const SizedBox(height: 12),
-                      _buildContactCard(),
+                      _buildContactCard(fullWidth: true),
                       const SizedBox(height: 20),
                     ],
 
@@ -488,8 +497,11 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
     required String label,
     required String value,
     required Color color,
+    VoidCallback? onTap,
+    bool fullWidth = false,
   }) {
-    return Container(
+    final card = Container(
+      width: fullWidth ? double.infinity : null,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -532,9 +544,25 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
               ],
             ),
           ),
+          if (onTap != null)
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
         ],
       ),
     );
+    
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: card,
+      );
+    }
+    
+    return card;
   }
 
   Widget _buildDateCard(String label, DateTime? date, IconData icon, Color color) {
@@ -595,27 +623,53 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
     );
   }
 
-  Widget _buildDescriptionCard(String description) {
-    return Container(
+  Widget _buildDescriptionCard(String description, {VoidCallback? onTap}) {
+    final card = Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppShadows.soft,
       ),
-      child: Text(
-        description,
-        style: const TextStyle(
-          fontSize: 15,
-          color: AppColors.textPrimary,
-          height: 1.6,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              description,
+              style: const TextStyle(
+                fontSize: 15,
+                color: AppColors.textPrimary,
+                height: 1.6,
+              ),
+            ),
+          ),
+          if (onTap != null)
+            const Padding(
+              padding: EdgeInsets.only(left: 12),
+              child: Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey,
+              ),
+            ),
+        ],
       ),
     );
+    
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: card,
+      );
+    }
+    
+    return card;
   }
 
-  Widget _buildBenefitItem(String benefit) {
-    return Container(
+  Widget _buildBenefitItem(String benefit, {VoidCallback? onTap}) {
+    final card = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -652,24 +706,67 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
               ),
             ),
           ),
+          if (onTap != null)
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
         ],
       ),
     );
+    
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: card,
+      );
+    }
+    
+    return card;
   }
 
-  Widget _buildContactCard() {
+  Widget _buildContactCard({bool fullWidth = false}) {
     final instagramUsername = widget.projectOffer.instagramAccount;
     final instagramUrl = 'https://www.instagram.com/$instagramUsername/';
+    final instagramAppUrl = 'instagram://user?username=$instagramUsername';
     
     return InkWell(
       onTap: () async {
-        final uri = Uri.parse(instagramUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        // Try to open Instagram app first
+        final appUri = Uri.parse(instagramAppUrl);
+        final webUri = Uri.parse(instagramUrl);
+        
+        try {
+          // Try Instagram app first
+          if (await canLaunchUrl(appUri)) {
+            await launchUrl(appUri, mode: LaunchMode.externalApplication);
+            return;
+          }
+        } catch (e) {
+          debugPrint('Instagram app not available, trying web: $e');
+        }
+        
+        // Fallback to web
+        try {
+          if (await canLaunchUrl(webUri)) {
+            await launchUrl(webUri, mode: LaunchMode.externalApplication);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unable to open Instagram'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
+        width: fullWidth ? double.infinity : null,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -718,6 +815,27 @@ class _ProjectOfferDetailScreenState extends State<ProjectOfferDetailScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  void _showDetailDialog(String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(
+          child: Text(
+            content,
+            style: const TextStyle(fontSize: 15, height: 1.6),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }

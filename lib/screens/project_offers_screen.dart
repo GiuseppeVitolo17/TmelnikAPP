@@ -291,6 +291,7 @@ class _ProjectOffersScreenState extends State<ProjectOffersScreen> {
     // This Scaffold only provides background color
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
+      resizeToAvoidBottomInset: false, // Prevent overflow when keyboard opens
       body: StreamBuilder<List<ProjectOffer>>(
         stream: _firestoreService.getProjectOffersStream(),
         builder: (context, snapshot) {
