@@ -21,11 +21,11 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
   final JournalService _journalService = JournalService.instance;
   final FirebaseFirestoreService _firestoreService = FirebaseFirestoreService();
   final _uuid = const Uuid();
-  
+
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  
+
   List<JournalEntry> _journalEntries = [];
   List<DailyReflection> _dailyReflections = [];
   bool _isLoading = true;
@@ -43,17 +43,19 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 
     try {
       final entries = await _journalService.getAllEntries();
-      
+
       // Load Daily Reflections for current user
       final user = FirebaseAuth.instance.currentUser;
       List<DailyReflection> reflections = [];
       if (user != null) {
-        final allReflections = await _firestoreService.getDailyReflectionsStream(user.uid).first;
+        final allReflections =
+            await _firestoreService.getDailyReflectionsStream(user.uid).first;
         reflections = allReflections;
       }
-      
-      debugPrint('📅 [CALENDAR] Loaded ${entries.length} journal entries, ${reflections.length} daily reflections');
-      
+
+      debugPrint(
+          '📅 [CALENDAR] Loaded ${entries.length} journal entries, ${reflections.length} daily reflections');
+
       setState(() {
         _journalEntries = entries;
         _dailyReflections = reflections;
@@ -71,16 +73,18 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     }
   }
 
-  List<CalendarEvent> _getEventsForDay(DateTime day, List<ProjectOffer> projectOffers) {
+  List<CalendarEvent> _getEventsForDay(
+      DateTime day, List<ProjectOffer> projectOffers) {
     final events = <CalendarEvent>[];
-    
+
     // Daily Reflections (from Daily Reflection screen)
-    final reflections = _dailyReflections.where((reflection) =>
-      reflection.date.year == day.year &&
-      reflection.date.month == day.month &&
-      reflection.date.day == day.day
-    ).toList();
-    
+    final reflections = _dailyReflections
+        .where((reflection) =>
+            reflection.date.year == day.year &&
+            reflection.date.month == day.month &&
+            reflection.date.day == day.day)
+        .toList();
+
     for (var reflection in reflections) {
       String title = 'Daily Reflection';
       if (reflection.mood != null) {
@@ -89,24 +93,25 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       if (reflection.activities.isNotEmpty) {
         title += ' (${reflection.activities.length} activities)';
       }
-      
+
       events.add(CalendarEvent(
         type: EventType.reflection,
         title: title,
         data: reflection,
       ));
     }
-    
+
     // Journal entries (notes)
-    final entries = _journalEntries.where((entry) =>
-      entry.date.year == day.year &&
-      entry.date.month == day.month &&
-      entry.date.day == day.day
-    ).toList();
-    
+    final entries = _journalEntries
+        .where((entry) =>
+            entry.date.year == day.year &&
+            entry.date.month == day.month &&
+            entry.date.day == day.day)
+        .toList();
+
     for (var entry in entries) {
-      final title = entry.content.length > 30 
-          ? '${entry.content.substring(0, 30)}...' 
+      final title = entry.content.length > 30
+          ? '${entry.content.substring(0, 30)}...'
           : entry.content;
       events.add(CalendarEvent(
         type: EventType.journal,
@@ -114,7 +119,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
         data: entry,
       ));
     }
-    
+
     // Project offers - departure, return, and deadline dates
     for (var offer in projectOffers) {
       // Departure dates
@@ -128,7 +133,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
           data: offer,
         ));
       }
-      
+
       // Return dates
       if (offer.returnDate != null &&
           offer.returnDate!.year == day.year &&
@@ -140,7 +145,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
           data: offer,
         ));
       }
-      
+
       // Deadline dates
       if (offer.expiresAt != null &&
           offer.expiresAt!.year == day.year &&
@@ -153,7 +158,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
         ));
       }
     }
-    
+
     return events;
   }
 
@@ -169,11 +174,12 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
               stream: _firestoreService.getProjectOffersStream(),
               builder: (context, snapshot) {
                 final projectOffers = snapshot.data ?? [];
-                
+
                 if (snapshot.hasError) {
-                  debugPrint('❌ [CALENDAR] Error loading projects: ${snapshot.error}');
+                  debugPrint(
+                      '❌ [CALENDAR] Error loading projects: ${snapshot.error}');
                 }
-                
+
                 return _buildCalendarContent(projectOffers);
               },
             ),
@@ -185,234 +191,396 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
     List<CalendarEvent> eventLoader(DateTime day) {
       return _getEventsForDay(day, projectOffers);
     }
-    
+
     return Column(
       children: [
-                // Calendar
-                TableCalendar(
-                  firstDay: DateTime.utc(2020, 1, 1),
-                  lastDay: DateTime.utc(2030, 12, 31),
-                  focusedDay: _focusedDay,
-                  calendarFormat: _calendarFormat,
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  eventLoader: eventLoader,
-                  startingDayOfWeek: StartingDayOfWeek.monday,
-                  calendarStyle: CalendarStyle(
-                    outsideDaysVisible: false,
-                    // Selected day: blue background with white text
-                    selectedDecoration: BoxDecoration(
-                      color: AppColors.primaryBlue,
-                      shape: BoxShape.circle,
-                    ),
-                    selectedTextStyle: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    // Today: light blue background
-                    todayDecoration: BoxDecoration(
-                      color: AppColors.primaryBlue.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primaryBlue,
-                        width: 2,
-                      ),
-                    ),
-                    todayTextStyle: TextStyle(
-                      color: AppColors.primaryBlue,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    // Regular day styling
-                    defaultTextStyle: const TextStyle(
-                      color: AppColors.textPrimary,
-                    ),
-                    // Weekend styling
-                    weekendTextStyle: TextStyle(
-                      color: Colors.grey[600],
-                    ),
-                    // Outside month days
-                    outsideTextStyle: TextStyle(
-                      color: Colors.grey[300],
+        // Calendar
+        TableCalendar(
+          firstDay: DateTime.utc(2020, 1, 1),
+          lastDay: DateTime.utc(2030, 12, 31),
+          focusedDay: _focusedDay,
+          calendarFormat: _calendarFormat,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          eventLoader: eventLoader,
+          startingDayOfWeek: StartingDayOfWeek.monday,
+          calendarStyle: CalendarStyle(
+            outsideDaysVisible: false,
+            // Selected day: blue background with white text
+            selectedDecoration: BoxDecoration(
+              color: AppColors.primaryBlue,
+              shape: BoxShape.circle,
+            ),
+            selectedTextStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+            // Today: light blue background
+            todayDecoration: BoxDecoration(
+              color: AppColors.primaryBlue.withOpacity(0.2),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primaryBlue,
+                width: 2,
+              ),
+            ),
+            todayTextStyle: TextStyle(
+              color: AppColors.primaryBlue,
+              fontWeight: FontWeight.bold,
+            ),
+            // Regular day styling
+            defaultTextStyle: const TextStyle(
+              color: AppColors.textPrimary,
+            ),
+            // Weekend styling
+            weekendTextStyle: TextStyle(
+              color: Colors.grey[600],
+            ),
+            // Outside month days
+            outsideTextStyle: TextStyle(
+              color: Colors.grey[300],
+            ),
+          ),
+          headerStyle: HeaderStyle(
+            formatButtonVisible: true,
+            titleCentered: true,
+            formatButtonShowsNext: false,
+            formatButtonDecoration: BoxDecoration(
+              color: AppColors.backgroundGrey,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.grey[300]!,
+              ),
+            ),
+            formatButtonTextStyle: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+            titleTextStyle: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+            leftChevronIcon: Icon(
+              Icons.chevron_left,
+              color: AppColors.textPrimary,
+            ),
+            rightChevronIcon: Icon(
+              Icons.chevron_right,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          onDaySelected: (selectedDay, focusedDay) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+          },
+          onFormatChanged: (format) {
+            setState(() {
+              _calendarFormat = format;
+            });
+          },
+          onPageChanged: (focusedDay) {
+            _focusedDay = focusedDay;
+          },
+          calendarBuilders: CalendarBuilders(
+            defaultBuilder: (context, date, focusedDay) {
+              // Get events for this day
+              final dayEvents = eventLoader(date);
+              if (dayEvents.isEmpty) {
+                return null; // Use default styling
+              }
+
+              // Check if this day has departure, return, or deadline events
+              bool hasDeparture = false;
+              bool hasReturn = false;
+              bool hasDeadline = false;
+
+              for (var event in dayEvents) {
+                if (event.type == EventType.departure) {
+                  hasDeparture = true;
+                } else if (event.type == EventType.returnDate) {
+                  hasReturn = true;
+                } else if (event.type == EventType.deadline) {
+                  hasDeadline = true;
+                }
+              }
+
+              // Color the day based on event type
+              Color? backgroundColor;
+              Color? textColor;
+
+              if (hasDeadline && !(hasDeparture && hasReturn)) {
+                // Red for deadline (unless it's also a departure/return day)
+                backgroundColor = Colors.red.withOpacity(0.2);
+                textColor = Colors.red[700];
+              } else if (hasDeparture && hasReturn) {
+                // Yellow for both departure and return on same day
+                backgroundColor = Colors.yellow.withOpacity(0.3);
+                textColor = Colors.orange[800];
+              } else if (hasDeparture || hasReturn) {
+                // Green for departure/return only
+                backgroundColor = Colors.green.withOpacity(0.2);
+                textColor = Colors.green[700];
+              }
+
+              if (backgroundColor != null && textColor != null) {
+                return Container(
+                  margin: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: textColor.withOpacity(0.5),
+                      width: 1.5,
                     ),
                   ),
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: true,
-                    titleCentered: true,
-                    formatButtonShowsNext: false,
-                    formatButtonDecoration: BoxDecoration(
-                      color: AppColors.backgroundGrey,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.grey[300]!,
+                  child: Center(
+                    child: Text(
+                      '${date.day}',
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    formatButtonTextStyle: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    titleTextStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                    leftChevronIcon: Icon(
-                      Icons.chevron_left,
-                      color: AppColors.textPrimary,
-                    ),
-                    rightChevronIcon: Icon(
-                      Icons.chevron_right,
-                      color: AppColors.textPrimary,
-                    ),
                   ),
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  },
-                  onFormatChanged: (format) {
-                    setState(() {
-                      _calendarFormat = format;
-                    });
-                  },
-                  onPageChanged: (focusedDay) {
-                    _focusedDay = focusedDay;
-                  },
-                  calendarBuilders: CalendarBuilders(
-                    defaultBuilder: (context, date, focusedDay) {
-                      // Get events for this day
-                      final dayEvents = eventLoader(date);
-                      if (dayEvents.isEmpty) {
-                        return null; // Use default styling
-                      }
-                      
-                      // Check if this day has departure, return, or deadline events
-                      bool hasDeparture = false;
-                      bool hasReturn = false;
-                      bool hasDeadline = false;
-                      
-                      for (var event in dayEvents) {
-                        if (event.type == EventType.departure) {
-                          hasDeparture = true;
-                        } else if (event.type == EventType.returnDate) {
-                          hasReturn = true;
-                        } else if (event.type == EventType.deadline) {
-                          hasDeadline = true;
-                        }
-                      }
-                      
-                      // Color the day based on event type
-                      Color? backgroundColor;
-                      Color? textColor;
-                      
-                      if (hasDeadline) {
-                        // Red for deadline
-                        backgroundColor = Colors.red.withOpacity(0.2);
-                        textColor = Colors.red[700];
-                      } else if (hasDeparture || hasReturn) {
-                        // Green for departure/return
-                        backgroundColor = Colors.green.withOpacity(0.2);
-                        textColor = Colors.green[700];
-                      }
-                      
-                      if (backgroundColor != null && textColor != null) {
-                        return Container(
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: backgroundColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: textColor.withOpacity(0.5),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${date.day}',
-                              style: TextStyle(
-                                color: textColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      
-                      return null; // Use default styling
-                    },
-                    markerBuilder: (context, date, events) {
-                      // Get events for this day using projectOffers from closure
-                      final dayEvents = eventLoader(date);
-                      if (dayEvents.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-                      
-                      // Get emoji for first event
-                      String emoji = '📅';
-                      final firstEvent = dayEvents.first;
-                      
-                      switch (firstEvent.type) {
-                        case EventType.reflection:
-                          final reflection = firstEvent.data as DailyReflection;
-                          emoji = reflection.moodEmoji.isNotEmpty 
-                              ? reflection.moodEmoji 
-                              : '📝';
-                          break;
-                        case EventType.journal:
-                          emoji = '📝';
-                          break;
-                        case EventType.departure:
-                          emoji = '🛫';
-                          break;
-                        case EventType.returnDate:
-                          emoji = '🛬';
-                          break;
-                        case EventType.deadline:
-                          emoji = '⏰';
-                          break;
-                      }
-                        
-                      // Position emoji above the day number like a sticker
-                      // This makes it clear which day the emoji belongs to
-                        return Positioned(
-                        top: 2,
-                        right: 2,
-                          child: Container(
-                          padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
+                );
+              }
+
+              return null; // Use default styling
+            },
+            markerBuilder: (context, date, events) {
+              final dayEvents = eventLoader(date);
+              if (dayEvents.isEmpty) return const SizedBox.shrink();
+
+              int departureCount = 0;
+              int returnCount = 0;
+              bool hasReflection = false;
+              bool hasJournal = false;
+              bool hasDeadline = false;
+
+              for (var event in dayEvents) {
+                switch (event.type) {
+                  case EventType.departure:
+                    departureCount++;
+                    break;
+                  case EventType.returnDate:
+                    returnCount++;
+                    break;
+                  case EventType.reflection:
+                    hasReflection = true;
+                    break;
+                  case EventType.journal:
+                    hasJournal = true;
+                    break;
+                  case EventType.deadline:
+                    hasDeadline = true;
+                    break;
+                }
+              }
+
+              final List<Widget> markers = [];
+
+              if (departureCount > 0 && returnCount > 0) {
+                markers.add(Positioned(
+                    top: 2,
+                    left: 2,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 2,
-                                offset: const Offset(0, 1),
-                            ),
-                            ],
-                          ),
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1))
+                            ]),
+                        child: const Text('🛫',
+                            style: TextStyle(fontSize: 14, height: 1.0)))));
+                markers.add(Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1))
+                            ]),
+                        child: const Text('🛬',
+                            style: TextStyle(fontSize: 14, height: 1.0)))));
+                if (departureCount > 1 || returnCount > 1) {
+                  markers.add(Positioned(
+                      bottom: 2,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                          child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.9),
+                                  borderRadius: BorderRadius.circular(6)),
                               child: Text(
-                                emoji,
-                                style: const TextStyle(
-                              fontSize: 16,
-                              height: 1.0,
-                              ),
-                            ),
-                          ),
-                        );
-                    },
-                  ),
-                ),
-                const Divider(),
-                // Events for selected day
-                Expanded(
-                  child: _buildEventsList(projectOffers),
-                ),
-              ],
-            );
+                                  '${departureCount}🛫 ${returnCount}🛬',
+                                  style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      height: 1.0))))));
+                }
+              } else if (departureCount > 0) {
+                markers.add(Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1))
+                            ]),
+                        child: const Text('🛫',
+                            style: TextStyle(fontSize: 16, height: 1.0)))));
+                if (departureCount > 1) {
+                  markers.add(Positioned(
+                      bottom: 2,
+                      right: 2,
+                      child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(6)),
+                          child: Text('$departureCount',
+                              style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  height: 1.0)))));
+                }
+              } else if (returnCount > 0) {
+                markers.add(Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1))
+                            ]),
+                        child: const Text('🛬',
+                            style: TextStyle(fontSize: 16, height: 1.0)))));
+                if (returnCount > 1) {
+                  markers.add(Positioned(
+                      bottom: 2,
+                      right: 2,
+                      child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(6)),
+                          child: Text('$returnCount',
+                              style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  height: 1.0)))));
+                }
+              } else if (hasDeadline) {
+                markers.add(Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1))
+                            ]),
+                        child: const Text('⏰',
+                            style: TextStyle(fontSize: 16, height: 1.0)))));
+              } else if (hasReflection) {
+                final reflectionEvent = dayEvents.firstWhere(
+                    (e) => e.type == EventType.reflection,
+                    orElse: () => dayEvents.first);
+                final reflection = reflectionEvent.data as DailyReflection;
+                final emoji = reflection.moodEmoji.isNotEmpty
+                    ? reflection.moodEmoji
+                    : '📝';
+                markers.add(Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1))
+                            ]),
+                        child: Text(emoji,
+                            style:
+                                const TextStyle(fontSize: 16, height: 1.0)))));
+              } else if (hasJournal) {
+                markers.add(Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1))
+                            ]),
+                        child: const Text('📝',
+                            style: TextStyle(fontSize: 16, height: 1.0)))));
+              }
+
+              return markers.isEmpty
+                  ? const SizedBox.shrink()
+                  : Stack(children: markers);
+            },
+          ),
+        ),
+        const Divider(),
+        // Events for selected day
+        Expanded(
+          child: _buildEventsList(projectOffers),
+        ),
+      ],
+    );
   }
 
   Widget _buildEventsList(List<ProjectOffer> projectOffers) {
     final events = _getEventsForDay(_selectedDay, projectOffers);
-    
+
     if (events.isEmpty) {
       return Center(
         child: Column(
@@ -440,7 +608,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: events.length,
@@ -455,14 +623,16 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
             trailing: event.type == EventType.journal
                 ? IconButton(
                     icon: const Icon(Icons.edit),
-                    onPressed: () => _editJournalEntry(event.data as JournalEntry),
+                    onPressed: () =>
+                        _editJournalEntry(event.data as JournalEntry),
                   )
                 : event.type == EventType.reflection
                     ? IconButton(
                         icon: const Icon(Icons.visibility),
-                        onPressed: () => _showReflectionDetails(event.data as DailyReflection),
-                  )
-                : null,
+                        onPressed: () => _showReflectionDetails(
+                            event.data as DailyReflection),
+                      )
+                    : null,
             onTap: () => _handleEventTap(event),
           ),
         );
@@ -509,19 +679,20 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
       case EventType.reflection:
         final reflection = event.data as DailyReflection;
         if (reflection.activities.isNotEmpty) {
-          return Text('${reflection.activities.length} activities - ${reflection.activities.take(2).map((a) => a.name).join(", ")}');
+          return Text(
+              '${reflection.activities.length} activities - ${reflection.activities.take(2).map((a) => a.name).join(", ")}');
         }
-        return reflection.mood != null 
+        return reflection.mood != null
             ? Text('Mood: ${reflection.moodEmoji}')
             : const Text('Daily reflection');
       case EventType.journal:
         final entry = event.data as JournalEntry;
         return Text(
-                entry.content.length > 50 
-                    ? '${entry.content.substring(0, 50)}...' 
-                    : entry.content,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+          entry.content.length > 50
+              ? '${entry.content.substring(0, 50)}...'
+              : entry.content,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         );
       case EventType.departure:
         final offer = event.data as ProjectOffer;
@@ -549,7 +720,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 
   void _showAddNoteDialog(DateTime date) {
     final textController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -586,56 +757,56 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                 Flexible(
                   child: SingleChildScrollView(
                     child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: textController,
-                decoration: const InputDecoration(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: textController,
+                          decoration: const InputDecoration(
                             hintText: 'Write your note...',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 5,
-              ),
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 5,
+                        ),
                       ],
                     ),
                   ),
                 ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
                     const SizedBox(width: 8),
-            FilledButton(
-              onPressed: () async {
-                if (textController.text.isNotEmpty) {
-                  final now = DateTime.now();
-                  final entry = JournalEntry(
-                    id: _uuid.v4(),
-                    date: date,
-                    content: textController.text,
-                    createdAt: now,
+                    FilledButton(
+                      onPressed: () async {
+                        if (textController.text.isNotEmpty) {
+                          final now = DateTime.now();
+                          final entry = JournalEntry(
+                            id: _uuid.v4(),
+                            date: date,
+                            content: textController.text,
+                            createdAt: now,
                             mood: '📝', // Simple note icon
                             humor: '', // No humor field
-                  );
-                  
-                  final success = await _journalService.addEntry(entry);
-                  if (success && mounted) {
-                    Navigator.pop(context);
-                    _loadStaticData();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                          );
+
+                          final success = await _journalService.addEntry(entry);
+                          if (success && mounted) {
+                            Navigator.pop(context);
+                            _loadStaticData();
+                            ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Note added!')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -651,7 +822,7 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 
   void _editJournalEntry(JournalEntry entry) {
     final textController = TextEditingController(text: entry.content);
-    
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -688,87 +859,91 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
                 Flexible(
                   child: SingleChildScrollView(
                     child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: textController,
-                decoration: const InputDecoration(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: textController,
+                          decoration: const InputDecoration(
                             hintText: 'Write your note...',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 5,
-              ),
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 5,
+                        ),
                       ],
                     ),
                   ),
                 ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-            TextButton(
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
+                    TextButton(
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
                             title: const Text('Delete Note?'),
-                            content: const Text('Are you sure you want to delete this note?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                );
-                
-                if (confirmed == true && mounted) {
-                  await _journalService.deleteEntry(entry.id);
-                  Navigator.pop(context);
-                  _loadStaticData();
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
-            ),
+                            content: const Text(
+                                'Are you sure you want to delete this note?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true && mounted) {
+                          await _journalService.deleteEntry(entry.id);
+                          Navigator.pop(context);
+                          _loadStaticData();
+                        }
+                      },
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Delete'),
+                    ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
                         const SizedBox(width: 8),
-            FilledButton(
-              onPressed: () async {
-                if (textController.text.isNotEmpty) {
-                  final now = DateTime.now();
-                  final updatedEntry = entry.copyWith(
-                    content: textController.text,
-                    updatedAt: now,
+                        FilledButton(
+                          onPressed: () async {
+                            if (textController.text.isNotEmpty) {
+                              final now = DateTime.now();
+                              final updatedEntry = entry.copyWith(
+                                content: textController.text,
+                                updatedAt: now,
                                 humor: '', // No humor field
-                  );
-                  
-                  final success = await _journalService.updateEntry(updatedEntry);
-                  if (success && mounted) {
-                    Navigator.pop(context);
-                    _loadStaticData();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Note updated!')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
+                              );
+
+                              final success = await _journalService
+                                  .updateEntry(updatedEntry);
+                              if (success && mounted) {
+                                Navigator.pop(context);
+                                _loadStaticData();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Note updated!')),
+                                );
+                              }
+                            }
+                          },
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -805,7 +980,8 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
             if (reflection.mood != null) ...[
               Text(
                 'Mood: ${reflection.moodEmoji}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
             ],
@@ -816,17 +992,17 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
               ),
               const SizedBox(height: 8),
               ...reflection.activities.map((activity) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Text(activity.name),
-                    if (activity.rating != null) ...[
-                      const SizedBox(width: 8),
-                      Text(activity.ratingEmoji),
-                    ],
-                  ],
-                ),
-              )),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Text(activity.name),
+                        if (activity.rating != null) ...[
+                          const SizedBox(width: 8),
+                          Text(activity.ratingEmoji),
+                        ],
+                      ],
+                    ),
+                  )),
             ] else
               const Text('No activities recorded'),
             const SizedBox(height: 16),
@@ -871,10 +1047,12 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
               const SizedBox(height: 16),
               Wrap(
                 spacing: 4,
-                children: entry.tags.map((tag) => Chip(
-                  label: Text(tag),
-                  padding: EdgeInsets.zero,
-                )).toList(),
+                children: entry.tags
+                    .map((tag) => Chip(
+                          label: Text(tag),
+                          padding: EdgeInsets.zero,
+                        ))
+                    .toList(),
               ),
             ],
             const SizedBox(height: 16),
@@ -916,8 +1094,8 @@ class _DiaryCalendarScreenState extends State<DiaryCalendarScreen> {
 }
 
 enum EventType {
-  reflection,  // Daily Reflection
-  journal,     // Notes
+  reflection, // Daily Reflection
+  journal, // Notes
   departure,
   returnDate,
   deadline,
@@ -934,4 +1112,3 @@ class CalendarEvent {
     required this.data,
   });
 }
-
